@@ -18,7 +18,6 @@ Two advantages can be derived from this:
 (b) Individual workers may complete and get updated parameters then continue to do additional processing - while other workers may not yet have completed.
 
 
-
 <h3> How to build</h3>
 mvn -DskipTests=true package
 
@@ -30,3 +29,5 @@ spark-submit --master spark://<host>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.0.
 Testing LsSinkRDD and LsSourceRDD:
 
 spark-submit --master spark://<host>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.0.jar --class org.openchai.spark.rdd.P2pRDDTest $(pwd)/libs/spark_p2prdd-1.0.0-tests.jar spark://<host>:7077
+
+Additional documentation is in the <b>docs</b> directory
