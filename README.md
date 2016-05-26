@@ -32,4 +32,4 @@ spark-submit --master spark://\<host\>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.
 
 Additional documentation -including details on the RDD capabilities of LSSink/LsSource and P2p - are  in the <b>doc</b> directory
 
-Credits: conception, design, and development effort for this open source project have been supplied by [OpenChai](http://openchai.org/) and by Futurewei - a US research of [Huawei Inc](http://www.huawei.com/us/).  Funding has been contributed by Futurewei.
+Credits: conception, design, and development effort for this open source project have been supplied by [OpenChai](http://openchai.org/) and by Futurewei - a US research of [Huawei Inc](http://www.huawei.com/us/).  Funding has been contributed by [Huawei Inc](http://www.huawei.com/us/).
