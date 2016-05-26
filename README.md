@@ -31,3 +31,5 @@ Testing LsSinkRDD and LsSourceRDD:
 spark-submit --master spark://\<host\>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.0.jar --class org.openchai.spark.rdd.P2pRDDTest $(pwd)/libs/spark_p2prdd-1.0.0-tests.jar spark://\<host\>:7077
 
 Additional documentation -including details on the RDD capabilities of LSSink/LsSource and P2p - are  in the <b>doc</b> directory
+
+Credits: conception, design, and development effort has been supplied by OpenChai and by Futurewei - a US research of Huawei Inc http://www.huawei.com/us/.  Funding has been contributed by Futurewei.
