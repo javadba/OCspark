@@ -169,7 +169,7 @@ object UpdaterIF {
         iteration += 1
         (error, state)
       }
-      EpochResult(Weights(data.dims, state.x.toArray), state.fVals.toArray, err, Math.max(0.01, 1 - err/15.0))
+      EpochResult(Weights(data.dims, state.x.toArray), state.grad.toArray, err, Math.max(0.01, 1 - err/15.0))
     }
 
     override def update(params: HyperParams, weights: Weights): Model[MData] = {

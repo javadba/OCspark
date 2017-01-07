@@ -17,6 +17,7 @@
 package org.openchai.spark.p2p
 
 import TcpCommon._
+import org.openchai.spark.util.TcpUtils
 
 case class TcpConnectionParams(server: String, port: Int) extends P2pConnectionParams
 
@@ -78,9 +79,10 @@ object TcpClient {
   val TestPort = 8989
   def main(args: Array[String]) {
     import UpdaterIF._
-    val port = if (args.length >= 1) args(0) else TestPort
+    val server = if (args.length >= 1) args(0) else TcpUtils.getLocalHostname
+    val port = if (args.length >= 2) args(1) else TestPort
     val serviceIf = new UpdaterIF
-    val client = TcpClient(TcpConnectionParams("localhost", TestPort), serviceIf)
+    val client = TcpClient(TcpConnectionParams(server, TestPort), serviceIf)
     val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),TestData.mdata(10,100), 3)
   }
 }

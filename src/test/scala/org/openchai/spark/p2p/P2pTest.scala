@@ -16,6 +16,8 @@
  */
 package org.openchai.spark.p2p
 
+import org.openchai.spark.util.TcpUtils
+
 /**
  * TcpCommTest
  *
@@ -27,7 +29,7 @@ object P2pTest {
 
   def main(args: Array[String]) {
     TcpServer.startServer(TestPort)
-    TcpClient.main(Array("" + TestPort))
+    TcpClient.main(Array(TcpUtils.getLocalHostname,"" + TestPort))
     Thread.currentThread.join
   }
 }
