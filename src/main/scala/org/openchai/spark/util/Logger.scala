@@ -16,6 +16,11 @@
  */
 package org.openchai.spark.util
 
+trait Logger {
+  def debug(msg: String) = Logger.debug(msg)
+  def info(msg: String) = Logger.info(msg)
+  def error(msg: String) = Logger.error(msg)
+}
 object Logger {
   def debug(msg: String) = println(s"Debug: $msg")
   def info(msg: String) = println(s"Info: $msg")

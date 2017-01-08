@@ -17,7 +17,8 @@
 package org.openchai.spark.p2p
 
 trait P2pServer {
-  def start(): Boolean
+  type ServerType <: P2pServer
+  def start(): ServerType
   def stop(): Boolean
-  def run(): Unit
+//  def run(): Unit
 }

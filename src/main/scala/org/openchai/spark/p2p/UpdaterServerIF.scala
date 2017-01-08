@@ -25,7 +25,7 @@ object UpdaterServerIF {
   val WeightsMergePolicies = Seq("average", "best")
 }
 
-class UpdaterServerIF(weightsMergePolicy: String) extends ServerIF {
+class UpdaterServerIF(weightsMergePolicy: String = "best") extends ServerIF {
 
   import UpdaterIF._
 

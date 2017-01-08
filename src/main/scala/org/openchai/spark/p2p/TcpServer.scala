@@ -26,37 +26,22 @@ import org.openchai.spark.util.{Logger, TcpUtils}
 import scala.collection.mutable
 
 object TcpServer {
+  val DefaultPort = 8989
   val BufSize = (Math.pow(2, 20) - 1).toInt
   // 1Meg
-  val weightsMergePolicy: String = "best"
-  val TestPort = 8989
-  var serverThread: Thread = _
 
-  def startServer(port: Int) {
-    val host = TcpUtils.getLocalHostname
-    val server = new TcpServer(host, port, new UpdaterServerIF(weightsMergePolicy))
-    serverThread = new Thread() {
-      override def run() {
-        server.run
-      }
-    }
-    serverThread.start
-  }
-
-  def main(args: Array[String]) {
-    startServer(TestPort)
-    Thread.currentThread.join
-  }
 }
 
-case class TcpServer(host: String, port: Int, serviceIf: ServerIF) extends P2pServer with P2pBinding {
+case class TcpServer(host: String, port: Int, serverIf: ServerIF) extends P2pServer with P2pBinding {
 
   import TcpServer._
 
+  private var serverThread: Thread = _
   private var serverSocket: ServerSocket = _
   private var stopRequested: Boolean = _
   val threads = mutable.ArrayBuffer[Thread]()
 
+  type ServerType = TcpServer
   def CheckPort = false
   def checkPort(port: Int) = {
     import scala.concurrent.duration._
@@ -78,15 +63,27 @@ case class TcpServer(host: String, port: Int, serviceIf: ServerIF) extends P2pSe
 //    }
   }
 
-  override def start(): Boolean = {
+  override def start() = {
     serverSocket = new ServerSocket()
 //    checkPort(port) match {
 //      case m: Exception => error(s"Server already running on port $port"); false
-      /* case _ => */ serverSocket.bind(new InetSocketAddress(host, port)); true
+      /* case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
+      // ; true
 //    }
+    serverThread = new Thread() {
+      override def run() {
+        while (!stopRequested) {
+          val t = serve(serverSocket.accept())
+          t.start
+          threads += t
+        }
+      }
+    }
+    serverThread.start
+    this
   }
 
-  def service(socket: Socket): Thread = {
+  def serve(socket: Socket): Thread = {
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
     val t = new Thread() {
@@ -99,7 +96,7 @@ case class TcpServer(host: String, port: Int, serviceIf: ServerIF) extends P2pSe
           is.read(buf)
           val req = deserialize(buf).asInstanceOf[P2pReq[_]]
           debug(s"Message received: ${req.toString}")
-          val resp = serviceIf.service(req)
+          val resp = serverIf.service(req)
           debug(s"Sending response:  ${resp.toString}")
           val ser = serialize(resp)
           os.write(ser)
@@ -109,17 +106,6 @@ case class TcpServer(host: String, port: Int, serviceIf: ServerIF) extends P2pSe
       }
     }
     t
-  }
-
-  override def run(): Unit = {
-    if (serverSocket == null) {
-      start
-    }
-    while (!stopRequested) {
-      val t = service(serverSocket.accept())
-      t.start
-      threads += t
-    }
   }
 
   override def stop(): Boolean = ???

@@ -24,10 +24,11 @@ import org.openchai.spark.p2p._
 
 import scala.reflect.ClassTag
 
-class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams)
+class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIF: ServerIF)
   extends RDD[T](parent) {
 
-  TcpServer.startServer(TcpServer.TestPort)
+  val tcpParams = p2pParams.asInstanceOf[TcpConnectionParams]
+  val server = TcpServer(tcpParams.server, tcpParams.port, serverIF)
   var testingSize : Int = 1000
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
     val updaterIF =  new UpdaterIF

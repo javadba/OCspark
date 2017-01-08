@@ -16,11 +16,9 @@
  */
 package org.openchai.spark.p2p
 
-import org.apache.spark.mllib.linalg.{Vector => SparkVector, SparseVector, DenseVector, Vectors}
-import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.MLProxy._
-import org.openchai.spark.p2p
-import org.openchai.spark.rdd.{LsRDD, P2pRDD}
+import org.apache.spark.mllib.linalg.{DenseVector, SparseVector, Vectors, Vector => SparkVector}
+import org.openchai.spark.rdd.SolverRDD
 
 object MllibImports {
 
@@ -32,11 +30,9 @@ object MllibImports {
    */
 
   import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
-  import breeze.optimize.{CachedDiffFunction, DiffFunction, LBFGS => BreezeLBFGS}
-
-  import LsRDD._
+  import breeze.optimize.{DiffFunction, LBFGS => BreezeLBFGS}
   class AsyncConvergenceCostFun(
-    data: P2pRDD[(String,String),MData],
+    data: SolverRDD[(String,String),MData],
     gradient: Gradient,
     updater: Updater,
     regParam: Double,
@@ -70,8 +66,6 @@ object MllibImports {
       val n = w.size
       val bcW = data.context.broadcast(w)
       val localGradient = gradient
-
-      import org.apache.spark.ml.classification.RandomForestClassificationModel
 
       val (gradientSum, lossSum) = (new DenseVector(List(1.0).toArray),2.0) // data.asyncConvergence((Vectors.zeros(n), 0.0))(
 //        seqOp = (c, v) => (c, v) match {
