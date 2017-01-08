@@ -17,7 +17,7 @@
 package org.openchai.spark.rdd
 
 import org.apache.spark.SparkContext
-import org.openchai.spark.p2p.{TcpConnectionParams, TcpServer, SolverIF, SolverServerIF$}
+import org.openchai.spark.p2p.{TcpParams, TcpServer}
 import org.openchai.spark.util.TcpUtils
 
 object P2pRDDTest {
@@ -33,7 +33,7 @@ object P2pRDDTest {
 
     val sc = new SparkContext(master,"P2pRDDTest")
     val lsrdd = LsRDDTest.sourceRdd(sc, master, "/data/lsrdd")
-    val params = TcpConnectionParams(server, TcpServer.DefaultPort)
+    val params = TcpParams(server, TcpServer.DefaultPort)
     val p2pRdd = new SolverRDD/*[LabeledArr]*/(sc, lsrdd, params)
     val cnt = p2pRdd.count
 

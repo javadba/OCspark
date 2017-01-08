@@ -19,9 +19,9 @@ package org.openchai.spark.p2p
 import TcpCommon._
 import org.openchai.spark.util.TcpUtils
 
-case class TcpConnectionParams(server: String, port: Int) extends P2pConnectionParams
+case class TcpParams(server: String, port: Int) extends P2pConnectionParams
 
-case class TcpClient(connParams: TcpConnectionParams, serviceIf: ServiceIF)
+case class TcpClient(connParams: TcpParams, serviceIf: ServiceIF)
   extends P2pRpc with P2pBinding {
 
   import org.openchai.spark.util.Logger._
@@ -42,7 +42,7 @@ case class TcpClient(connParams: TcpConnectionParams, serviceIf: ServiceIF)
 
   override def connect(connParam: P2pConnectionParams): Boolean = {
     savedConnParam = connParam
-    val tconn = connParams.asInstanceOf[TcpConnectionParams]
+    val tconn = connParams.asInstanceOf[TcpParams]
     sock = new Socket(tconn.server, tconn.port)
     os = sock.getOutputStream
     is = sock.getInputStream
@@ -82,7 +82,7 @@ object TcpClient {
     val server = if (args.length >= 1) args(0) else TcpUtils.getLocalHostname
     val port = if (args.length >= 2) args(1) else TestPort
     val serviceIf = new SolverIF
-    val client = TcpClient(TcpConnectionParams(server, TestPort), serviceIf)
+    val client = TcpClient(TcpParams(server, TestPort), serviceIf)
     val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),TestData.mdata(10,100), 3)
   }
 }

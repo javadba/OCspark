@@ -27,12 +27,12 @@ import scala.reflect.ClassTag
 class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIF: ServerIF)
   extends RDD[T](parent) {
 
-  val tcpParams = p2pParams.asInstanceOf[TcpConnectionParams]
+  val tcpParams = p2pParams.asInstanceOf[TcpParams]
   val server = TcpServer(tcpParams.server, tcpParams.port, serverIF)
   var testingSize : Int = 1000
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
     val updaterIF =  new SolverIF
-    val p2pClient = new TcpClient(p2pParams.asInstanceOf[TcpConnectionParams], updaterIF)
+    val p2pClient = new TcpClient(p2pParams.asInstanceOf[TcpParams], updaterIF)
     val dat = parent.compute(split, context)
     val converted = dat.map { case (path, idAndData) =>
       (path.asInstanceOf[String], idAndData.asInstanceOf[String].split(LsRDD.Delim).tail.map(_.toDouble))
