@@ -19,7 +19,7 @@ package org.openchai.spark.p2p
 import java.util.Random
 
 object TestData {
-  import UpdaterIF._
+  import SolverIF._
   def randArr(size: Int) = Array.tabulate(size) {
     _ * new Random().nextDouble
   }

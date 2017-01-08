@@ -78,10 +78,10 @@ case class TcpClient(connParams: TcpConnectionParams, serviceIf: ServiceIF)
 object TcpClient {
   val TestPort = 8989
   def main(args: Array[String]) {
-    import UpdaterIF._
+    import SolverIF._
     val server = if (args.length >= 1) args(0) else TcpUtils.getLocalHostname
     val port = if (args.length >= 2) args(1) else TestPort
-    val serviceIf = new UpdaterIF
+    val serviceIf = new SolverIF
     val client = TcpClient(TcpConnectionParams(server, TestPort), serviceIf)
     val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),TestData.mdata(10,100), 3)
   }

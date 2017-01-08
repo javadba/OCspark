@@ -17,7 +17,7 @@
 package org.openchai.spark.rdd
 
 import org.apache.spark.SparkContext
-import org.openchai.spark.p2p.{TcpConnectionParams, TcpServer, UpdaterIF, UpdaterServerIF}
+import org.openchai.spark.p2p.{TcpConnectionParams, TcpServer, SolverIF, SolverServerIF$}
 import org.openchai.spark.util.TcpUtils
 
 object P2pRDDTest {

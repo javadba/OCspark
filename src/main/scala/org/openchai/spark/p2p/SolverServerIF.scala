@@ -21,13 +21,13 @@ import org.openchai.spark.util.Logger
 import Logger._
 import breeze.linalg.{DenseVector => BDV}
 
-object UpdaterServerIF {
+object SolverServerIF {
   val WeightsMergePolicies = Seq("average", "best")
 }
 
-class UpdaterServerIF(weightsMergePolicy: String = "best") extends ServerIF {
+class SolverServerIF(weightsMergePolicy: String = "best") extends ServerIF {
 
-  import UpdaterIF._
+  import SolverIF._
 
   import collection.mutable
 

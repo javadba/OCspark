@@ -28,7 +28,7 @@ object P2pTest {
   val TestPort = TcpServer.DefaultPort
 
   def main(args: Array[String]) {
-    val server = TcpServer(TcpUtils.getLocalHostname, TestPort, new UpdaterServerIF(weightsMergePolicy))
+    val server = TcpServer(TcpUtils.getLocalHostname, TestPort, new SolverServerIF(weightsMergePolicy))
     server.start
     TcpClient.main(Array(TcpUtils.getLocalHostname,"" + TestPort))
     Thread.currentThread.join

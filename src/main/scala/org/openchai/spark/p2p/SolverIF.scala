@@ -27,9 +27,9 @@ import scala.util.Random
  * Weights Updater Interface used for Driver to Worker piecewise sgd updates
  *
  */
-class UpdaterIF extends ServiceIF {
+class SolverIF extends ServiceIF {
 
-  import UpdaterIF._
+  import SolverIF._
 
   def keepGoing(nLoops: Int): KeepGoingResp = {
     val resp = getRpc().request(KeepGoingReq(nLoops))
@@ -74,7 +74,7 @@ class UpdaterIF extends ServiceIF {
 
 }
 
-object UpdaterIF {
+object SolverIF {
   type Num = Double
 
   case class Weights(dims: Seq[Int], d: Array[Num]) {
