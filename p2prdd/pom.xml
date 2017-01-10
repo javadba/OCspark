@@ -74,10 +74,14 @@
                         </goals>
                         <configuration>
 				<artifactSet>
-					<filters>
-					<filter>
                                 <excludes>
-                                    <exclude>org.apache.spark:*</exclude>
+					<exclude>org.apache.spark:*</exclude>A
+				</excludes>
+			</artifactSet>
+					<filters>
+						<filter>
+							<artifact>*.*</artifact>
+							<excludes>	
                                         <!--<exclude>org.apache.maven:lib:tests</exclude>-->
                                         <exclude>log4j:log4j:jar:</exclude>
                                         <exclude>META-INF/*.SF</exclude>
@@ -88,7 +92,6 @@
                                     </excludes>
                                 </filter>
 			</filters>
-		</artifactSet>
                             <minimizeJar>false</minimizeJar>
                         </configuration>
                     </execution>
