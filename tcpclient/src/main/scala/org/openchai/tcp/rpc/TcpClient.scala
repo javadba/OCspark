@@ -42,10 +42,12 @@ case class TcpClient(connParams: TcpParams, serviceIf: ServiceIF)
   override def connect(connParam: P2pConnectionParams): Boolean = {
     savedConnParam = connParam
     val tconn = connParams.asInstanceOf[TcpParams]
+    println(s"Connecting to ${tconn.server}:${tconn.port} ..")
     sock = new Socket(tconn.server, tconn.port)
     os = sock.getOutputStream
     is = sock.getInputStream
     bind(this, serviceIf)
+    println(s"Connected to ${tconn.server}:${tconn.port}")
     is != null && os != null
   }
 

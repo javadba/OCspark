@@ -22,14 +22,29 @@ Two advantages can be derived from this:
 mvn -DskipTests=true package
 
 <h3> How to test </h3>
-Testing P2pRDD:
+
+<h4> Testing P2pRDD:</h4>
 
 spark-submit --master spark://\<host\>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.0.jar --class org.openchai.spark.rdd.P2pRDDTest $(pwd)/libs/spark_p2prdd-1.0.0-tests.jar spark://\<host\>:7077
 
-Testing LsSinkRDD and LsSourceRDD:
+<h4>Testing LsSinkRDD and LsSourceRDD:</h4>
 
 spark-submit --master spark://\<host\>:7077 --jars $(pwd)/libs/spark_p2prdd-1.0.0.jar --class org.openchai.spark.rdd.P2pRDDTest $(pwd)/libs/spark_p2prdd-1.0.0-tests.jar spark://\<host\>:7077
+
+<h4>Testing Rexec:</h4>
+
+a. Check out the codebase from github to the remote server. On the remote server:
+
+mvn -pl tcpclient exec:java -Dexec.mainClass="org.openchai.tcp.rexec.Rexec" -Dexec.args="--server 192.168.0.4 9191"
+
+b. On the client side:
+
+mvn -pl tcpclient exec:java -Dexec.mainClass="org.openchai.tcp.rexec.Rexec" -Dexec.args="--client 192.168.0.4 9191 ls /etc/pam.d"
+
 
 Additional documentation -including details on the RDD capabilities of LSSink/LsSource and P2p - are  in the <b>doc</b> directory
 
-Credits: conception, design, and development effort for this open source project have been supplied by [OpenChai](http://openchai.org/) and by Futurewei - a US research of [Huawei Inc](http://www.huawei.com/us/).  Funding has been contributed by [Huawei Inc](http://www.huawei.com/us/).
+
+Credits: conception, design, and development effort for this open source project have been supplied by [OpenChai](http://openchai.org/).
+
+
