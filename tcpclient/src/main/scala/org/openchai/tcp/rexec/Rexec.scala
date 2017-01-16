@@ -22,6 +22,8 @@ case class RexecResp(res: ExecResult) extends P2pResp[ExecResult] {
 object Rexec {
   def main(args: Array[String]): Unit = {
     val serverOrClient = args(0)
+    System.setProperty("java.net.preferIPv4Stack","true")
+
     if (serverOrClient.toLowerCase().endsWith("server")) {
       RexecServer.main(args.tail)
     } else {
