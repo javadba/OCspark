@@ -3,7 +3,7 @@ package org.openchai.tcp.util
 object ProcessUtils {
 
 case class ExecParams(process: String, args: Option[Seq[String]] = None,
-  env: Option[Array[String]] = None, dir: String = ".") {
+  env: Option[Seq[String]] = None, dir: String = ".") {
 
   override def toString: String = dir + "/" + process + args.flatMap( arr => Some(arr.mkString(" "))).getOrElse("")
 

@@ -9,15 +9,27 @@ import org.openchai.tcp.util.ProcessUtils
 
 case class RexecParams(execParams: ExecParams /*, tcpParams: TcpParams */)
 
-  case class Rexec(execParams: ExecParams)
-  case class RexecReq(rexec: Rexec) extends P2pReq[Rexec] {
-    override def value(): Rexec = rexec
-  }
+case class Rexec(execParams: ExecParams)
 
-  case class RexecResp(res: ExecResult) extends P2pResp[ExecResult] {
-    override def value(): ExecResult = res
-  }
+case class RexecReq(rexec: Rexec) extends P2pReq[Rexec] {
+  override def value(): Rexec = rexec
+}
 
+case class RexecResp(res: ExecResult) extends P2pResp[ExecResult] {
+  override def value(): ExecResult = res
+}
+
+object Rexec {
+  def main(args: Array[String]): Unit = {
+    val serverOrClient = args(0)
+    if (serverOrClient.toLowerCase().endsWith("server")) {
+      RexecServer.main(args.tail)
+    } else {
+      RexecClient.main(args.tail)
+    }
+
+  }
+}
 object RexecServer {
 
   var server: TcpServer = _
@@ -26,6 +38,14 @@ object RexecServer {
     server = TcpServer(tcpParams.server, tcpParams.port,
       new RexecServerIf(tcpParams))
     server
+  }
+
+  def main(args: Array[String]): Unit = {
+    val host = args(0)
+    val port = args(1).toInt
+    val server = apply(TcpParams(host, port))
+    server.start
+    Thread.currentThread.join
   }
 }
 
@@ -45,6 +65,22 @@ class RexecIf extends ServiceIF {
       val result = rexec(execParams)
       debug(s"Loop #$n: Result is $result")
     }
+  }
+
+}
+
+object RexecClient {
+  def main(args: Array[String]): Unit = {
+    val host = args(0)
+    val port = args(1).toInt
+    val cmd = args(2)
+    val params = if (args.length >= 4) Some(args(3).split(":").toSeq) else None
+    val env = if (args.length >= 5) Some(args(4).split(":").toSeq) else None
+    val dir = if (args.length >= 6) args(5) else "."
+    val client = RexecClient(TcpParams(host, port))
+    val rparams = RexecParams(ExecParams(cmd, params, env, dir))
+    val res = client.run(rparams, 1)
+    println(res)
   }
 
 }
