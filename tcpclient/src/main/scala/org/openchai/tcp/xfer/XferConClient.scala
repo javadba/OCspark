@@ -18,17 +18,23 @@ class PrepResp(val value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
 case class CompletedResp(value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
-case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIF {
+/** XferController Interface.  Handles the
+* signalling to Prepare and Complete the data transfers
+*/
+case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIF("XferCon") {
 
   private val nReqs = new AtomicInteger(0)
 
   def prepareWrite(config: TcpXferConfig): PrepResp = {
+    println(s"PrepareWrite ..")
     val resp = getRpc().request(PrepWriteReq(config))
+    println(s"PrepareWrite response: $resp")
     resp.asInstanceOf[PrepResp]
   }
 
   def completeWrite(config: TcpXferConfig): CompletedResp = {
     val resp = getRpc().request(new CompleteWriteReq(config))
+    println(s"CompleteWrite response: $resp")
     resp.asInstanceOf[CompletedResp]
   }
 
@@ -43,13 +49,17 @@ case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIF
   }
 }
 
-case class XferConClient(tcpParams: TcpParams, config: XferConfig)
-  extends TcpClient(tcpParams, new XferConIf(tcpParams, config)) {
+/** XferController Client Interface.  Invoke this one first which handles the
+* signalling to Prepare , Invoke (via Xfer interface), and Complete the data transfers
+*/
+case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: XferConfig)
+  extends TcpClient(tcpParams, XferConIf(tcpParams, config)) {
 
   val xferConIf = serviceIf.asInstanceOf[XferConIf]
-  val xferIf = new XferIf
+  val xferIf = new XferIfClient(xferTcpParams, config)
 
   def write(params: TcpXferConfig, writeParams: XferWriteParams) = {
+    println(s"Client: beginning Write Controller for $params")
     val presult = xferConIf.prepareWrite(params)
     val result = xferIf.write(writeParams)
     val cresult = xferConIf.completeWrite(params)
@@ -57,6 +67,7 @@ case class XferConClient(tcpParams: TcpParams, config: XferConfig)
   }
 
   def read(params: TcpXferConfig, readParams: XferReadParams) = {
+    println(s"Client: beginning Read Controller for $params")
     val presult = xferConIf.prepareRead(params)
     val result = xferIf.read(readParams)
     val cresult = xferConIf.completeRead(params)
@@ -70,8 +81,11 @@ object XferConClient {
     val port = args(1).toInt
     val configFile = args(2)
     val tcpParams = TcpParams(host, port)
+    val xhost = host
+    val xport = port + 1
+    val xtcpParams = TcpParams(xhost, xport)
     val xferConf = new TcpXferConfig("/tmp/x","/tmp/y")
-    val client = XferConClient(tcpParams, xferConf)
+    val client = XferConClient(tcpParams, xtcpParams, xferConf)
     val data = LoremIpsum
     val xparams = XferWriteParams(xferConf, LoremIpsum.getBytes("ISO-8859-1"))
     val wres = client.write(xferConf, xparams)
@@ -96,63 +110,6 @@ ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non 
     """.stripMargin
 }
 
-
-class XferConServerIf(tcpParams: TcpParams) extends ServerIF {
-
-  val xferServerIf = new XferServerIf(tcpParams)
-
-  val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
-
-  private val nReqs = new AtomicInteger(0)
-
-  def claimPaths(paths: Seq[String], config: TcpXferConfig) = {
-    for (path <- paths) {
-      assert(pathsMap.containsKey(path), s"Server says the path you requested is in use/busy: $path")
-      pathsMap.put(path, config)
-    }
-  }
-
-  def releasePaths(paths: Seq[String], config: TcpXferConfig) = {
-    for (path <- paths) {
-      if (!pathsMap.containsKey(path)) {
-        println(s"WARN: Trying to release Path $path that is not found in the PathsMap ")
-      } else {
-        pathsMap.remove(path, config)
-      }
-    }
-  }
-
-  override def service(req: P2pReq[_]): P2pResp[_] = {
-    req match {
-      case o: PrepWriteReq => {
-        val config = o.value
-        println(s"Prepping the Datawrite config=$config")
-        claimPaths(Seq(config.tmpPath, config.finalPath), config)
-        new PrepResp(PrepRespStruct(0,0,config.tmpPath))
-      }
-      case o: CompleteWriteReq => {
-        val config = o.value
-        println(s"Completed Write for ${config} the Datawrite config=$config")
-        releasePaths(Seq(config.tmpPath, config.finalPath), config)
-        CompletedResp(PrepRespStruct(0,0,config.tmpPath))
-      }
-      case o: PrepReadReq => {
-        val config = o.value
-        println(s"Prepping the Datawrite config=$config")
-        claimPaths(Seq(config.tmpPath, config.finalPath), config)
-        new PrepResp(PrepRespStruct(0,0,config.tmpPath))
-      }
-      case o: CompleteReadReq => {
-        val config = o.value
-        println(s"Completed Write for ${config} the Datawrite config=$config")
-        releasePaths(Seq(config.tmpPath, config.finalPath), config)
-        CompletedResp(PrepRespStruct(0,0,config.tmpPath))
-      }
-      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
-    }
-  }
-
-}
 
 
 

@@ -27,7 +27,7 @@ import scala.util.Random
  * Weights Updater Interface used for Driver to Worker piecewise sgd updates
  *
  */
-class SolverIF extends ServiceIF {
+class SolverIF extends ServiceIF("Solver") {
 
   import SolverIF._
 

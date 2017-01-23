@@ -50,7 +50,7 @@ object RexecServer {
   }
 }
 
-class RexecIf extends ServiceIF {
+class RexecIf extends ServiceIF("Rexec") {
 
   private val nReqs = new AtomicInteger(0)
 
@@ -92,10 +92,6 @@ case class RexecTcpClient(tcpParams: TcpParams) extends TcpClient(tcpParams, new
   val rexecIf = serviceIf.asInstanceOf[RexecIf]
 
   connect(tcpParams)
-
-//  def connect() = {
-//    new TcpClient(tcpParams, rexecIf)
-//  }
 
   def run(rexecParams: RexecParams, nLoops: Int) = {
     val result = rexecIf.run(rexecParams.execParams, nLoops)

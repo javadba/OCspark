@@ -22,7 +22,7 @@ package object rpc {
 
   trait P2pConnectionParams
 
-  trait ServiceIF {
+  abstract class ServiceIF(val name: String) {
 
     import reflect.runtime.universe.TypeTag
     def request[U: TypeTag, V: TypeTag](req: P2pReq[U]): P2pResp[V] = {
@@ -42,13 +42,13 @@ package object rpc {
     def service(req: P2pReq[_]): P2pResp[_]
   }
 
-  sealed trait P2pMessage[T] {
+  sealed trait P2pMessage[T] extends java.io.Serializable {
     def value(): T
   }
 
-  trait P2pReq[T] extends P2pMessage[T]
+  trait P2pReq[T] extends P2pMessage[T] with java.io.Serializable
 
-  trait P2pResp[T] extends P2pMessage[T]
+  trait P2pResp[T] extends P2pMessage[T] with java.io.Serializable
 
   trait ArrayData[V] {
     def tag: String
