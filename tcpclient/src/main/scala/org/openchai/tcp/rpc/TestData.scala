@@ -19,7 +19,9 @@ package org.openchai.tcp.rpc
 import java.util.Random
 
 object TestData {
-  import SolverIF._
+
+  import org.openchai.tcp.rpc.SolverIF._
+
   def randArr(size: Int) = Array.tabulate(size) {
     _ * new Random().nextDouble
   }
@@ -29,12 +31,15 @@ object TestData {
     val samplesPerPoint = 10
     val npoints = size / samplesPerPoint
     val rand = new Random
-    def f(x: Double) = 1.0 + (0.1+0.9*rand.nextFloat)*x + (0.01 + 0.09*rand.nextFloat)*x*x
+
+    def f(x: Double) = 1.0 + (0.1 + 0.9 * rand.nextFloat) * x + (0.01 + 0.09 * rand.nextFloat) * x * x
+
     Array.tabulate(npoints) { case n =>
       val x = n % samplesPerPoint
       (x, f(x))
     }
   }
+
   def epochResult(nrows: Int, ncols: Int) = {
     val len = nrows * ncols
     EpochResult(Weights(Array(nrows, ncols), randArr(len)), parabolicArr(len).map(_._2),

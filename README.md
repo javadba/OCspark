@@ -10,7 +10,7 @@ The LsSinkRDD sets up that capability by writing data from other RDD's into the 
 <b>Point to Point communication RDD - P2pRDD</b>
 P2pRDD sets up a TcP channel between the Driver and each of the Workers. This channel can be used to provide instructions and/or data updates from Driver to Workers without incurring the I/O of reading RDD data afresh. 
 
-The use case is allow repeatedly processing the data in a tight loop but potentially with different Machine Learning or Deep Learning parameters. The Workers would send back results - possibly in the form of updated Weights - to the Driver -who in turn sends updated parameters (and possibly weights) to the Worker.  
+The use case is allow repeatedly processing the data in a tight loop but potentially with different Machine Learning or Deep Learning parameters. The Workers would send back results - possibly in the form of updated Weights - to the Driver -who in turn sends updated paramet``ers (and possibly weights) to the Worker.  
 
 Two advantages can be derived from this:
 

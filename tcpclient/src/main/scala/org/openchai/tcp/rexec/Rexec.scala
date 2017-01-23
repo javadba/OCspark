@@ -7,17 +7,16 @@ import org.openchai.tcp.util.ProcessUtils.{ExecParams, ExecResult}
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.ProcessUtils
 
-case class RexecParams(execParams: ExecParams /*, tcpParams: TcpParams */)
+case class RexecParams(execParams: ExecParams)
 
-case class Rexec(execParams: ExecParams)
+  case class Rexec(execParams: ExecParams)
+  case class RexecReq(rexec: Rexec) extends P2pReq[Rexec] {
+    override def value(): Rexec = rexec
+  }
 
-case class RexecReq(rexec: Rexec) extends P2pReq[Rexec] {
-  override def value(): Rexec = rexec
-}
-
-case class RexecResp(res: ExecResult) extends P2pResp[ExecResult] {
-  override def value(): ExecResult = res
-}
+  case class RexecResp(res: ExecResult) extends P2pResp[ExecResult] {
+    override def value(): ExecResult = res
+  }
 
 object Rexec {
   def main(args: Array[String]): Unit = {
@@ -27,7 +26,7 @@ object Rexec {
     if (serverOrClient.toLowerCase().endsWith("server")) {
       RexecServer.main(args.tail)
     } else {
-      RexecClient.main(args.tail)
+      RexecTcpClient.main(args.tail)
     }
 
   }
@@ -71,7 +70,7 @@ class RexecIf extends ServiceIF {
 
 }
 
-object RexecClient {
+object RexecTcpClient {
   def main(args: Array[String]): Unit = {
     val host = args(0)
     val port = args(1).toInt
@@ -79,7 +78,7 @@ object RexecClient {
     val params = if (args.length >= 4) Some(args(3).split(":").toSeq) else None
     val env = if (args.length >= 5) Some(args(4).split(":").toSeq) else None
     val dir = if (args.length >= 6) args(5) else "."
-    val client = RexecClient(TcpParams(host, port))
+    val client = RexecTcpClient(TcpParams(host, port))
     val rparams = RexecParams(ExecParams(cmd, params, env, dir))
     val res = client.run(rparams, 1)
     println(res)
@@ -87,14 +86,16 @@ object RexecClient {
 
 }
 
-case class RexecClient(tcpParams: TcpParams) {
+case class RexecTcpClient(tcpParams: TcpParams) extends TcpClient(tcpParams, new RexecIf) {
 
-  val rexecIf = new RexecIf
-  var tcpClient: TcpClient = connect()
+  // TODO: see how to use typeclass annotation for the RexecIf
+  val rexecIf = serviceIf.asInstanceOf[RexecIf]
 
-  def connect() = {
-    new TcpClient(tcpParams, rexecIf)
-  }
+  connect(tcpParams)
+
+//  def connect() = {
+//    new TcpClient(tcpParams, rexecIf)
+//  }
 
   def run(rexecParams: RexecParams, nLoops: Int) = {
     val result = rexecIf.run(rexecParams.execParams, nLoops)

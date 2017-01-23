@@ -56,6 +56,11 @@ package object rpc {
     def toArray: V
   }
 
+  import reflect.runtime.universe._
+  abstract class XferReq[T: TypeTag](val value: T) extends P2pReq[T]
+
+  abstract class XferResp[T: TypeTag](val value: T) extends P2pResp[T]
+
   type DArray = Array[Double]
   case class MData(override val tag: String, override val dims: Seq[Int], override val toArray: DArray) extends ArrayData[DArray]
   type AnyData = MData

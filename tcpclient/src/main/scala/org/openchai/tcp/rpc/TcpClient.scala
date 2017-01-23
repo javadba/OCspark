@@ -16,13 +16,15 @@
  */
 package org.openchai.tcp.rpc
 
+import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.TcpCommon._
 import org.openchai.tcp.util.TcpUtils
-import org.openchai.tcp.util.Logger._
 
 case class TcpParams(server: String, port: Int) extends P2pConnectionParams
 
-case class TcpClient(connParams: TcpParams, serviceIf: ServiceIF)
+//class BinaryTcpClient(connParams: TcpParams) extends TcpClient(connParams, new BinaryIf)
+
+class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIF)
   extends P2pRpc with P2pBinding {
 
   import java.io._
@@ -83,7 +85,7 @@ object TcpClient {
     val server = if (args.length >= 1) args(0) else TcpUtils.getLocalHostname
     val port = if (args.length >= 2) args(1) else TestPort
     val serviceIf = new SolverIF
-    val client = TcpClient(TcpParams(server, TestPort), serviceIf)
+    val client = new TcpClient(TcpParams(server, TestPort), serviceIf)
     val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),TestData.mdata(10,100), 3)
   }
 }

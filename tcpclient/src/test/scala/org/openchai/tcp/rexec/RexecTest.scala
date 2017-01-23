@@ -9,7 +9,7 @@ object RexecTest {
     val tcpParams = TcpParams(server, TcpServer.DefaultPort)
     val rexecServer = RexecServer(tcpParams)
     rexecServer.start
-    val rexecClient = RexecClient(tcpParams)
+    val rexecClient = RexecTcpClient(tcpParams)
       val res = rexecClient.run(RexecParams(ExecParams("ls",Some("-lrta .".split(" ")),None,"/etc/pam.d")), 5)
     println(s"Result: $res")
   }
