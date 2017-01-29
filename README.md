@@ -1,7 +1,11 @@
 # OCspark 
 Spark related contributions from OpenChai
 
-Presently there are two primary contributions:  
+There are two modules:  <b>P2pRdd</b> and <b>TcpClient</b> 
+
+Within the <b><font size="+1">TcpClient</font></b> there is a <b>Controller Channel "XferCon"</b> and a <b>Data Transfer ("XferIf") channel</b> . The XferCon provides coordination of activities between a client and a server.  The XferIf provides data transfers: initially over (slow) TCP but pluggable for use by high performance direct memory access or shared memory approaches.
+
+Within the <b><font size="+1">P2pRdd</font></b> there are two primary contributions:  
 
 <b>Locality Sensitive RDD - LsSinkRDD and LsSourceRDD</b>
 The LsSourceRDD reads from local filesystem directories - allowing individual slices/partitions of data to run locally. The intended use case is iterative processing in machine learning algorithms.
