@@ -1,3 +1,11 @@
+package org.openchai.caffeonspark
+
+import org.openchai.tcp.rpc.TcpParams
+import org.openchai.tcp.util.TcpCommon
+import org.openchai.tcp.xfer.XferConClient.XferControllers
+import org.openchai.tcp.xfer.XferConCommon.XferControllerArgs
+import org.openchai.tcp.xfer._
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -14,24 +22,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openchai.tcp
 
-import org.openchai.tcp.rpc.{SolverServerIf, TcpClient, TcpServer}
-import org.openchai.tcp.util.TcpUtils
+import java.util.concurrent.ArrayBlockingQueue
+import org.openchai.tcp.util.Logger._
 
-/**
- * TcpCommTest
- *
- */
-object TcpTest {
-
-  val weightsMergePolicy: String = "best"
-  val TestPort = TcpServer.DefaultPort
-
-  def main(args: Array[String]) {
-    val server = TcpServer(TcpUtils.getLocalHostname, TestPort, new SolverServerIf(weightsMergePolicy))
-    server.start
-    TcpClient.main(Array(TcpUtils.getLocalHostname,"" + TestPort))
-    Thread.currentThread.join
-  }
+class CaffeOnSparkXferServer(queue: ArrayBlockingQueue[QueueEntry]) {
 }
+
+object CaffeOnSparkXferServer {
+}
+
+

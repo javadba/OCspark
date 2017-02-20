@@ -31,7 +31,7 @@ object TcpServer {
 
 }
 
-case class TcpServer(host: String, port: Int, serverIf: ServerIF) extends P2pServer with P2pBinding {
+case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
 
   import TcpServer._
 

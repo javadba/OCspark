@@ -20,11 +20,11 @@ import java.util.Random
 import org.openchai.tcp.util.Logger._
 import breeze.linalg.{DenseVector => BDV}
 
-object SolverServerIF {
+object SolverServerIf {
   val WeightsMergePolicies = Seq("average", "best")
 }
 
-class SolverServerIF(weightsMergePolicy: String = "best") extends ServerIF {
+class SolverServerIf(weightsMergePolicy: String = "best") extends ServerIf {
 
   import org.openchai.tcp.rpc.SolverIF._
 

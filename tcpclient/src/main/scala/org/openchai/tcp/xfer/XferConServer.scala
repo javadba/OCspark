@@ -3,38 +3,55 @@ package org.openchai.tcp.xfer
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.util.{FileUtils, TcpCommon}
 
-object XferConServer {
+case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
 
   var server: TcpServer = _
   var xferServerThread: Thread = _
-  def apply(tcpParams: TcpParams, xtcpParams: TcpParams) = {
-    val xferServerIf = new XferServerIf(xtcpParams)
-    xferServerThread = new Thread() {
-      override def run() = {
-        XferServer.main(Array(xtcpParams.server, xtcpParams.port.toString))
-      }
+
+  val xferServerIf: XferServerIf = new NioXferServerIf(xtcpParams)
+  xferServerThread = new Thread() {
+    override def run() = {
+      XferServer.main(Array(xtcpParams.server, xtcpParams.port.toString))
     }
-    xferServerThread.start
-
-    server = TcpServer(tcpParams.server, tcpParams.port,
-      new XferConServerIf(tcpParams, xferServerIf))
-
-    server
   }
 
-  def main(args: Array[String]): Unit = {
+  def start() = {
+    xferServerThread.start
+    server = TcpServer(tcpParams.server, tcpParams.port,
+      new XferConServerIf(tcpParams, xferServerIf))
+    server.start
+    this
+  }
+
+  case class XferControllerArgs(conHost: String, conPort: Int, dataHost: String, dataPort: Int,
+    configFile: String)
+
+  //  case class XferControllers(server: XferConServer /*, xferConf: TcpXferConfig*/)
+
+  def makeXferControllers(args: XferControllerArgs) = {
+    val tcpParams = TcpParams(args.conHost, args.conPort)
+    val xtcpParams = TcpParams(args.dataHost, args.dataPort)
+    //    val xferConf = new TcpXferConfig(args.outboundDataPaths._1, args.outboundDataPaths._2)
+    val server = XferConServer(tcpParams, xtcpParams /*, xferConf */)
+    server // XderControllers(client, xferConf, wparams, rparams)
+  }
+}
+
+object XferConServer {
+ def main(args: Array[String]): Unit = {
     val host = args(0)
     val port = args(1).toInt
     val xhost = host
     val xport = port + 1
-    val server = apply(TcpParams(host, port), TcpParams(xhost, xport))
-    server.start
+    val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
+    // server.start
     Thread.currentThread.join
   }
 }
 
-class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends ServerIF {
+class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends ServerIf {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 
@@ -57,6 +74,16 @@ class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends 
     }
   }
 
+  def consume(config: TcpXferConfig): Any = defaultConsume(config)
+
+  def defaultConsume(config: TcpXferConfig): Any = {
+    val payload = TcpCommon.deserialize(readFile(config.finalPath))
+    println(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
+    payload
+  }
+
+  def readFile(path: String) = FileUtils.readFile(path).getBytes("ISO-8859-1")
+
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
       case o: PrepWriteReq => {
@@ -68,6 +95,7 @@ class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends 
       case o: CompleteWriteReq => {
         val config = o.value
         println(s"Completed Write for ${config} the Datawrite config=$config")
+//        val res = consume(config)
         releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }

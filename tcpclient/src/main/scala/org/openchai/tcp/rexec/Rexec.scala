@@ -99,7 +99,7 @@ case class RexecTcpClient(tcpParams: TcpParams) extends TcpClient(tcpParams, new
   }
 }
 
-class RexecServerIf(tcpParams: TcpParams) extends ServerIF {
+class RexecServerIf(tcpParams: TcpParams) extends ServerIf {
 
   val rexecIf = new RexecIf
 

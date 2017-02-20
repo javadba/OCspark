@@ -14,7 +14,7 @@ class CompleteWriteReq(val value: TcpXferConfig) extends P2pReq[TcpXferConfig]
 
 case class PrepRespStruct(len: Int, elapsed: Int, path: String)
 
-class PrepResp(val value: PrepRespStruct) extends P2pResp[PrepRespStruct]
+case class PrepResp(val value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
 case class CompletedResp(value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
@@ -64,6 +64,7 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
     val result = xferIf.write(writeParams)
     val cresult = xferConIf.completeWrite(params)
     println(s"Client: got result $result")
+    cresult
   }
 
   def read(params: TcpXferConfig, readParams: XferReadParams) = {
@@ -72,42 +73,41 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
     val result = xferIf.read(readParams)
     val cresult = xferConIf.completeRead(params)
     println(s"Client: got result $result")
+    cresult
   }
 }
 
 object XferConClient {
+
+  import XferConCommon._
+  case class XferControllers(client: XferConClient, xferConf: TcpXferConfig, wparams: XferWriteParams, rparams: XferReadParams)
+
+
+  def makeXferControllers(args: XferControllerArgs) = {
+    val tcpParams = TcpParams(args.conHost, args.conPort)
+    val xtcpParams = TcpParams(args.dataHost, args.dataPort)
+    val xferConf = new TcpXferConfig(args.outboundDataPaths._1, args.outboundDataPaths._2)
+    val client = XferConClient(tcpParams, xtcpParams, xferConf)
+    val wparams = XferWriteParams(xferConf, args.data)
+    val rparams = XferReadParams(xferConf, args.inboundDataPath)
+    XferControllers(client, xferConf, wparams, rparams)
+  }
+
   def main(args: Array[String]): Unit = {
     val host = args(0)
     val port = args(1).toInt
     val configFile = args(2)
-    val tcpParams = TcpParams(host, port)
     val xhost = host
     val xport = port + 1
-    val xtcpParams = TcpParams(xhost, xport)
-    val xferConf = new TcpXferConfig("/tmp/x","/tmp/y")
-    val client = XferConClient(tcpParams, xtcpParams, xferConf)
-    val data = LoremIpsum
-    val xparams = XferWriteParams(xferConf, LoremIpsum.getBytes("ISO-8859-1"))
-    val wres = client.write(xferConf, xparams)
+    val data = LoremIpsum.getBytes("ISO-8859-1")
+    val controllers = makeXferControllers(XferControllerArgs(host, port, xhost, xport, configFile,
+      data, ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin"))
+    val wres = controllers.client.write(controllers.xferConf, controllers.wparams)
     val buf = ByteBuffer.allocate(1e4.toInt)
-    val rparams = XferReadParams(xferConf, "/tmp/readBack" )
-    val rres = client.read(xferConf, rparams)
+    val rres = controllers.client.read(controllers.xferConf, controllers.rparams)
     println(rres)
   }
 
-  val LoremIpsum =
-    """
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur et nibh sagittis, aliquam metus nec, faucibus neque.
-      Proin ullamcorper facilisis turpis at sollicitudin. Mauris facilisis, turpis ut facilisis rhoncus, mi erat ultricies ligula,
-      id pretium lacus ante id est. Morbi at lorem congue, consectetur nunc vel, facilisis urna. Fusce mollis pulvinar sagittis.
-      Aenean eu imperdiet augue. Morbi sit amet enim tristique nisl tristique efficitur vitae eget diam. Vestibulum non metus eros.
-
-Nulla in nunc interdum, pulvinar dolor et, euismod leo. Mauris at enim nec felis hendrerit porttitor nec vel lorem. Duis a euismod
-augue. Maecenas scelerisque, ipsum placerat suscipit ultricies, odio nulla laoreet ex, a varius lacus sem quis sapien.
-Aliquam condimentum tellus id tempus posuere. Nullam volutpat, tellus in euismod hendrerit, dui lacus fermentum quam,
-a pretium nisi eros a nisl. Duis vehicula eros sit amet nunc fermentum, vel faucibus erat ornare. Suspendisse sed
-ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non efficitur egestas, justo lorem faucibus
-    """.stripMargin
 }
 
 

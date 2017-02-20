@@ -21,7 +21,7 @@
     <artifactId>apache</artifactId>
     <version>14</version>
   </parent> -->
-    <groupId>org.openchai</groupId>
+    <groupId>org.openchai.ocspark</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
     <name>parent</name>
@@ -30,6 +30,8 @@
     <modules>
 	    <module>tcpclient</module>
 	    <module>p2prdd</module>
+	    <module>registry</module>
+	    <module>caffeonspark</module>
     </modules>
 
     <url>https://github.com/openchai</url>
@@ -96,7 +98,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <executions>
+		<version>2.5.2</version>
+		<executions>
                 </executions>
             </plugin>
             <plugin>
@@ -174,7 +177,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <executions>
+	<version>3.0.1</version>
+	<executions>
           <execution>
             <id>attach-sources</id>
             <goals>
