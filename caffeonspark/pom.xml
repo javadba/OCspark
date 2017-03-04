@@ -17,7 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>caffeonspark</artifactId>
-    <name>Registry</name>
+    <name>caffeonspark</name>
     <version>1.0.0</version>
 
     <parent>

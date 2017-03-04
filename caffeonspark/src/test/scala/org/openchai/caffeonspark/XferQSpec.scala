@@ -52,7 +52,7 @@ object XferQConClientTest {
     qserver.start
     Thread.sleep(100)
     val controllers = XferConClient.makeXferControllers(testControllers)
-    val qclient = new XferQConClient(q,controllers)
+    val qclient = new XferQConClient[QueueEntry](q,controllers)
     Thread.currentThread.join
   }
   def main(args: Array[String]): Unit = {

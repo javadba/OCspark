@@ -17,7 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>registry</artifactId>
-    <name>Registry</name>
+    <name>registry</name>
     <version>1.0.0</version>
 
     <parent>

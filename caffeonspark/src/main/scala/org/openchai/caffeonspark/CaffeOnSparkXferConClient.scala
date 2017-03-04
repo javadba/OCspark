@@ -1,8 +1,7 @@
 package org.openchai.caffeonspark
 
-import org.openchai.tcp.rpc.TcpParams
 import org.openchai.tcp.util.TcpCommon
-import org.openchai.tcp.xfer.{TcpXferConfig, XferConClient, XferConfig, XferWriteParams}
+import org.openchai.tcp.xfer.{XferConClient, XferWriteParams}
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -22,11 +21,13 @@ import org.openchai.tcp.xfer.{TcpXferConfig, XferConClient, XferConfig, XferWrit
  */
 
 import java.util.concurrent.ArrayBlockingQueue
+
 import org.openchai.tcp.util.Logger._
+import org.openchai.tcp.xfer.XferConClient._
 
-import XferConClient._
+import reflect.runtime.universe.TypeTag
 
-class XferQConClient(queue: ArrayBlockingQueue[QueueEntry],
+class XferQConClient[T: TypeTag](queue: ArrayBlockingQueue[T],
   controllers: XferControllers) {
 
   val qclient = new Thread() {
@@ -45,7 +46,7 @@ class XferQConClient(queue: ArrayBlockingQueue[QueueEntry],
         val wparams = XferWriteParams(controllers.xferConf,
           TcpCommon.serialize(payload))
         val wres = controllers.client.write(controllers.xferConf, wparams)
-        info(s"XferQClient: QReader completed with resp=$wres")
+        info(s"Xferqclient: QReader completed with resp=$wres")
       }
     }
   }
@@ -60,7 +61,7 @@ object XferQConClient {
     val nEntries = 20
     val q = new ArrayBlockingQueue[QueueEntry](5)
     val controllers = makeXferControllers(testControllers)
-    val client = new XferQConClient(q,controllers)
+    val client = new XferQConClient[QueueEntry](q,controllers)
     val entries = for (i <- 1 until nEntries) yield {
       (Array("a", "b", "c"), TcpCommon.serialize(Howdy(s"Hi${i}!", i*i)))
     }

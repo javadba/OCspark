@@ -21,26 +21,36 @@ class XferQConServer(outQ: BlockingQueue[QueueEntry], tcpParams: TcpParams, xtcp
 
 }
 
+case class QTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
+
 object XferQConServer {
   def main(args: Array[String]): Unit = {
-    val host = args(0)
-    val port = args(1).toInt
-    val xhost = host
-    val xport = port + 1
+//    val host = args(0)
+//    val port = args(1).toInt
+//    val xhost = host
+//    val xport = port + 1
     val q = new ArrayBlockingQueue[QueueEntry](1000)
+//
+//    val qReader = new Thread() {
+//      var canceled: Boolean = _
+//      override def run(): Unit = {
+//        while (!canceled) {
+//          val out = q.take
+//          info(s"QReader: received msg [$out]")
+//        }
+//      }
+//    }
+//    qReader.start
+//    val server = new XferQConServer(q, TcpParams(host, port), TcpParams(xhost, xport))
+//    server.start
+//    Thread.currentThread.join
 
-    val qReader = new Thread() {
-      var canceled: Boolean = _
-      override def run(): Unit = {
-        while (!canceled) {
-          val out = q.take
-          info(s"QReader: received msg [$out]")
-        }
-      }
-    }
-    qReader.start
-    val server = new XferQConServer(q, TcpParams(host, port), TcpParams(xhost, xport))
-    server.start
+  import org.openchai.tcp.xfer.XferConCommon._
+  val cont = testControllers
+  val params = QTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
+    val qserver = new XferQConServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
+    qserver.start
+//    Thread.sleep(100)
     Thread.currentThread.join
   }
 }
