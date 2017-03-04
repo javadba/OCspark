@@ -24,7 +24,7 @@ import org.openchai.tcp.rpc._
 
 import scala.reflect.ClassTag
 
-class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIF: ServerIF)
+class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIF: ServerIf)
   extends RDD[T](parent) {
 
   val tcpParams = p2pParams.asInstanceOf[TcpParams]
