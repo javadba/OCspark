@@ -23,7 +23,7 @@ class XferArrayBlockingQueue[T: TypeTag](val capacity: Int) extends java.util.co
   val controllers = XferConClient.makeXferControllers(XferConCommon.testControllers)
   val qclient = new XferQConClient[T](this,controllers)
 
-  override def offer(e: T): Boolean = {
-    qclient.
-  }
+//  override def offer(e: T): Boolean = {
+ //   qclient.
+  // }
 }
