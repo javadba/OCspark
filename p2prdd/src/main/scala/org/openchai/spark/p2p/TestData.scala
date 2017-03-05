@@ -19,7 +19,7 @@ package org.openchai.spark.p2p
 import java.util.Random
 
 import org.openchai.tcp.rpc.MData
-import org.openchai.tcp.rpc.SolverIF.{EpochResult, Weights}
+import org.openchai.tcp.rpc.SolverIf.{EpochResult, Weights}
 
 object TestData {
   def randArr(size: Int) = Array.tabulate(size) {

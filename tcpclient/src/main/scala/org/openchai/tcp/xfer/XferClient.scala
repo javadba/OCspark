@@ -3,10 +3,10 @@ package org.openchai.tcp.xfer
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.openchai.tcp.rpc.{ServiceIF, TcpClient, TcpParams}
+import org.openchai.tcp.rpc.{ServiceIf, TcpClient, TcpParams}
 import org.openchai.tcp.util.Logger.debug
 
-class XferIf(config: XferConfig) extends ServiceIF("Xfer") {
+class XferIf(config: XferConfig) extends ServiceIf("Xfer") {
 
   private val nReqs = new AtomicInteger(0)
 

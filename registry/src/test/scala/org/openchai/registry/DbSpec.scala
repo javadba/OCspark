@@ -1,5 +1,4 @@
 package org.openchai.registry
-import org.openchai.db._
 
 import org.scalatest.{FlatSpec, ShouldMatchers}
 
@@ -27,7 +26,8 @@ object DbSpec {
 
   def main(args: Array[String]): Unit = {
     import org.openchai.db.Db._
-    val conn = connect("src/test/scala/resources/h2.properties","h2")
+    val conn = connect("registry/src/test/scala/resources/h2.properties","h2")
+//    val conn = connect(s"${System.getProperty("user.dir")}/h2.properties","h2")
     val create = """drop table if exists foo; create table foo(id identity primary key, name varchar, metric int)"""
     val insert = """insert into foo(name, metric) values ('$$name', $$metric)"""
     exec(conn,create)

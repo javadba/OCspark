@@ -20,7 +20,7 @@ import java.util.Random
 
 object TestData {
 
-  import org.openchai.tcp.rpc.SolverIF._
+  import org.openchai.tcp.rpc.SolverIf._
 
   def randArr(size: Int) = Array.tabulate(size) {
     _ * new Random().nextDouble

@@ -19,19 +19,20 @@ package org.openchai.spark.rdd
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{Partition, SparkContext, TaskContext}
-import org.openchai.tcp.rpc.SolverIF.{DefaultHyperParams, DefaultModel, ModelParams}
+import org.openchai.tcp.rpc.SolverIf.{DefaultHyperParams, DefaultModel, ModelParams}
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.rpc.ServerIf
 
 import scala.reflect.ClassTag
 
-class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIF: ServerIf)
+class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pParams: P2pConnectionParams, serverIf: ServerIf)
   extends RDD[T](parent) {
 
   val tcpParams = p2pParams.asInstanceOf[TcpParams]
-  val server = TcpServer(tcpParams.server, tcpParams.port, serverIF)
+  val server = TcpServer(tcpParams.server, tcpParams.port, serverIf)
   var testingSize : Int = 1000
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
-    val updaterIF =  new SolverIF
+    val updaterIF =  new SolverIf
     val p2pClient = new TcpClient(p2pParams.asInstanceOf[TcpParams], updaterIF)
     val dat = parent.compute(split, context)
     val converted = dat.map { case (path, idAndData) =>

@@ -21,7 +21,7 @@ case class CompletedResp(value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 /** XferController Interface.  Handles the
 * signalling to Prepare and Complete the data transfers
 */
-case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIF("XferCon") {
+case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIf("XferCon") {
 
   private val nReqs = new AtomicInteger(0)
 

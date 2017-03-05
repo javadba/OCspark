@@ -26,7 +26,7 @@ object SolverServerIf {
 
 class SolverServerIf(weightsMergePolicy: String = "best") extends ServerIf {
 
-  import org.openchai.tcp.rpc.SolverIF._
+  import org.openchai.tcp.rpc.SolverIf._
 
   import collection.mutable
 

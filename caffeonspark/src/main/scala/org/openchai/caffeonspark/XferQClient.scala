@@ -27,7 +27,7 @@ import org.openchai.tcp.xfer.XferConClient._
 
 import reflect.runtime.universe.TypeTag
 
-class XferQConClient[T: TypeTag](queue: ArrayBlockingQueue[T],
+class XferQClient[T: TypeTag](queue: ArrayBlockingQueue[T],
   controllers: XferControllers) {
 
   val qclient = new Thread() {
@@ -55,13 +55,13 @@ class XferQConClient[T: TypeTag](queue: ArrayBlockingQueue[T],
 
 case class Howdy(name: String, metric: Int)
 
-object XferQConClient {
+object XferQClient {
   import org.openchai.tcp.xfer.XferConCommon._
   def main(args: Array[String]): Unit = {
     val nEntries = 20
     val q = new ArrayBlockingQueue[QueueEntry](5)
     val controllers = makeXferControllers(testControllers)
-    val client = new XferQConClient[QueueEntry](q,controllers)
+    val client = new XferQClient[QueueEntry](q,controllers)
     val entries = for (i <- 1 until nEntries) yield {
       (Array("a", "b", "c"), TcpCommon.serialize(Howdy(s"Hi${i}!", i*i)))
     }

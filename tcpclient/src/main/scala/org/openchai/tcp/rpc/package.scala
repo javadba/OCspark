@@ -22,7 +22,7 @@ package object rpc {
 
   trait P2pConnectionParams
 
-  abstract class ServiceIF(val name: String) {
+  abstract class ServiceIf(val name: String) {
 
     import reflect.runtime.universe.TypeTag
     def request[U: TypeTag, V: TypeTag](req: P2pReq[U]): P2pResp[V] = {

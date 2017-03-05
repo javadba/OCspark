@@ -21,7 +21,7 @@ import org.openchai.tcp.xfer.{XferConClient, XferConCommon}
 import reflect.runtime.universe.TypeTag
 class XferArrayBlockingQueue[T: TypeTag](val capacity: Int) extends java.util.concurrent.ArrayBlockingQueue[T](capacity) {
   val controllers = XferConClient.makeXferControllers(XferConCommon.testControllers)
-  val qclient = new XferQConClient[T](this,controllers)
+  val qclient = new XferQClient[T](this,controllers)
 
 //  override def offer(e: T): Boolean = {
  //   qclient.

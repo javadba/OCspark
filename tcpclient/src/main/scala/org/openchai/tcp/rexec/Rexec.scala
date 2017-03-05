@@ -50,7 +50,7 @@ object RexecServer {
   }
 }
 
-class RexecIf extends ServiceIF("Rexec") {
+class RexecIf extends ServiceIf("Rexec") {
 
   private val nReqs = new AtomicInteger(0)
 

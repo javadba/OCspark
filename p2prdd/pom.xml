@@ -21,20 +21,19 @@
     <name>P2pRDD</name>
     <version>1.0.0</version>
 
- <parent>
-      <groupId>org.openchai.ocspark</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0.0</version>
-      <!-- <relativePath>../pom.xml</relativePath> -->
+    <parent>
+        <groupId>org.openchai.ocspark</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0</version>
     </parent>
 
     <dependencies>
 
-    <dependency>
-      <groupId>org.openchai.ocspark</groupId>
-      <artifactId>tcpclient</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+        <dependency>
+            <groupId>org.openchai.ocspark</groupId>
+            <artifactId>tcpclient</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -73,15 +72,15 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-				<artifactSet>
+                            <artifactSet>
                                 <excludes>
-					<exclude>org.apache.spark:*</exclude>A
-				</excludes>
-			</artifactSet>
-					<filters>
-						<filter>
-							<artifact>*.*</artifact>
-							<excludes>	
+                                    <exclude>org.apache.spark:*</exclude>A
+                                </excludes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>*.*</artifact>
+                                    <excludes>
                                         <!--<exclude>org.apache.maven:lib:tests</exclude>-->
                                         <exclude>log4j:log4j:jar:</exclude>
                                         <exclude>META-INF/*.SF</exclude>
@@ -91,13 +90,13 @@
                                         <exclude>META-INF/license/*</exclude>
                                     </excludes>
                                 </filter>
-			</filters>
+                            </filters>
                             <minimizeJar>false</minimizeJar>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-      </plugins>
+        </plugins>
     </build>
 </project>
 

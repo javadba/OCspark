@@ -20,20 +20,20 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import org.openchai.tcp.rpc.TcpParams
 import org.openchai.tcp.util.TcpCommon
-import org.openchai.tcp.xfer.{XferConClient, XferQConServer}
+import org.openchai.tcp.xfer.{XferConClient, XferQServer}
 import org.scalatest.FlatSpec
 
 case class QTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
 
-class XferQConClientTest(params: QTestParams = XferQConClientTest.DefaultQTestParams) extends FlatSpec {
+class XferQClientTest(params: QTestParams = XferQClientTest.DefaultQTestParams) extends FlatSpec {
 
-  import XferQConClientTest._
+  import XferQClientTest._
   "basicTest" should
   "run qtest" in {
     basicQTest(DefaultQTestParams)
   }
 }
-object XferQConClientTest {
+object XferQClientTest {
 
   import org.openchai.tcp.xfer.XferConCommon._
   val cont = testControllers
@@ -48,15 +48,15 @@ object XferQConClientTest {
       q.offer( (Array.tabulate(StringArrayCount){ j => s"Hello there $i-$j"},
         TcpCommon.serialize(Array.tabulate[Float](FloatArrayCount){ f => f*(f+1.0).toFloat})))
     }
-    val qserver = new XferQConServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
+    val qserver = new XferQServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
     qserver.start
     Thread.sleep(100)
     val controllers = XferConClient.makeXferControllers(testControllers)
-    val qclient = new XferQConClient[QueueEntry](q,controllers)
+    val qclient = new XferQClient[QueueEntry](q,controllers)
     Thread.currentThread.join
   }
   def main(args: Array[String]): Unit = {
-    XferQConClientTest.basicQTest(DefaultQTestParams)
+    XferQClientTest.basicQTest(DefaultQTestParams)
 
   }
 }
