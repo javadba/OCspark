@@ -32,6 +32,7 @@ class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pPar
   val server = TcpServer(tcpParams.server, tcpParams.port, serverIf)
   var testingSize : Int = 1000
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
+    println(s"P2pRDD compute on split=${split.index}")
     val updaterIF =  new SolverIf
     val p2pClient = new TcpClient(p2pParams.asInstanceOf[TcpParams], updaterIF)
     val dat = parent.compute(split, context)
@@ -44,9 +45,12 @@ class P2pRDD[KVO:ClassTag,T:ClassTag](sc: SparkContext, parent: RDD[KVO], p2pPar
     // TODO: Throw warning or exception if size mismatch
     val bigarr = converted.map(_._2).foldLeft(mutable.ArrayBuffer[Double]()) { case (buf, darr) =>
       buf ++ mutable.ArrayBuffer[Double](darr.asInstanceOf[Array[Double]]:_*)
-    }.toArray.slice(0,testingSize)
+    }.toArray
+    println(s"WARN: cutting datasize to $testingSize original=${bigarr.length}")
+
+      val outarr = bigarr.slice(0,testingSize)
     val iter = updaterIF.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),
-      MData("somepath",Seq(2,5),bigarr),3)
+      MData("somepath",Seq(2,5),outarr),3)
     iter.asInstanceOf[Iterator[T]]
   }
 

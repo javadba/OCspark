@@ -2,6 +2,13 @@ package org.openchai
 
 package object caffeonspark {
 
-  type QueueEntry = (Array[String], Any)
+  type AnyQEntry = Any
+
+  type CaosQEntry = (Array[String], Any)
+
+  type TrainingData = Array[Byte]
+
+  type ValidationData = Array[Byte]
 
 }
+

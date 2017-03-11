@@ -16,13 +16,17 @@
  */
 package org.openchai.tcp.util
 
-import java.io.File
+import java.io.{File, FileInputStream}
 import java.nio.file.Paths
 import java.util.Scanner
 import java.util.concurrent.{Callable, Executors, Future}
 
+import scala.collection.mutable.ArrayBuffer
+
 object FileUtils {
   import Logger._
+  type TaskResult = Array[Byte]
+
   def mkdirs(dir: String) = {
     val fdir = new File(dir)
     if (!fdir.exists()) {
@@ -40,23 +44,24 @@ object FileUtils {
   def write(path: String, data: String): Unit = tools.nsc.io.File(path).writeAll(data)
 
 
-  def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): String = {
+  def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): TaskResult = {
     val nThreads = if (multiThreaded) {
       Runtime.getRuntime.availableProcessors * 2
     } else {
       1
     }
     val tpool = Executors.newFixedThreadPool(nThreads)
-    class ReadTask(path: String) extends Callable[String] {
-      override def call(): String = {
-        readFile(path)
+    class ReadTask(path: String) extends Callable[TaskResult] {
+      override def call(): TaskResult = {
+        readFileBytes(path)
       }
     }
-    val sb = new StringBuffer // Make sure StringBUFFER not BUILDER because of multithreaded!!
+//    val sb = new StringBuffer // Make sure StringBUFFER not BUILDER because of multithreaded!!
+    val taskResult = new ArrayBuffer[Byte](1024*128) // Make sure StringBUFFER not BUILDER because of multithreaded!!
 
     import collection.mutable
-    val tasksBuf = mutable.ArrayBuffer[Future[String]]()
-    def readPath0(fpath: String): String = {
+    val tasksBuf = mutable.ArrayBuffer[Future[TaskResult]]()
+    def readPath0(fpath: String): TaskResult = {
       val paths = new File(fpath).listFiles.filter { f => !f.getName.startsWith(".") }
       paths.foreach { f =>
         if (f.isDirectory) {
@@ -70,14 +75,17 @@ object FileUtils {
           tasksBuf += tpool.submit(new ReadTask(f.getPath))
         }
       }
-      tasksBuf.foreach { t => sb.append(t.get) }
-      sb.toString
+      tasksBuf.foreach { t => taskResult ++= t.get }
+      taskResult.toArray
     }
     readPath0(path)
   }
 
-  def readFile(fpath: String) = {
-    val content = new Scanner(Paths.get(fpath)).useDelimiter("\\Z").next()
+  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
+
+  def readFileAsString(fpath: String) = {
+//    val content = new Scanner(Paths.get(fpath)).useDelimiter("\\Z").next()
+    val content = scala.io.Source.fromFile(fpath,"ISO-8859-1").getLines.mkString("")
     content
   }
 }

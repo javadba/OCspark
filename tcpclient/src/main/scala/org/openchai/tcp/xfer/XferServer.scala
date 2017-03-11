@@ -119,6 +119,7 @@ class QXferServerIf[T](q: BlockingQueue[T], tcpParams: TcpParams) extends XferSe
     req match {
       case o: XferWriteReq =>
         val (path,data) = o.value
+        println(s"XferWriteReq! datalen=${data.length}")
         val start = System.currentTimeMillis
         val len = writeQ(path, data)
         val elapsed = System.currentTimeMillis - start

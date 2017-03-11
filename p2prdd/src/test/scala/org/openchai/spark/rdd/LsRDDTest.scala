@@ -26,6 +26,7 @@ class LsRDDTest
 
 object LsRDDTest {
   def sourceRdd(sc: SparkContext, master: String, dir: String) = {
+    println(s"LsRDDTest: building from dir=$dir")
     val dirs = new File(dir).listFiles.filter(f => f.isDirectory && !f.getName.startsWith("."))
     val rpaths = dirs.map(d => s"${TcpUtils.getLocalHostname}:${RackPath.hostToRack(TcpUtils.getLocalHostname)}:$d")
     val lsrdd = new LsSourceRDD[String,String,String,String](sc, rpaths)

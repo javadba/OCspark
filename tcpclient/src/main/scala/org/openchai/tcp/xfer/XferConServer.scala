@@ -20,7 +20,7 @@ case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
   def start() = {
     xferServerThread.start
     server = TcpServer(tcpParams.server, tcpParams.port,
-      new XferConServerIf(tcpParams, xferServerIf))
+      new XferConServerIf(/*tcpParams, xferServerIf)*/))
     server.start
     this
   }
@@ -40,18 +40,24 @@ case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
 }
 
 object XferConServer {
- def main(args: Array[String]): Unit = {
+  def makeXferConnections(args: Array[String]) = {
     val host = args(0)
     val port = args(1).toInt
+    val configFile = args(2)
     val xhost = host
     val xport = port + 1
+    (host, port, xhost, xport, configFile)
+  }
+
+ def main(args: Array[String]): Unit = {
+    val (host,port,xhost,xport,configFile) = makeXferConnections(args)
     val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
     // server.start
     Thread.currentThread.join
   }
 }
 
-class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends ServerIf {
+class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) extends ServerIf {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 
@@ -82,7 +88,7 @@ class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends 
     payload
   }
 
-  def readFile(path: String) = FileUtils.readFile(path).getBytes("ISO-8859-1")
+  def readFile(path: String) = FileUtils.readFileBytes(path)
 
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
@@ -95,7 +101,7 @@ class XferConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends 
       case o: CompleteWriteReq => {
         val config = o.value
         println(s"Completed Write for ${config} the Datawrite config=$config")
-//        val res = consume(config)
+        val res = consume(config)
         releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }

@@ -28,9 +28,27 @@ class CaosQClient {
   val qClient = new XferQClient(new ArrayBlockingQueue[Any](1000),
     XferConClient.makeXferControllers(XferConCommon.testControllers))
 
+  val client = new CaosConClient(new TcpParams(XferConCommon.testControllers.conHost,
+    XferConCommon.testControllers.conPort+2), CaosConfig("fum"), qClient)
 
 }
 
+object CaosQClient {
+  def testClient(): Unit = {
+    val trainData = "Hi I'm some training data!".getBytes
+    val validData = "what IS validation data actually?".getBytes
+    val qClient = new CaosQClient
+    qClient.client.sync(SyncStruct("foo"))
+    qClient.client.train(TrainStruct("foo"), trainData)
+    qClient.client.trainValid(TrainValidStruct("foo"),trainData,validData)
+    qClient.client.testMode(TestModeStruct("foo"))
+    qClient.client.shutdown(ShutdownStruct("foo"))
+  }
+  def main(args: Array[String]): Unit = {
+    testClient
+    println("We're done!")
+  }
+}
 
 /*
 1. Discover and initialize/startup the Caffe Processors
@@ -90,7 +108,23 @@ case class ShutdownRespStruct(nWorkers: Int, elapsed: Int, path: String)
 
 case class ShutdownResp(val value: ShutdownRespStruct) extends P2pResp[ShutdownRespStruct]
 
-case class CaosConClientIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIf("CaosClient") {
+case class CaosConfig(foo: String) // placeholder
+
+class CaosConClient(tcpParams: TcpParams, config: CaosConfig, qClient: XferQClient[Any])
+  extends TcpClient(tcpParams, CaosConClientIf(tcpParams, config, qClient)) {
+
+  val caosIf = serviceIf.asInstanceOf[CaosConClientIf]
+
+  def sync(struct: SyncStruct) = caosIf.sync(struct)
+  def train(struct: TrainStruct, train: TrainingData) = caosIf.train(struct, train)
+  def trainValid(struct: TrainValidStruct, train: TrainingData, valid: TrainingData)
+    = caosIf.trainValid(struct, train, valid)
+  def validation(struct: ValidationStruct, valid: ValidationData) = caosIf.validation(struct, valid)
+  def testMode(struct: TestModeStruct) = caosIf.testMode(struct)
+  def shutdown(struct: ShutdownStruct) = caosIf.shutdown(struct)
+}
+
+case class CaosConClientIf(tcpParams: TcpParams, config: CaosConfig, qClient: XferQClient[Any]) extends ServiceIf("CaosClient") {
 
   private val nReqs = new AtomicInteger(0)
 
@@ -101,21 +135,24 @@ case class CaosConClientIf(tcpParams: TcpParams, config: XferConfig) extends Ser
     resp.asInstanceOf[SyncResp]
   }
 
-  def train(s: TrainStruct): TrainResp = {
-    println(s"Train..")
+  def train(s: TrainStruct, data: TrainingData): TrainResp = {
+    println(s"Train with dataSize= ${data.length} ..")
+    qClient.queue.offer(data)
     val resp = getRpc().request(TrainReq(s))
     println(s"Train response: $resp")
     resp.asInstanceOf[TrainResp]
   }
 
-  def trainValid(s: TrainValidStruct): TrainValidResp = {
+  def trainValid(s: TrainValidStruct, train: TrainingData, valid: TrainingData): TrainValidResp = {
     println(s"TrainValid..")
+    qClient.queue.offer(train)
+    qClient.queue.offer(valid)
     val resp = getRpc().request(TrainValidReq(s))
     println(s"TrainValid response: $resp")
     resp.asInstanceOf[TrainValidResp]
   }
 
-  def validation(s: ValidationStruct): ValidationResp = {
+  def validation(s: ValidationStruct, valid: ValidationData): ValidationResp = {
     println(s"Validation..")
     val resp = getRpc().request(ValidationReq(s))
     println(s"Validation response: $resp")
@@ -134,73 +171,6 @@ case class CaosConClientIf(tcpParams: TcpParams, config: XferConfig) extends Ser
     val resp = getRpc().request(ShutdownReq(s))
     println(s"Shutdown response: $resp")
     resp.asInstanceOf[ShutdownResp]
-  }
-
-}
-
-
-class CaosConServerIf(tcpParams: TcpParams, xferServerIf: XferServerIf) extends ServerIf {
-
-  val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
-
-  private val nReqs = new AtomicInteger(0)
-
-  def consume(config: TcpXferConfig): Any = defaultConsume(config)
-
-  def defaultConsume(config: TcpXferConfig): Any = {
-    val payload = TcpCommon.deserialize(readFile(config.finalPath))
-    println(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
-    payload
-  }
-
-  def readFile(path: String) = FileUtils.readFile(path).getBytes("ISO-8859-1")
-
-  def sync(struct: SyncStruct): SyncRespStruct = SyncRespStruct(1, 0, "Sync")
-
-  def train(struct: TrainStruct): TrainRespStruct = TrainRespStruct(1, 0, "Train")
-
-  def trainValid(struct: TrainValidStruct): TrainValidRespStruct = TrainValidRespStruct(1, 0, "TrainValid")
-
-  def validation(struct: ValidationStruct): ValidationRespStruct = ValidationRespStruct(1, 0, "Validation")
-
-  def testMode(struct: TestModeStruct): TestModeRespStruct = TestModeRespStruct(1, 0, "TestMode")
-
-  def shutdown(struct: ShutdownStruct): ShutdownRespStruct = ShutdownRespStruct(1, 0, "Shutdown")
-
-  override def service(req: P2pReq[_]): P2pResp[_] = {
-    req match {
-      case o: SyncReq =>
-        val struct = o.value
-        println(s"Invoking Sync: struct=$struct")
-        val resp = sync(struct)
-        SyncResp(sync(struct))
-      case o: TrainReq =>
-        val struct = o.value
-        println(s"Invoking Train: struct=$struct")
-        val resp = train(struct)
-        TrainResp(resp)
-      case o: TrainValidReq =>
-        val struct = o.value
-        println(s"Invoking TrainValid: struct=$struct")
-        val resp = trainValid(struct)
-        TrainValidResp(resp)
-      case o: ValidationReq =>
-        val struct = o.value
-        println(s"Invoking Validation: struct=$struct")
-        val resp = validation(struct)
-        ValidationResp(resp)
-      case o: TestModeReq =>
-        val struct = o.value
-        println(s"Invoking TestMode: struct=$struct")
-        val resp = testMode(struct)
-        TestModeResp(resp)
-      case o: ShutdownReq =>
-        val struct = o.value
-        println(s"Invoking Shutdown: struct=$struct")
-        val resp = shutdown(struct)
-        ShutdownResp(resp)
-      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
-    }
   }
 
 }

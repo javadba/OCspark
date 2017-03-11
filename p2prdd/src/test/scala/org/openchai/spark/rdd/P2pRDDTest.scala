@@ -32,10 +32,11 @@ object P2pRDDTest {
     }
 
     val sc = new SparkContext(master,"P2pRDDTest")
-    val lsrdd = LsRDDTest.sourceRdd(sc, master, "/data/lsrdd")
+    val lsrdd = LsRDDTest.sourceRdd(sc, master, "/data/what")
     val params = TcpParams(server, TcpServer.DefaultPort)
     val p2pRdd = new SolverRDD/*[LabeledArr]*/(sc, lsrdd, params)
     val cnt = p2pRdd.count
+    println(s"cnt is $cnt")
 
   }
 }

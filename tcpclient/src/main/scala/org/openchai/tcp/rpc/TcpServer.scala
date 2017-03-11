@@ -23,12 +23,11 @@ import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.TcpCommon
 
 import scala.collection.mutable
+import scala.util.Try
 
 object TcpServer {
   val DefaultPort = 8989
   val BufSize = (Math.pow(2, 20) - 1).toInt
-  // 1Meg
-
 }
 
 case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
@@ -41,7 +40,9 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
   val threads = mutable.ArrayBuffer[Thread]()
 
   type ServerType = TcpServer
+
   def CheckPort = false
+
   def checkPort(port: Int) = {
     import scala.concurrent.duration._
     val socketTimeout = 200
@@ -64,10 +65,14 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
 
   override def start() = {
     serverSocket = new ServerSocket()
+    try {
+      serverSocket.bind(new InetSocketAddress(host, port))
+    } catch {
+      case e: Exception => throw new Exception(s"BindException on $host:$port", e)
+    }
 //    checkPort(port) match {
 //      case m: Exception => error(s"Server already running on port $port"); false
-      /* case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
-      // ; true
+//      case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
 //    }
     serverThread = new Thread() {
       override def run() {
