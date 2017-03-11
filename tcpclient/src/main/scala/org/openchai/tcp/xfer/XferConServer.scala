@@ -28,14 +28,12 @@ case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
   case class XferControllerArgs(conHost: String, conPort: Int, dataHost: String, dataPort: Int,
     configFile: String)
 
-  //  case class XferControllers(server: XferConServer /*, xferConf: TcpXferConfig*/)
 
   def makeXferControllers(args: XferControllerArgs) = {
     val tcpParams = TcpParams(args.conHost, args.conPort)
     val xtcpParams = TcpParams(args.dataHost, args.dataPort)
-    //    val xferConf = new TcpXferConfig(args.outboundDataPaths._1, args.outboundDataPaths._2)
     val server = XferConServer(tcpParams, xtcpParams /*, xferConf */)
-    server // XderControllers(client, xferConf, wparams, rparams)
+    server
   }
 }
 
@@ -52,7 +50,6 @@ object XferConServer {
  def main(args: Array[String]): Unit = {
     val (host,port,xhost,xport,configFile) = makeXferConnections(args)
     val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
-    // server.start
     Thread.currentThread.join
   }
 }
