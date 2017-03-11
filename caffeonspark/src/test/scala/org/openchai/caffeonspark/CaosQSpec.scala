@@ -24,16 +24,31 @@ import org.openchai.tcp.xfer.XferConClient
 import org.scalatest.FlatSpec
 
 case class CQTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
+case class ApiTestParams(ctestParams: CQTestParams)
 
-class CaosQTest(params: CQTestParams = CaosQTest.DefaultQTestParams) extends FlatSpec {
+import CaosTest._
 
-  import CaosQTest._
-  "basicTest" should
-  "run qtest" in {
-    basicQTest(DefaultQTestParams)
+class CaosApiTest(params: ApiTestParams = DefaultApiTestParams) extends FlatSpec {
+
+  import CaosTest._
+
+  "APITest" should
+    "run ApiTest" in {
+    apiTest()
   }
 }
-object CaosQTest {
+
+
+class CaosQTest(params: CQTestParams = DefaultQTestParams) extends FlatSpec {
+
+  import CaosTest._
+  "QTest" should
+  "run qtest" in {
+    basicTest(DefaultQTestParams)
+  }
+}
+
+object CaosTest {
 
   import org.openchai.tcp.xfer.XferConCommon._
   val cont = testControllers
@@ -47,13 +62,26 @@ object CaosQTest {
     }
   }
 
-  def basicQTest(params: CQTestParams) = {
+  val DefaultApiTestParams = ApiTestParams(DefaultQTestParams)
+
+  def apiTest(params: ApiTestParams = DefaultApiTestParams) = {
+    val (server,qs) = startServer(params.ctestParams)
+    CaosQClient.testClient
+  }
+
+  def startServer(params: CQTestParams) = {
     val QSize = 1000
     val qs = new ArrayBlockingQueue[AnyQEntry](QSize)
     val qserver = new CaosServer(qs, TcpParams(params.cHost, params.cPort+2),
         TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
     qserver.start
     Thread.sleep(100)
+    (qserver, qs)
+  }
+
+  def basicTest(params: CQTestParams) = {
+    val QSize = 1000
+    val (server,qs) = startServer(params)
 
     val StringArrayCount=3
     val FloatArrayCount=20
@@ -64,7 +92,7 @@ object CaosQTest {
     }
     val controllers = XferConClient.makeXferControllers(testControllers)
     val qclient = new XferQClient[AnyQEntry](q,controllers)
-    val sleep = 8000
+    val sleep = 4000
     println(s"Sleeping $sleep ..")
     Thread.sleep(sleep)
     var i = 0
@@ -79,43 +107,9 @@ object CaosQTest {
       i += 1
     }
   }
+
   def main(args: Array[String]): Unit = {
-    CaosQTest.basicQTest(DefaultQTestParams)
-  }
-}
-
-class CaosTest(params: CQTestParams = CaosQTest.DefaultQTestParams) extends FlatSpec {
-
-  import CaosTest._
-  "basicTest" should
-  "run qtest" in {
-    basicTest(DefaultQTestParams)
-  }
-}
-object CaosTest {
-
-  import org.openchai.tcp.xfer.XferConCommon._
-  val cont = testControllers
-  val DefaultQTestParams = CQTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
-
-  def basicTest(params: CQTestParams) = {
-    val QSize = 1000
-    val StringArrayCount=3
-    val FloatArrayCount=20
-    val q = new ArrayBlockingQueue[AnyQEntry](QSize)
-    for (i <- 1 to QSize) {
-      q.offer( (Array.tabulate(StringArrayCount){ j => s"Hello there $i-$j"},
-        TcpCommon.serialize(Array.tabulate[Float](FloatArrayCount){ f => f*(f+1.0).toFloat})))
-    }
-    val qserver = new CaosServer(q, TcpParams(params.cHost, params.cPort+2),
-        TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
-    qserver.start
-    Thread.sleep(100)
-    val controllers = XferConClient.makeXferControllers(testControllers)
-    val qclient = new XferQClient[AnyQEntry](q,controllers)
-    Thread.currentThread.join
-  }
-  def main(args: Array[String]): Unit = {
-    CaosQTest.basicQTest(DefaultQTestParams)
+    apiTest()
+//    basicTest(DefaultQTestParams)
   }
 }

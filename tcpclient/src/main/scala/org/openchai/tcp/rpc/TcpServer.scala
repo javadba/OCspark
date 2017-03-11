@@ -91,12 +91,14 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
     val t = new Thread() {
+      var msgPrinted = false
+      var msgCounter = 0
       override def run() = {
         val is = new BufferedInputStream(socket.getInputStream)
         val os = new BufferedOutputStream(socket.getOutputStream)
         val buf = new Array[Byte](BufSize)
         do {
-          debug("Listening for messages..")
+          if (!msgPrinted) { debug("Listening for messages.."); msgPrinted = true }
           is.read(buf)
           val req = TcpCommon.deserialize(buf).asInstanceOf[P2pReq[_]]
           debug(s"Message received: ${req.toString}")
