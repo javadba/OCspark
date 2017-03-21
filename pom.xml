@@ -24,7 +24,7 @@
     <groupId>org.openchai.ocspark</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <name>parent</name>
+    <name>OCSpark</name>
     <version>1.0.0</version>
 
     <modules>
