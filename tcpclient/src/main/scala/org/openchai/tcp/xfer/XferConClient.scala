@@ -99,13 +99,15 @@ object XferConClient {
     val configFile = args(2)
     val xhost = host
     val xport = port + 1
-    (host,port,xhost,xport,configFile)
+    val ahost = host
+    val aport = port + 2
+    (host,port,xhost,xport,ahost, aport, configFile)
   }
 
   def main(args: Array[String]): Unit = {
     val data = LoremIpsum.getBytes("ISO-8859-1")
-    val (host,port,xhost,xport,configFile) = makeXferConnections(args)
-    val controllers = makeXferControllers(XferControllerArgs(host, port, xhost, xport, configFile,
+    val (host,port,xhost,xport,ahost, aport, configFile) = makeXferConnections(args)
+    val controllers = makeXferControllers(XferControllerArgs(host, port, xhost, xport, ahost, aport, configFile,
       data, ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin"))
     val wres = controllers.client.write(controllers.xferConf, controllers.wparams)
     val buf = ByteBuffer.allocate(1e4.toInt)

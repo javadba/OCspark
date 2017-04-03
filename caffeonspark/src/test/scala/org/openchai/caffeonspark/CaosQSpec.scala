@@ -51,7 +51,7 @@ class CaosQTest(params: CQTestParams = DefaultQTestParams) extends FlatSpec {
 object CaosTest {
 
   import org.openchai.tcp.xfer.XferConCommon._
-  val cont = testControllers
+  val cont = TestControllers
   val DefaultQTestParams = CQTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
 
   def toString(msg: Any): String = {
@@ -90,7 +90,7 @@ object CaosTest {
       q.offer( (Array.tabulate(StringArrayCount){ j => s"Hello there $i-$j"},
         TcpCommon.serialize(Array.tabulate[Float](FloatArrayCount){ f => f*(f+1.0).toFloat})))
     }
-    val controllers = XferConClient.makeXferControllers(testControllers)
+    val controllers = XferConClient.makeXferControllers(TestControllers)
     val qclient = new XferQClient[AnyQEntry](q,controllers)
     val sleep = 4000
     println(s"Sleeping $sleep ..")

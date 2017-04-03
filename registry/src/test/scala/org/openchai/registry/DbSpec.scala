@@ -24,8 +24,8 @@ class DbSpec extends FlatSpec with ShouldMatchers {
 }
 object DbSpec {
 
+  import org.openchai.db.Db._
   def main(args: Array[String]): Unit = {
-    import org.openchai.db.Db._
 //    val conn = connect("registry/src/test/scala/resources/h2.properties","h2")
     val conn = connect(s"${System.getProperty("user.dir")}/src/test/scala/resources/h2.properties","h2")
     val create = """drop table if exists foo; create table foo(id identity primary key, name varchar, metric int)"""

@@ -33,13 +33,13 @@ object CaosServer {
 
   def main(args: Array[String]): Unit = {
     val q = new ArrayBlockingQueue[AnyQEntry](1000)
-    val (host,port,xhost,xport,configFile) = XferConServer.makeXferConnections(args)
-    val server = apply(q,TcpParams(host, port+2), TcpParams(host,port), TcpParams(xhost,xport))
+    val (host,port,xhost,xport,ahost, aport, configFile) = XferConServer.makeXferConnections(args)
+    val server = apply(q,TcpParams(ahost, aport), TcpParams(host,port), TcpParams(xhost,xport))
   }
 
 }
 
-class CaosServerIf[T](/*tcpParams: TcpParams, xferServerIf: XferServerIf, */q: BlockingQueue[T]) extends ServerIf {
+class CaosServerIf[T](/*tcpParams: TcpParams, xferServerIf: XferServerIf, */q: BlockingQueue[T]) extends ServerIf("CaosServerIf") {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 

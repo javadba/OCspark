@@ -38,7 +38,7 @@ package object rpc {
     val clientName = TcpUtils.getLocalHostname
   }
 
-  trait ServerIf {
+  abstract class ServerIf(val name: String ="ServerIf") {
     def service(req: P2pReq[_]): P2pResp[_]
   }
 

@@ -62,7 +62,7 @@ object XferQClient {
   def main(args: Array[String]): Unit = {
     val nEntries = 20
     val q = new ArrayBlockingQueue[AnyQEntry](5)
-    val controllers = makeXferControllers(testControllers)
+    val controllers = makeXferControllers(TestControllers)
     val client = new XferQClient[AnyQEntry](q,controllers)
     val entries = for (i <- 1 until nEntries) yield {
       (Array("a", "b", "c"), TcpCommon.serialize(Howdy(s"Hi${i}!", i*i)))

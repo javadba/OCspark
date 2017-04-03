@@ -1,5 +1,6 @@
 package org.openchai.tcp.xfer
 
+import org.openchai.tcp.rpc.TcpParams
 import org.openchai.tcp.util.TcpUtils
 
 object XferConCommon {
@@ -18,11 +19,13 @@ a pretium nisi eros a nisl. Duis vehicula eros sit amet nunc fermentum, vel fauc
 ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non efficitur egestas, justo lorem faucibus
     """.stripMargin
 
-  case class XferControllerArgs(conHost: String, conPort: Int, dataHost: String, dataPort: Int,
+  case class XferControllerArgs(conHost: String, conPort: Int, dataHost: String, dataPort: Int, appHost:String, appPort: Int,
     configFile: String, data: Array[Byte], outboundDataPaths: (String,String), inboundDataPath: String)
 
 
-  val testControllers = XferControllerArgs(TcpUtils.getLocalHostname, 1234,TcpUtils.getLocalHostname, 4567,
+  val TestControllers = XferControllerArgs(TcpUtils.getLocalHostname, 1234,TcpUtils.getLocalHostname, 1235, TcpUtils.getLocalHostname, 1236,
     "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
+
+  val AppTcpArgs = TcpParams(TcpUtils.getLocalHostname, 1236)
 
 }

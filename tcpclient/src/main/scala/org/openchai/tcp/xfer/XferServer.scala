@@ -5,7 +5,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.TcpCommon
+import org.openchai.tcp.util.{FileUtils, TcpCommon}
 
 object XferServer {
 
@@ -26,25 +26,18 @@ object XferServer {
   }
 }
 
-abstract class XferServerIf extends ServerIf
+abstract class XferServerIf extends ServerIf("XferServerIf")
 
 class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
 
+  import org.openchai.tcp.util.FileUtils.md5
+
   private val nReqs = new AtomicInteger(0)
-
-  import java.security.MessageDigest
-
-  val md = MessageDigest.getInstance("MD5")
-
-  def md5(arr: Array[Byte]) = {
-    md.update(arr)
-    md.digest
-  }
 
   val AllocSize = math.pow(2,26).toInt // 64MB
   var buf = java.nio.ByteBuffer.allocate(AllocSize)
 
-  def writeNio(path: DataPtr, data: RawData) = {
+  def writeNio(path: DataPtr, data: RawData, md5In: RawData) = {
     // Allocating nio is not really necessary but just here
     // to simulate whatever rdma done down the road
     if (data.length > buf.capacity) {
@@ -53,9 +46,9 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
     buf.clear
 
     buf.put(data)
-    val _md5 = md5(buf.array.slice(0,buf.position))
+    FileUtils.checkMd5(path, buf.array.slice(0,buf.position), md5In)
     val out = Files.write(Paths.get(path), buf.array.slice(0,buf.position))
-    (buf, buf.position, _md5)
+    (buf, buf.position)
   }
 
   def readNio(path: DataPtr) = {
@@ -75,11 +68,12 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
       case o: XferWriteReq =>
-        val (path,data) = o.value
+        val (path,data, md5In) = o.value
+        FileUtils.checkMd5(path, data, md5In)
         val start = System.currentTimeMillis
-        val (buf, len, md5) = writeNio(path.toString, data)
+        val (buf, len) = writeNio(path.toString, data, md5In)
         val elapsed = System.currentTimeMillis - start
-        XferWriteResp("abc", len, elapsed, md5)
+        XferWriteResp("abc", len, elapsed, md5In)
 
       case o: XferReadReq =>
         val data = o.value
@@ -118,8 +112,9 @@ class QXferServerIf[T](q: BlockingQueue[T], tcpParams: TcpParams) extends XferSe
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
       case o: XferWriteReq =>
-        val (path,data) = o.value
-        println(s"XferWriteReq! datalen=${data.length}")
+        val (path,data,md5In) = o.value
+        println(s"XferWriteReq! datalen=${data.length} md5len=${md5In.length}")
+        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
         val start = System.currentTimeMillis
         val len = writeQ(path, data)
         val elapsed = System.currentTimeMillis - start

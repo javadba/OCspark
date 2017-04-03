@@ -65,6 +65,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
 
   override def start() = {
     serverSocket = new ServerSocket()
+    println(s"Starting ${serverIf.name} on $host:$port ..")
     try {
       serverSocket.bind(new InetSocketAddress(host, port))
     } catch {

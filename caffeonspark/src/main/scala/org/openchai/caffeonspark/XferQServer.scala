@@ -41,7 +41,7 @@ object XferQServer {
     val q = new ArrayBlockingQueue[AnyQEntry](1000)
 
     import org.openchai.tcp.xfer.XferConCommon._
-    val cont = testControllers
+    val cont = TestControllers
     val params = QTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
     val qserver = new XferQServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
     qserver.start

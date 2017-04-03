@@ -44,17 +44,20 @@ object XferConServer {
     val configFile = args(2)
     val xhost = host
     val xport = port + 1
-    (host, port, xhost, xport, configFile)
+    val ahost = host
+    val aport = port + 2
+    (host, port, xhost, xport, ahost, aport, configFile)
   }
 
  def main(args: Array[String]): Unit = {
-    val (host,port,xhost,xport,configFile) = makeXferConnections(args)
+    val (host,port,xhost,xport,ahost, aport, configFile) = makeXferConnections(args)
     val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
+   server.start
     Thread.currentThread.join
   }
 }
 
-class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) extends ServerIf {
+class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) extends ServerIf("XferConServerIf") {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 

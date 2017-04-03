@@ -17,7 +17,7 @@ case class XferWriteParams(config: TcpXferConfig, dataPtr: RawData)
 
 case class XferReadParams(config: TcpXferConfig, dataPtr: DataPtr)
 
-case class XferWriteReq(override val value: (String, RawData)) extends P2pReq[(String,RawData)]
+case class XferWriteReq(override val value: (String, RawData, RawData)) extends P2pReq[(String,RawData, RawData)]
 
 case class XferReadReq(override val value: DataPtr) extends P2pReq[DataPtr]
 

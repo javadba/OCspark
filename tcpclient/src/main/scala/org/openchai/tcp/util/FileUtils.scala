@@ -16,14 +16,30 @@
  */
 package org.openchai.tcp.util
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, FileOutputStream}
 import java.nio.file.Paths
 import java.util.Scanner
 import java.util.concurrent.{Callable, Executors, Future}
 
+import org.openchai.tcp.xfer.{DataPtr, RawData}
+
 import scala.collection.mutable.ArrayBuffer
 
 object FileUtils {
+  def checkMd5(path: DataPtr, data: Array[Byte], md5In: RawData) = {
+    if (!compareBytes(md5(data), md5In)) {
+      throw new IllegalStateException(s"writeNio: output md5 not matching input on $path")
+    }
+  }
+
+  def compareBytes(_md5: Array[Byte], md5: Array[Byte]) = {
+    if (_md5.length != md5.length) {
+      false
+    } else {
+      md5.sameElements(_md5)
+    }
+  }
+
   import Logger._
   type TaskResult = Array[Byte]
 
@@ -43,6 +59,10 @@ object FileUtils {
 
   def write(path: String, data: String): Unit = tools.nsc.io.File(path).writeAll(data)
 
+  def writeBytes(fpath: String, data: Array[Byte]) = {
+    println(s"Writing ${data.length} bytes to $fpath ..")
+    new FileOutputStream(fpath).write(data)
+  }
 
   def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): TaskResult = {
     val nThreads = if (multiThreaded) {
@@ -88,4 +108,15 @@ object FileUtils {
     val content = scala.io.Source.fromFile(fpath,"ISO-8859-1").getLines.mkString("")
     content
   }
+
+
+  import java.security.MessageDigest
+
+  val md = MessageDigest.getInstance("MD5")
+
+  def md5(arr: Array[Byte]) = {
+    md.update(arr)
+    md.digest
+  }
+
 }

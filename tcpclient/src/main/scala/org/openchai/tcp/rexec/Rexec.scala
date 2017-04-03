@@ -3,9 +3,8 @@ package org.openchai.tcp.rexec
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.ProcessUtils.{ExecParams, ExecResult}
 import org.openchai.tcp.util.Logger._
-import org.openchai.tcp.util.ProcessUtils
+import org.openchai.tcp.util.{ExecParams, ExecResult, ProcessUtils}
 
 case class RexecParams(execParams: ExecParams)
 
@@ -79,7 +78,7 @@ object RexecTcpClient {
     val env = if (args.length >= 5) Some(args(4).split(":").toSeq) else None
     val dir = if (args.length >= 6) args(5) else "."
     val client = RexecTcpClient(TcpParams(host, port))
-    val rparams = RexecParams(ExecParams(cmd, params, env, dir))
+    val rparams = RexecParams(ExecParams(cmd, cmd, params, env, dir))
     val res = client.run(rparams, 1)
     println(res)
   }
@@ -99,7 +98,7 @@ case class RexecTcpClient(tcpParams: TcpParams) extends TcpClient(tcpParams, new
   }
 }
 
-class RexecServerIf(tcpParams: TcpParams) extends ServerIf {
+class RexecServerIf(tcpParams: TcpParams) extends ServerIf("RexecServerIf") {
 
   val rexecIf = new RexecIf
 

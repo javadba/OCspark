@@ -24,7 +24,7 @@ object SolverServerIf {
   val WeightsMergePolicies = Seq("average", "best")
 }
 
-class SolverServerIf(weightsMergePolicy: String = "best") extends ServerIf {
+class SolverServerIf(weightsMergePolicy: String = "best") extends ServerIf("SolverServerIf") {
 
   import org.openchai.tcp.rpc.SolverIf._
 

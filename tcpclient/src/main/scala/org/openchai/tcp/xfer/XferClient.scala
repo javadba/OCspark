@@ -4,6 +4,7 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc.{ServiceIf, TcpClient, TcpParams}
+import org.openchai.tcp.util.FileUtils
 import org.openchai.tcp.util.Logger.debug
 
 class XferIf(config: XferConfig) extends ServiceIf("Xfer") {
@@ -12,9 +13,10 @@ class XferIf(config: XferConfig) extends ServiceIf("Xfer") {
 
   def write(xferParams: XferWriteParams) = {
     // while (keepGoing(n).value) {
-    debug(s"XferIf: Sending request: $xferParams ..")
+    val md5 = FileUtils.md5(xferParams.dataPtr)
+    debug(s"XferIf: Sending request: $xferParams md5len =${md5.length})..")
     val resp = getRpc().request(XferWriteReq(Paths.get(xferParams.config.finalPath).toString,
-      xferParams.dataPtr)).asInstanceOf[XferWriteResp]
+      xferParams.dataPtr, md5)).asInstanceOf[XferWriteResp]
     debug(s"XferIf: Result is $resp")
     resp
   }

@@ -26,10 +26,10 @@ import org.openchai.tcp.xfer._
 class CaosQClient {
 
   val qClient = new XferQClient(new ArrayBlockingQueue[Any](1000),
-    XferConClient.makeXferControllers(XferConCommon.testControllers))
+    XferConClient.makeXferControllers(XferConCommon.TestControllers))
 
-  val client = new CaosConClient(new TcpParams(XferConCommon.testControllers.conHost,
-    XferConCommon.testControllers.conPort+2), CaosConfig("fum"), qClient)
+  val client = new CaosConClient(new TcpParams(XferConCommon.TestControllers.conHost,
+    XferConCommon.TestControllers.conPort+2), CaosConfig("fum"), qClient)
 
 }
 

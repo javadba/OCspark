@@ -4,4 +4,6 @@ package object xfer {
 
   type RawData = Array[Byte]
   type DataPtr = String
+
+  type AnyQEntry = Any
 }
