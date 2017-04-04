@@ -68,12 +68,12 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
       case o: XferWriteReq =>
-        val (path,data, md5In) = o.value
-        FileUtils.checkMd5(path, data, md5In)
+        val req = o.value
+        FileUtils.checkMd5(req.config.finalPath, req.data, req.md5)
         val start = System.currentTimeMillis
-        val (buf, len) = writeNio(path.toString, data, md5In)
+        val (buf, len) = writeNio(req.config.finalPath, req.data, req.md5)
         val elapsed = System.currentTimeMillis - start
-        XferWriteResp("abc", len, elapsed, md5In)
+        XferWriteResp("abc", len, elapsed, req.md5)
 
       case o: XferReadReq =>
         val data = o.value
@@ -89,21 +89,9 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
 
 class QXferServerIf[T](q: BlockingQueue[T], tcpParams: TcpParams) extends XferServerIf {
 
-  private val nReqs = new AtomicInteger(0)
-
-  import java.security.MessageDigest
-
-  val md = MessageDigest.getInstance("MD5")
-
-  def md5(arr: Array[Byte]) = {
-    md.update(arr)
-    md.digest
-  }
-
-
   def writeQ(path: DataPtr, data: RawData) = {
 //    val _md5 = md5(buf.array.slice(0,buf.position))
-    val o = TcpCommon.deserialize(data).asInstanceOf[T]
+    val o = TcpCommon.deserializeObject(data).asInstanceOf[T]
     q.offer(o)
     val out = Files.write(Paths.get(path), data)
     data.length
@@ -112,13 +100,15 @@ class QXferServerIf[T](q: BlockingQueue[T], tcpParams: TcpParams) extends XferSe
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
       case o: XferWriteReq =>
-        val (path,data,md5In) = o.value
-        println(s"XferWriteReq! datalen=${data.length} md5len=${md5In.length}")
-        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
+        val req = o.value
+        println(s"XferWriteReq! datalen=${req.data.length}")
+//        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
         val start = System.currentTimeMillis
-        val len = writeQ(path, data)
+        val len = writeQ(req.config.finalPath, req.data)
         val elapsed = System.currentTimeMillis - start
         XferWriteResp("abc", len, elapsed, Array.empty[Byte])
+      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
+
     }
   }
 

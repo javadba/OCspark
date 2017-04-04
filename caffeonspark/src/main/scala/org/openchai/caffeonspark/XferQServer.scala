@@ -26,6 +26,12 @@ class XferQServer(outQ: BlockingQueue[AnyQEntry], tcpParams: TcpParams, xtcpPara
   extends XferConServer(tcpParams, xtcpParams) {
   override val xferServerIf = new QXferServerIf[AnyQEntry](outQ, xtcpParams)
 
+  override val xferServerThread = new Thread() {
+    override def run() = {
+      XferQServer.main(Array(xtcpParams.server, xtcpParams.port.toString))
+    }
+  }
+
   override def start() = {
     xferServerThread.start
     // Notice the use of XferQConServerIf as third parameter: but still using xferServerIf inside that constructor

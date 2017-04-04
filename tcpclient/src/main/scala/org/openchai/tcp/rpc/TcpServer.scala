@@ -88,6 +88,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     this
   }
 
+  import TcpCommon._
   def serve(socket: Socket): Thread = {
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
@@ -100,12 +101,13 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         val buf = new Array[Byte](BufSize)
         do {
           if (!msgPrinted) { debug("Listening for messages.."); msgPrinted = true }
-          is.read(buf)
-          val req = TcpCommon.deserialize(buf).asInstanceOf[P2pReq[_]]
+          val nread = is.read(buf)
+          val unpacked = unpack(buf.slice(0,nread))
+          val req = unpacked._2.asInstanceOf[P2pReq[_]]
           debug(s"Message received: ${req.toString}")
           val resp = serverIf.service(req)
           debug(s"Sending response:  ${resp.toString}")
-          val ser = TcpCommon.serialize(resp)
+          val ser = serializeStream(pack(unpacked._1, resp))
           os.write(ser)
           os.flush
         } while (!reconnectEveryRequest)

@@ -1,14 +1,13 @@
-package org.openchai.caffeonspark
+package org.openchai.tensorflow
 
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 
-import or.openchai.tf.TaggedEntry
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecResult, FileUtils, ProcessResult, TcpCommon}
 import org.openchai.tcp.util.ProcessUtils._
 import org.openchai.tcp.xfer._
-import org.openchai.tf.TfServer
+import org.openchai.tensorflow.TfServer
 
 
 object TfClient {
@@ -22,17 +21,22 @@ object TfClient {
   }
 
   def testClient(): Unit = {
-    val testImg = "/images/pilatus800.jpg"
+//    val testImg = "/images/pilatus800.jpg"
+    val testImg = "/images/JohnNolteAndDad.jpg"
 
     val is = this.getClass().getResourceAsStream(testImg)
-    val buf = new Array[Byte](2 * 1024 *1024)
+    val buf = new Array[Byte](16 * 1024 *1024)
 
-    val imgBytes = this.getClass().getResourceAsStream(testImg) //.getBytes("ISO-8859-1")
-    is.read(buf)
+//    val imgBytes = this.getClass().getResourceAsStream(testImg) //.getBytes("ISO-8859-1")
+    if (is == null) {
+      throw new IllegalArgumentException(s"Unable to access $testImg")
+    }
+    val n = is.read(buf)
+    val rbuf = buf.slice(0,n)
     val tfClient = TfClient()
-    val md5 = FileUtils.md5(buf)
+    val md5 = FileUtils.md5(rbuf.slice(0,n))
     val label = tfClient.labelImg(LabelImgStruct("funnyPic",s"${System.getProperty("user.dir")}/tf/src/main/resources/$testImg",
-      buf, md5))
+      rbuf, md5))
     println(s"Received label result: $label")
   }
   def main(args: Array[String]): Unit = {
@@ -71,11 +75,11 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: XferConC
   def labelImg(s: LabelImgStruct): LabelImgResp = {
     println(s"LabelImg..")
 
-    val fdata = FileUtils.readFileBytes(s.fpath)
+//    val fdata = FileUtils.readFileBytes(s.fpath)
     val wparams = XferWriteParams(controllers.xferConf,
-      TcpCommon.serialize(TaggedEntry("funnyPic", fdata)))
+      TcpCommon.serializeObject(TaggedEntry("funnyPic", s.data)))
     val wres = controllers.client.write(controllers.xferConf, wparams)
-    val resp = getRpc().request(LabelImgReq(s.copy(data = fdata)))
+    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
     println(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
   }

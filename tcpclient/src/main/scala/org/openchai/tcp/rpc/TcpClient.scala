@@ -18,7 +18,8 @@ package org.openchai.tcp.rpc
 
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.TcpCommon._
-import org.openchai.tcp.util.TcpUtils
+import org.openchai.tcp.util.{FileUtils, TcpUtils}
+import org.openchai.tcp.xfer.{DataPtr, PackedData, RawData, UnpackedData}
 
 case class TcpParams(server: String, port: Int) extends P2pConnectionParams
 
@@ -29,6 +30,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
 
   import java.io._
   import java.net._
+
+  import TcpClient._
 
   import reflect.runtime.universe._
 
@@ -61,11 +64,11 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
       connect(savedConnParam)
     }
     val buf = new Array[Byte](Math.pow(2,20).toInt)
-    val serreq = serialize(req)
+    val serreq = serializeStream(pack(req.path, req))
     os.write(serreq)
     val nread = is.read(buf)
     info(s"request: received $nread bytes")
-    val o = deserialize(buf)
+    val (path, o, md5) = unpack(buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
     if (reconnectEveryRequest) {
       sock.close
@@ -80,6 +83,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
 
 object TcpClient {
   val TestPort = 8989
+
+
   def main(args: Array[String]) {
     import SolverIf._
     val server = if (args.length >= 1) args(0) else TcpUtils.getLocalHostname

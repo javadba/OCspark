@@ -59,31 +59,31 @@ object XferConServer {
 
 class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) extends ServerIf("XferConServerIf") {
 
-  val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
-
-  private val nReqs = new AtomicInteger(0)
-
-  def claimPaths(paths: Seq[String], config: TcpXferConfig) = {
-    for (path <- paths) {
-      assert(!pathsMap.containsKey(path), s"Server says the path you requested is in use/busy: $path")
-      pathsMap.put(path, config)
-    }
-  }
-
-  def releasePaths(paths: Seq[String], config: TcpXferConfig) = {
-    for (path <- paths) {
-      if (!pathsMap.containsKey(path)) {
-        println(s"WARN: Trying to release Path $path that is not found in the PathsMap ")
-      } else {
-        pathsMap.remove(path, config)
-      }
-    }
-  }
+//  val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
+//
+//  private val nReqs = new AtomicInteger(0)
+//
+//  def claimPaths(paths: Seq[String], config: TcpXferConfig) = {
+//    for (path <- paths) {
+//      assert(!pathsMap.containsKey(path), s"Server says the path you requested is in use/busy: $path")
+//      pathsMap.put(path, config)
+//    }
+//  }
+//
+//  def releasePaths(paths: Seq[String], config: TcpXferConfig) = {
+//    for (path <- paths) {
+//      if (!pathsMap.containsKey(path)) {
+//        println(s"WARN: Trying to release Path $path that is not found in the PathsMap ")
+//      } else {
+//        pathsMap.remove(path, config)
+//      }
+//    }
+//  }
 
   def consume(config: TcpXferConfig): Any = defaultConsume(config)
 
   def defaultConsume(config: TcpXferConfig): Any = {
-    val payload = TcpCommon.deserialize(readFile(config.finalPath))
+    val payload = TcpCommon.unpack(readFile(config.finalPath))._2
     println(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
     payload
   }
@@ -95,26 +95,26 @@ class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) exte
       case o: PrepWriteReq => {
         val config = o.value
         println(s"Prepping the Datawrite config=$config")
-        claimPaths(Seq(config.tmpPath, config.finalPath), config)
+//        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteWriteReq => {
         val config = o.value
         println(s"Completed Write for ${config} the Datawrite config=$config")
-        val res = consume(config)
-        releasePaths(Seq(config.tmpPath, config.finalPath), config)
+//        val res = consume(config)
+//        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: PrepReadReq => {
         val config = o.value
         println(s"Prepping the Datawrite config=$config")
-        claimPaths(Seq(config.tmpPath, config.finalPath), config)
+//        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteReadReq => {
         val config = o.value
         println(s"Completed Write for ${config} the Datawrite config=$config")
-        releasePaths(Seq(config.tmpPath, config.finalPath), config)
+//        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")

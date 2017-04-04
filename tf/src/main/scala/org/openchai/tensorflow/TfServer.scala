@@ -1,17 +1,11 @@
-package org.openchai.tf
+package org.openchai.tensorflow
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
-import com.sun.tools.javac.code.TypeTag
-import or.openchai.tf.TaggedEntry
-import org.openchai.caffeonspark.{LabelImgReq, LabelImgResp, LabelImgRespStruct, LabelImgStruct}
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils, TcpCommon}
-import org.openchai.tcp.util.ProcessUtils._
-import org.openchai.tcp.util.Logger._
+import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils}
 import org.openchai.tcp.xfer._
-
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
@@ -30,11 +24,13 @@ class TfServer(val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
 }
 
 object TfServer {
+
   val tfExec = "/shared/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image"
+  val tfExecDir = "/shared/tensorflow"
   val imagesDir = "/tmp/images"
   val f = new java.io.File(imagesDir)
-  if (!f.exists()) {
-    f.mkdirs
+  if (!f.exists() && !f.mkdirs) {
+    throw new IllegalStateException(s"Unable to create image dirs ${f.getAbsolutePath}")
   }
 //  val tfExec = "/shared/label_image/label_image"
 
@@ -68,27 +64,6 @@ class TfServerIf /*[T]*/ (/*tcpParams: TcpParams, xferServerIf: XferServerIf, */
 
   //  def readFile(path: String) = FileUtils.readFileBytes(path)
 
-  def findInQ(/*q: BlockingQueue[TaggedEntry], */ tag: String) = {
-    val aq = q.asInstanceOf[ArrayBlockingQueue[TaggedEntry]]
-    println(s"FindInQ: looking for $tag: entries=${aq.size}")
-    val e = {
-      var p: Option[TaggedEntry] = None
-        while (aq.iterator.hasNext && !aq.isEmpty) {
-          val pv = aq.iterator.next
-          println(s"Queue entry: ${pv}")
-          if (pv.tag == tag) {
-            println(s"Found entry ${pv.tag}")
-            p = Option(pv)
-            aq.remove(pv)
-          } else {
-            None
-          }
-        }
-      p
-    }
-    e.flatMap { ee => println(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
-    e
-  }
 
   def labelImg(struct: LabelImgStruct): LabelImgRespStruct = {
 
@@ -99,10 +74,12 @@ class TfServerIf /*[T]*/ (/*tcpParams: TcpParams, xferServerIf: XferServerIf, */
       FileUtils.checkMd5(struct.fpath, struct.data, struct.md5)
     }
 
-    val e = findInQ(struct.tag)
-    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
-    FileUtils.writeBytes(s"${TfServer.imagesDir}/${struct.fpath}", struct.data)
-    val exeResult = ProcessUtils.exec("LabelImage", s"""${TfServer.tfExec} --image="${struct.fpath}"""")
+//    val e = XferQServer.findInQ(q, struct.tag)
+//    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
+    val dir = TfServer.tfExecDir
+    val path = s"${TfServer.imagesDir}/${struct.fpath.substring(struct.fpath.lastIndexOf("/")+1)}"
+    FileUtils.writeBytes(path, struct.data)
+    val exeResult = ProcessUtils.exec(ExecParams("LabelImage", s"${TfServer.tfExec}", Option(s"""--image=$path""".split(" ")),None,dir))
 
     LabelImgRespStruct(exeResult)
   }
@@ -111,9 +88,9 @@ class TfServerIf /*[T]*/ (/*tcpParams: TcpParams, xferServerIf: XferServerIf, */
     req match {
       case o: LabelImgReq =>
         val struct = o.value
-        println(s"Invoking LabelImg: struct=$struct")
+        println(s"Service: Invoking LabelImg: struct=$struct")
         val resp = labelImg(struct)
-        LabelImgResp(labelImg(struct))
+        LabelImgResp(resp)
       case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
     }
   }

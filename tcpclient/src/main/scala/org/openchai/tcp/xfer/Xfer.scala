@@ -4,6 +4,7 @@ import java.nio.file.{Path, Paths}
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.util.FileUtils
 import org.openchai.tcp.util.Logger._
 
 trait XferConfig extends java.io.Serializable // Probably a json, yaml, or TypeSafe Config
@@ -13,11 +14,18 @@ case class TcpXferConfig(val tmpPath: String, val finalPath: String) extends Xfe
 //case class WriteTcpXferConfig(override val tmpPath: String, override val finalPath: String) extends TcpXferConfig(tmpPath, finalPath)
 //case class ReadTcpXferConfig(override val tmpPath: String, override val finalPath: String) extends TcpXferConfig(tmpPath, finalPath)
 
-case class XferWriteParams(config: TcpXferConfig, dataPtr: RawData)
+case class XferWriteParams(config: TcpXferConfig, data: RawData, md5: RawData) {
+
+  override def toString: DataPtr = s"XferWriteParams: config=$config datalen=${data.length}} md5len=${md5.length}}"
+}
+
+object XferWriteParams {
+  def apply(config: TcpXferConfig, data: RawData)  = new XferWriteParams(config, data, FileUtils.md5(data))
+}
 
 case class XferReadParams(config: TcpXferConfig, dataPtr: DataPtr)
 
-case class XferWriteReq(override val value: (String, RawData, RawData)) extends P2pReq[(String,RawData, RawData)]
+case class XferWriteReq(override val value: XferWriteParams) extends P2pReq[XferWriteParams]
 
 case class XferReadReq(override val value: DataPtr) extends P2pReq[DataPtr]
 

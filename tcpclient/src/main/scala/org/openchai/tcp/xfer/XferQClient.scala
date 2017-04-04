@@ -28,7 +28,7 @@ class XferQClient[T: TypeTag](val queue: ArrayBlockingQueue[T],
         val payload = queue.take
         debug(s"XferQClient: payload is $payload")
         val wparams = XferWriteParams(controllers.xferConf,
-          TcpCommon.serialize(payload))
+          TcpCommon.serializeObject(payload))
         val wres = controllers.client.write(controllers.xferConf, wparams)
         info(s"Xferqclient: QReader completed with resp=$wres")
       }
@@ -47,7 +47,7 @@ object XferQClient {
     val controllers = makeXferControllers(TestControllers)
     val client = new XferQClient[AnyQEntry](q,controllers)
     val entries = for (i <- 1 until nEntries) yield {
-      (Array("a", "b", "c"), TcpCommon.serialize(Howdy(s"Hi${i}!", i*i)))
+      (Array("a", "b", "c"), TcpCommon.serializeObject(Howdy(s"Hi${i}!", i*i)))
     }
 
   }

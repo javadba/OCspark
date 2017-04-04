@@ -1,4 +1,4 @@
-package or.openchai.tf
+package org.openchai.tensorflow
 
 import org.openchai.tcp.rpc.{P2pConnectionParams, SolverServerIf}
 

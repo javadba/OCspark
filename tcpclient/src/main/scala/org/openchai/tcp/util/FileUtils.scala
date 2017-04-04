@@ -21,11 +21,14 @@ import java.nio.file.Paths
 import java.util.Scanner
 import java.util.concurrent.{Callable, Executors, Future}
 
-import org.openchai.tcp.xfer.{DataPtr, RawData}
+import org.openchai.tcp.xfer.{DataPtr, PackedData, RawData}
 
 import scala.collection.mutable.ArrayBuffer
 
 object FileUtils {
+
+  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
+
   def checkMd5(path: DataPtr, data: Array[Byte], md5In: RawData) = {
     if (!compareBytes(md5(data), md5In)) {
       throw new IllegalStateException(s"writeNio: output md5 not matching input on $path")

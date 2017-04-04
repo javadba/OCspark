@@ -91,6 +91,7 @@ object ProcessUtils {
 
     val pb = new ProcessBuilder((params.process +: params.args.getOrElse(Seq.empty[String])):_*)
     pb.directory(new java.io.File(params.dir))
+    println(s"Exec: $params  pbDir=${pb.directory.getAbsolutePath}")
 
     val proc = pb.start()
     proc.waitFor()

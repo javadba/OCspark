@@ -16,7 +16,8 @@
  */
 package org.openchai.tcp
 
-import org.openchai.tcp.util.TcpUtils
+import org.openchai.tcp.util.{FileUtils, TcpUtils}
+import org.openchai.tcp.xfer.{DataPtr, RawData}
 
 package object rpc {
 
@@ -43,6 +44,7 @@ package object rpc {
   }
 
   sealed trait P2pMessage[T] extends java.io.Serializable {
+    def path(): DataPtr = getClass.getName
     def value(): T
   }
 
