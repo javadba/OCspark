@@ -11,7 +11,7 @@ import org.openchai.tcp.xfer._
 class TfServer(val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
-  val xferServer = new XferQServer(outQ.asInstanceOf[BlockingQueue[Any]],
+  val xferServer = new QXferServer(outQ.asInstanceOf[BlockingQueue[TaggedEntry]],
     tcpParams, xtcpParams)
   val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf /*[TaggedEntry]*/ (outQ))
 
@@ -74,8 +74,8 @@ class TfServerIf /*[T]*/ (/*tcpParams: TcpParams, xferServerIf: XferServerIf, */
       FileUtils.checkMd5(struct.fpath, struct.data, struct.md5)
     }
 
-//    val e = XferQServer.findInQ(q, struct.tag)
-//    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
+    val e = QXferServer.findInQ(q, struct.tag)
+    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
     val dir = TfServer.tfExecDir
     val path = s"${TfServer.imagesDir}/${struct.fpath.substring(struct.fpath.lastIndexOf("/")+1)}"
     FileUtils.writeBytes(path, struct.data)

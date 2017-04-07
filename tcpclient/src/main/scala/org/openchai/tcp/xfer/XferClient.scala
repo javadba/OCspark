@@ -16,7 +16,8 @@ class XferIf(config: XferConfig) extends ServiceIf("Xfer") {
 //    val md5 = FileUtils.md5(xferParams.dataPtr)
     debug(s"XferIf: Sending request: $xferParams")
     val resp = getRpc().request(XferWriteReq(
-      XferWriteParams(TcpXferConfig("", Paths.get(xferParams.config.finalPath).toString), xferParams.data))).asInstanceOf[XferWriteResp]
+//      XferWriteParams(TcpXferConfig("", Paths.get(xferParams.config.finalPath).toString), xferParams.data))).asInstanceOf[XferWriteResp]
+      xferParams)).asInstanceOf[XferWriteResp]
     debug(s"XferIf: Result is $resp")
     resp
   }

@@ -1,17 +1,19 @@
 package org.openchai.tcp.xfer
 
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
-import org.openchai.tcp.rpc.{TcpParams, TcpServer}
+import org.openchai.tcp.rpc.{P2pReq, P2pResp, TcpParams, TcpServer}
+import org.openchai.tcp.util.{FileUtils, TcpCommon}
 
 case class QTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
 
-class XferQServerIf(outQ: BlockingQueue[AnyQEntry], tcpParams: TcpParams, qServerIf: QXferServerIf[AnyQEntry])
+class XferQServerIf(outQ: BlockingQueue[TaggedEntry], tcpParams: TcpParams, qServerIf: QXferServerIf)
   extends XferConServerIf(/*tcpParams, qServerIf */) {
   println("Created XferQServerIf")
 
   override def consume(config: TcpXferConfig) = {
-    val payload = super.defaultConsume(config).asInstanceOf[AnyQEntry]
+    val payload = super.defaultConsume(config).asInstanceOf[TaggedEntry]
     println(s"Consuming message of length ${payload.toString.length}")
     val res = outQ.offer(payload)
     res
@@ -20,10 +22,35 @@ class XferQServerIf(outQ: BlockingQueue[AnyQEntry], tcpParams: TcpParams, qServe
 }
 
 
+class QXferServerIf(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) extends XferServerIf {
+
+  def writeQ(path: DataPtr, data: TaggedEntry) = {
+//    val _md5 = md5(buf.array.slice(0,buf.position))
+    q.offer(data)
+  }
+
+  override def service(req: P2pReq[_]): P2pResp[_] = {
+    req match {
+      case o: XferWriteReq =>
+        val params = o.value.asInstanceOf[XferWriteParams]
+//        FileUtils.checkMd5(params.config.finalPath, params.data, params.md5)
+        println(s"XferWriteReq! datalen=${params.data.length}")
+//        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
+        val start = System.currentTimeMillis
+        val len = writeQ(params.config.finalPath, TaggedEntry(params.tag, params.data))
+        val elapsed = System.currentTimeMillis - start
+        XferWriteResp("abc", params.data.length, elapsed, Array.empty[Byte])
+      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
+
+    }
+  }
+
+}
+
 // The main thing we need to override here is using XferQConServerIf inside the server object
-class XferQServer(outQ: BlockingQueue[AnyQEntry], tcpParams: TcpParams, xtcpParams: TcpParams)
+class QXferServer(outQ: BlockingQueue[TaggedEntry], tcpParams: TcpParams, xtcpParams: TcpParams)
   extends XferConServer(tcpParams, xtcpParams) {
-  override val xferServerIf = new QXferServerIf[AnyQEntry](outQ, xtcpParams)
+  override val xferServerIf = new QXferServerIf(outQ, xtcpParams)
 
   override def start() = {
     xferServerThread.start
@@ -35,7 +62,7 @@ class XferQServer(outQ: BlockingQueue[AnyQEntry], tcpParams: TcpParams, xtcpPara
 
 }
 
-object XferQServer {
+object QXferServer {
   def findInQ(q: BlockingQueue[TaggedEntry],tag: String) = {
     val aq = q.asInstanceOf[ArrayBlockingQueue[TaggedEntry]]
     println(s"FindInQ: looking for $tag: entries=${aq.size}")
@@ -59,12 +86,12 @@ object XferQServer {
   }
 
   def main(args: Array[String]): Unit = {
-    val q = new ArrayBlockingQueue[AnyQEntry](1000)
+    val q = new ArrayBlockingQueue[TaggedEntry](1000)
 
     import org.openchai.tcp.xfer.XferConCommon._
     val cont = TestControllers
     val params = QTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
-    val qserver = new XferQServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
+    val qserver = new QXferServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
     qserver.start
     Thread.currentThread.join
   }

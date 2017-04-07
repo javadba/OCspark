@@ -1,7 +1,7 @@
 package org.openchai.tcp.xfer
 
 import java.nio.file.{Files, Paths}
-import java.util.concurrent.BlockingQueue
+import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
@@ -17,16 +17,35 @@ object XferServer {
     server
   }
 
+  def apply(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) = {
+    server = TcpServer(tcpParams.server, tcpParams.port,
+      new QXferServerIf(q, tcpParams))
+    server
+  }
+
   def main(args: Array[String]): Unit = {
     val host = args(0)
     val port = args(1).toInt
-    val server = apply(TcpParams(host, port))
+//    val server = apply(TcpParams(host, port))
+    val q = new ArrayBlockingQueue[TaggedEntry](1000)
+    val qreader = new Thread() {
+      override def run(): Unit = {
+        println("QReader thread started")
+        while (true) {
+          val v = q.take
+          println(s"QReader: received $v")
+        }
+      }
+    }
+    qreader.start
+    val server = apply(q, TcpParams(host, port))
     server.start
     Thread.currentThread.join
   }
 }
 
 abstract class XferServerIf extends ServerIf("XferServerIf")
+
 
 class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
 
@@ -82,33 +101,6 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
         val elapsed = System.currentTimeMillis - start
         XferReadResp("abc", data.length, elapsed, md5, buf.array)
       case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
-    }
-  }
-
-}
-
-class QXferServerIf[T](q: BlockingQueue[T], tcpParams: TcpParams) extends XferServerIf {
-
-  def writeQ(path: DataPtr, data: RawData) = {
-//    val _md5 = md5(buf.array.slice(0,buf.position))
-    val o = TcpCommon.deserializeObject(data).asInstanceOf[T]
-    q.offer(o)
-    val out = Files.write(Paths.get(path), data)
-    data.length
-  }
-
-  override def service(req: P2pReq[_]): P2pResp[_] = {
-    req match {
-      case o: XferWriteReq =>
-        val req = o.value
-        println(s"XferWriteReq! datalen=${req.data.length}")
-//        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
-        val start = System.currentTimeMillis
-        val len = writeQ(req.config.finalPath, req.data)
-        val elapsed = System.currentTimeMillis - start
-        XferWriteResp("abc", len, elapsed, Array.empty[Byte])
-      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
-
     }
   }
 

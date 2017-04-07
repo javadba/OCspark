@@ -33,6 +33,7 @@
 	    <module>registry</module>
 	    <module>caffeonspark</module>
 	    <module>tf</module>
+	    <module>tfdma</module>
     </modules>
 
     <url>https://github.com/openchai</url>
@@ -55,6 +56,12 @@
 
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>

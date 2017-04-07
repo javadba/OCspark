@@ -6,13 +6,13 @@ import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{FileUtils, TcpCommon}
 import org.openchai.tcp.util.Logger._
-import org.openchai.tcp.xfer.{TcpXferConfig, XferConServer, XferConServerIf, XferServerIf}
+import org.openchai.tcp.xfer._
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class CaosServer(val outQ: BlockingQueue[AnyQEntry], val qTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
-  val qServer = new XferQServer(outQ, tcpParams, xtcpParams)
+  val qServer = new QXferServer(outQ, tcpParams, xtcpParams)
   val caosServer = new TcpServer(qTcpParams.server, qTcpParams.port, new CaosServerIf[AnyQEntry](outQ))
 
   def start() = {

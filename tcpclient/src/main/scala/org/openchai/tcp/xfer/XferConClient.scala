@@ -5,12 +5,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc._
 
-case class CompleteReadReq(value: TcpXferConfig) extends P2pReq[TcpXferConfig]
+case class CompleteReadReq(value: XferConfig) extends P2pReq[XferConfig]
 
-case class PrepReadReq(value: TcpXferConfig) extends P2pReq[TcpXferConfig]
+case class PrepReadReq(value: XferConfig) extends P2pReq[XferConfig]
 
-case class PrepWriteReq(value: TcpXferConfig) extends P2pReq[TcpXferConfig]
-class CompleteWriteReq(val value: TcpXferConfig) extends P2pReq[TcpXferConfig]
+case class PrepWriteReq(value: XferConfig) extends P2pReq[XferConfig]
+class CompleteWriteReq(val value: XferConfig) extends P2pReq[XferConfig]
 
 case class PrepRespStruct(len: Int, elapsed: Int, path: String)
 
@@ -25,25 +25,25 @@ case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIf
 
   private val nReqs = new AtomicInteger(0)
 
-  def prepareWrite(config: TcpXferConfig): PrepResp = {
+  def prepareWrite(config: XferConfig): PrepResp = {
     println(s"PrepareWrite ..")
     val resp = getRpc().request(PrepWriteReq(config))
     println(s"PrepareWrite response: $resp")
     resp.asInstanceOf[PrepResp]
   }
 
-  def completeWrite(config: TcpXferConfig): CompletedResp = {
+  def completeWrite(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(new CompleteWriteReq(config))
     println(s"CompleteWrite response: $resp")
     resp.asInstanceOf[CompletedResp]
   }
 
-  def prepareRead(params: TcpXferConfig): PrepResp = {
+  def prepareRead(params: XferConfig): PrepResp = {
     val resp = getRpc().request(PrepReadReq(params))
     resp.asInstanceOf[PrepResp]
   }
 
-  def completeRead(config: TcpXferConfig): CompletedResp = {
+  def completeRead(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(CompleteReadReq(config))
     resp.asInstanceOf[CompletedResp]
   }
@@ -58,7 +58,7 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
   val xferConIf = serviceIf.asInstanceOf[XferConIf]
   val xferIf = new XferIfClient(xferTcpParams, config)
 
-  def write(params: TcpXferConfig, writeParams: XferWriteParams) = {
+  def write(params: XferConfig, writeParams: XferWriteParams) = {
     println(s"Client: beginning Write Controller for $params")
     val presult = xferConIf.prepareWrite(params)
     val result = xferIf.write(writeParams)
@@ -67,7 +67,7 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
     cresult
   }
 
-  def read(params: TcpXferConfig, readParams: XferReadParams) = {
+  def read(params: XferConfig, readParams: XferReadParams) = {
     println(s"Client: beginning Read Controller for $params")
     val presult = xferConIf.prepareRead(params)
     val result = xferIf.read(readParams)
@@ -80,7 +80,7 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
 object XferConClient {
 
   import XferConCommon._
-  case class XferControllers(client: XferConClient, xferConf: TcpXferConfig, wparams: XferWriteParams, rparams: XferReadParams)
+  case class XferControllers(client: XferConClient, xferConf: XferConfig, wparams: XferWriteParams, rparams: XferReadParams)
 
 
   def makeXferControllers(args: XferControllerArgs) = {
@@ -88,8 +88,8 @@ object XferConClient {
     val xtcpParams = TcpParams(args.dataHost, args.dataPort)
     val xferConf = new TcpXferConfig(args.outboundDataPaths._1, args.outboundDataPaths._2)
     val client = XferConClient(tcpParams, xtcpParams, xferConf)
-    val wparams = XferWriteParams(xferConf, args.data)
-    val rparams = XferReadParams(xferConf, args.inboundDataPath)
+    val wparams = XferWriteParams("WriteParams", xferConf, args.data)
+    val rparams = XferReadParams("ReadParams", xferConf, args.inboundDataPath)
     XferControllers(client, xferConf, wparams, rparams)
   }
 

@@ -1,13 +1,8 @@
 package org.openchai.tensorflow
 
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.{ExecResult, FileUtils, ProcessResult, TcpCommon}
-import org.openchai.tcp.util.ProcessUtils._
+import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
 import org.openchai.tcp.xfer._
-import org.openchai.tensorflow.TfServer
 
 
 object TfClient {
@@ -67,18 +62,20 @@ class TfClient(val tcpParams: TcpParams, val config: TfConfig, val xferClient: X
 
   def labelImg(struct: LabelImgStruct) = tfIf.labelImg(struct)
 }
-
-  import XferConClient._
 case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: XferConClient) extends ServiceIf("TfClient") {
 
-  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
+//  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
   def labelImg(s: LabelImgStruct): LabelImgResp = {
     println(s"LabelImg..")
 
 //    val fdata = FileUtils.readFileBytes(s.fpath)
-    val wparams = XferWriteParams(controllers.xferConf,
+    val wparams = XferWriteParams("FunnyPicTag", tfClient.config,
       TcpCommon.serializeObject(TaggedEntry("funnyPic", s.data)))
-    val wres = controllers.client.write(controllers.xferConf, wparams)
+    val xferConf = TcpXferConfig("blah", s.fpath)
+    tfClient.xferConIf.prepareWrite(xferConf)
+    tfClient.xferIf.write(XferWriteParams("TestWriteTag", xferConf, s.data))
+    tfClient.xferConIf.completeWrite(xferConf)
+    val wres = tfClient.write(tfClient.config, wparams)
     val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
     println(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
