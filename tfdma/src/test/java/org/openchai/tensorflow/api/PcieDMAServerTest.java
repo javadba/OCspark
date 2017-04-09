@@ -15,7 +15,7 @@ public class PcieDMAServerTest {
 
   @After
   public void tearDown() throws Exception {
-    server.shutdownChannel("blah");
+//    server.shutdownChannel("blah");
     server = null;
   }
 

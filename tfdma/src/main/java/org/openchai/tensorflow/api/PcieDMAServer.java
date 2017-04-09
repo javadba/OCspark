@@ -4,6 +4,17 @@ import static org.openchai.tensorflow.api.Logger.*;
 import static org.openchai.tensorflow.api.TensorFlowIf.*;
 
 public class PcieDMAServer extends DMAServerBase implements TensorFlowIf.DMAServer {
+
+  public PcieDMAServer() {
+    String libpath = String.format("%s/%s",System.getProperty("user.dir"),"./src/main/cpp/dmaserver.dylib");
+//    String libpath = "dmaserver.dylib";
+    System.err.println("Loading DMA native library " + libpath + " ..");
+    System.load(libpath);
+
+//    System.loadLibrary(libpath);
+  }
+
+
   @Override
   public String setupChannel(String setupJson) {
     super.setupChannel(setupJson);

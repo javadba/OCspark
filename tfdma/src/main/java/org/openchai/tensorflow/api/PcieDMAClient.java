@@ -50,7 +50,7 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
 
   @Override
   public String shutdownChannel(String shutdownJson) {
-    shutdownChannel(shutdownJson);
+    super.shutdownChannel(shutdownJson);
     return shutdownChannelN(shutdownJson);
   }
 
