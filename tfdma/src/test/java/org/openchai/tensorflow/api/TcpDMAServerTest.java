@@ -1,14 +1,10 @@
-package org.openchai.tensorflow;
+package org.openchai.tensorflow.api;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openchai.tensorflow.api.DMAStructures;
-import org.openchai.tensorflow.api.TcpDMAServer;
-import org.openchai.tensorflow.api.TensorFlowIf;
-import static org.openchai.tensorflow.api.Logger.*;
 
-import static org.junit.Assert.*;
+import static org.openchai.tensorflow.api.Logger.p;
 
 public class TcpDMAServerTest {
   TcpDMAServer server = null;

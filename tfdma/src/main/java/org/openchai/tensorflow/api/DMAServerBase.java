@@ -1,12 +1,25 @@
 package org.openchai.tensorflow.api;
 
+import static org.openchai.tensorflow.api.JsonUtils.toJson;
 import static org.openchai.tensorflow.api.Logger.f;
 import static org.openchai.tensorflow.api.Logger.info;
 
 public class DMAServerBase implements TensorFlowIf.DMAServer {
+  public static class Result {
+    public Result(String fn, int rc, String msg) {
+      this.fn = fn;
+      this.rc = rc;
+      this.msg = msg;
+    }
+
+    public String fn;
+    public int rc;
+    public String msg;
+  }
+
   public String setupChannel(String setupJson) {
     info(f("SetupChannel for %s", setupJson));
-    return f("SetupChannel completed for %s", setupJson);
+    return toJson(new Result("SetupChannel", 1, "Foo"));
   }
 
   public String register(TensorFlowIf.DMACallback callbackIf) {

@@ -8,12 +8,15 @@ public class Logger {
     System.out.println(msg);
   }
 
-  public static void error(String msg, Exception e) {
-    System.out.println(msg);
+  public static String eToString(Exception e) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
-    System.out.println(String.format("%s: %s - %s", msg, e.getMessage(), sw.toString()));
+    return String.format("%s - %s", e.getMessage(), sw.toString());
+  }
+  public static void error(String msg, Exception e) {
+    System.out.println(msg);
+    System.out.println(String.format("%s: %s", msg, eToString(e)));
   }
 
   public static void p(String msg, Object arg1, Object ... moreArgs) {

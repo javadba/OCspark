@@ -5,6 +5,7 @@ import static org.openchai.tensorflow.api.Logger.*;
 import static org.openchai.tensorflow.api.TensorFlowIf.*;
 
 public class TcpDMAServer extends DMAServerBase implements TensorFlowIf.DMAServer {
+
   @Override
   public String setupChannel(String setupJson) {
     return super.setupChannel(setupJson);
