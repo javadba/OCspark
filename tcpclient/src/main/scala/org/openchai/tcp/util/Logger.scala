@@ -17,11 +17,21 @@
 package org.openchai.tcp.util
 
 trait Logger {
+  def f(msg: String) = {
+    val d = new java.util.Date
+    "%02d%02d-%02d:%02d:%02d.%03d".format(d.getMonth, d.getDate, d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
+  }
+
   def debug(msg: String) = Logger.debug(msg)
   def info(msg: String) = Logger.info(msg)
   def error(msg: String) = Logger.error(msg)
 }
 object Logger {
+  def f(msg: String) = {
+    val d = new java.util.Date
+    "%02d%02d-%02d:%02d:%02d.%03d".format(d.getMonth, d.getDate, d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
+  }
+
   def debug(msg: String) = println(s"Debug: $msg")
   def info(msg: String) = println(s"Info: $msg")
   def error(msg: String) = println(s"ERROR: $msg")

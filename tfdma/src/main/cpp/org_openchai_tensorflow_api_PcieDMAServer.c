@@ -5,13 +5,41 @@
 extern "C" {
 #endif
 
+// SHB: utility for lastIndexOf
+//int lastIndexOf(char *haystack, *needle) {
+//  if (!haystack || !needle || strlen(needle) > strlen(haystack)) {
+//  return -1;
+//  } else if (strlen(haystack)==0 || strlen(needle) == 0) {
+//   return 0;
+//   } else {
+//    for (int i=strlen(haystack)-strlen(needle)-1;i>=0;i--) {
+//      if (strncmp(haystack[i],needle,strlen(needle))) {
+//        return i;
+//      }
+//    }
+//    return -1;
+//   }
+//}
+//
+//char *rfind(char *haystack, *needle) {
+//  int ind = lastIndexOf(haystack, needle);
+//  if (ind < 0) {
+//    return NULL;
+//  } else {
+//    int n = strlen(needle)+1;
+//    return memcpy((char *)malloc(n),haystack,n+1);
+//   }
+// }
+
+
 // SHB: Helper for generating an output string
 jstring makeMsg(JNIEnv *env, jstring str, char* fname) {
   const char *name = (*env)->GetStringUTFChars(env,str, NULL);
    char msg[200];
    jstring result;
 
-   sprintf(msg, "Server %s: %s", fname, name);
+   char *fnameShort = rfind(fname, "_");
+   sprintf(msg, "CServer %s: %s", fnameShort, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
    puts(msg);
    result = (*env)->NewStringUTF(env,msg);

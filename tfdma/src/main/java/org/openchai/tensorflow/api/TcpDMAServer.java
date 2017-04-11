@@ -1,7 +1,5 @@
 package org.openchai.tensorflow.api;
 
-import static org.openchai.tensorflow.api.Logger.f;
-import static org.openchai.tensorflow.api.Logger.*;
 import static org.openchai.tensorflow.api.TensorFlowIf.*;
 
 public class TcpDMAServer extends DMAServerBase implements TensorFlowIf.DMAServer {
@@ -32,8 +30,8 @@ public class TcpDMAServer extends DMAServerBase implements TensorFlowIf.DMAServe
   }
 
   @Override
-  public byte[] readData(byte[] dataPtr) {
-    return super.readData(dataPtr);
+  public byte[] readLocal(byte[] dataPtr) {
+    return super.readLocal(dataPtr);
   }
 }
 

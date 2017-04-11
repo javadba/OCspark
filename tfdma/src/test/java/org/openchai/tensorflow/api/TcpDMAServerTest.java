@@ -63,7 +63,7 @@ public class TcpDMAServerTest {
   @Test
   public void readData() throws Exception {
     byte[] dataPtr = "I am a dataPointer".getBytes();
-    byte[] x = server.readData(dataPtr);
+    byte[] x = server.readLocal(dataPtr);
     p("setupChannel result: %s", x);
 
   }

@@ -24,12 +24,31 @@ public class DMAServerBase implements TensorFlowIf.DMAServer {
 
   public String register(TensorFlowIf.DMACallback callbackIf) {
     info(f("register DMACallback invoked for ", callbackIf.getClass().getName()));
-    return "register not implemented";
+    return toJson("register not implemented");
   }
 
+  @Override
+  public String prepareSend(String configJson) {
+    info(f("prepareSend for %s", configJson));
+    return toJson(f("prepareSend completed for %s", configJson));
+  }
+
+  @Override
+  public DMAStructures.SendResultStruct completeSend(String configJson) {
+    info(f("completeSend for %s", configJson));
+    return new DMAStructures.SendResultStruct();
+  }
+
+  @Override
   public DMAStructures.SendResultStruct sendData(String configJson, byte[] dataPtr) {
     info(f("sendData for %s and dataLen=%d", configJson, dataPtr.length));
     return new DMAStructures.SendResultStruct();
+  }
+
+  @Override
+  public String prepareRcv(String configJson) {
+    info(f("prepareRcv for %s", configJson));
+    return toJson(f("prepareRcv completed for %s", configJson));
   }
 
   public DMAStructures.RcvResultStruct rcvData(String configJson) {
@@ -37,13 +56,19 @@ public class DMAServerBase implements TensorFlowIf.DMAServer {
     return new DMAStructures.RcvResultStruct();
   }
 
-  public String shutdownChannel(String shutdownJson) {
-    info(f("ShutdownCannel for %s", shutdownJson));
-    return f("ShutdownChannel completed for %s", shutdownJson);
+  @Override
+  public DMAStructures.RcvResultStruct completeRcv(String configJson) {
+    info(f("completeRcv for %s", configJson));
+    return new DMAStructures.RcvResultStruct();
   }
 
-  public byte[] readData(byte[] dataPtr) {
-    info(f("readData for datalen=%d", dataPtr.length));
-    return "readData not implemented".getBytes();
+  public String shutdownChannel(String shutdownJson) {
+    info(f("ShutdownCannel for %s", shutdownJson));
+    return toJson(f("ShutdownChannel completed for %s", shutdownJson));
+  }
+
+  public byte[] readLocal(byte[] dataPtr) {
+    info(f("readLocal for datalen=%d", dataPtr.length));
+    return toJson("readLocal not implemented").getBytes();
   }
 }
