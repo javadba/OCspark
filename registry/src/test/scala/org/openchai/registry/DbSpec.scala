@@ -1,4 +1,4 @@
-package org.openchai.registry
+package org.openchai.db
 
 import org.scalatest.{FlatSpec, ShouldMatchers}
 

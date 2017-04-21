@@ -4,11 +4,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openchai.tcp.util.FileUtils;
+import org.openchai.tcp.util.FileUtils$;
 
 import static org.openchai.tensorflow.api.JsonUtils.*;
 import static org.openchai.tensorflow.api.Logger.*;
 
 import static org.junit.Assert.*;
+import java.security.MessageDigest;
 
 public class PcieDMAClientTest {
   PcieDMAServer server = null;
@@ -17,6 +19,18 @@ public class PcieDMAClientTest {
   public static void main(String[] args) throws Exception {
     PcieDMAClientTest test = new PcieDMAClientTest();
     test.battery();
+  }
+
+
+  byte[] md5(byte[] arr) {
+    MessageDigest md = null;
+    try {
+      md = MessageDigest.getInstance("MD5");
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+    md.update(arr);
+    return md.digest();
   }
 
   @Test
@@ -86,7 +100,7 @@ public class PcieDMAClientTest {
   public void write() throws Exception {
     byte[] data = "some data to write".getBytes();
     client.write(toJson(new TestJson("write","something")), data,
-            FileUtils.md5(data));
+            md5(data));
   }
 
   @Test

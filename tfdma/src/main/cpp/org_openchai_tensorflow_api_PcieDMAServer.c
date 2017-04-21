@@ -6,6 +6,37 @@ extern "C" {
 #endif
 
 // SHB: utility for lastIndexOf
+int lastIndexOf(char *str, char c) {
+  int ind = -1;
+ for (int i=strlen(str)-1;i>=0;i--) {
+  if (str[i] == c) {
+    ind = i;
+    break;
+  }
+ }
+ return ind;
+}
+
+char *rfind(char *haystack, char c) {
+  int ind = lastIndexOf(haystack, c);
+  if (ind < 0) {
+    return NULL;
+  } else {
+    return haystack+ind+1;
+   }
+ }
+
+//char *rfind(char *haystack, char *needle) {
+//  int ind = lastIndexOf(haystack, needle);
+//  if (ind < 0) {
+//    return NULL;
+//  } else {
+//    int n = strlen(needle)+1;
+//    return memcpy((char *)malloc(n),haystack,n+1);
+//   }
+// }
+
+
 //int lastIndexOf(char *haystack, *needle) {
 //  if (!haystack || !needle || strlen(needle) > strlen(haystack)) {
 //  return -1;
@@ -21,15 +52,7 @@ extern "C" {
 //   }
 //}
 //
-//char *rfind(char *haystack, *needle) {
-//  int ind = lastIndexOf(haystack, needle);
-//  if (ind < 0) {
-//    return NULL;
-//  } else {
-//    int n = strlen(needle)+1;
-//    return memcpy((char *)malloc(n),haystack,n+1);
-//   }
-// }
+
 
 
 // SHB: Helper for generating an output string
@@ -38,7 +61,7 @@ jstring makeMsg(JNIEnv *env, jstring str, char* fname) {
    char msg[200];
    jstring result;
 
-   char *fnameShort = rfind(fname, "_");
+   char *fnameShort = rfind(fname, '_');
    sprintf(msg, "CServer %s: %s", fnameShort, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
    puts(msg);
@@ -79,8 +102,9 @@ jobject makeObject(JNIEnv *env, jstring str, char* fname) {
     // jobject outobj = (*env)->NewObject(env, cls, constructor, obj, 5, 6);
     jclass rcvResultClass = (*env)->FindClass(env, "org/openchai/tensorflow/api/DMAStructures$RcvResultStruct");
     // TODO: Need to do stuff to the rcvResult including setting the dataStruct into it..
+//    rcvResultClass->
     jobject rcvResult;
-  return(rcvResult);
+  return(NULL);
 }
 
 /*
@@ -107,6 +131,13 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_registe
   return(makeMsg(env, str, fname));
 }
 
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareSendN
+  (JNIEnv *env, jobject jobj, jstring str) {
+  char fname[100];
+  sprintf(fname, "%s", __func__);
+  return(makeMsg(env, str, fname));
+}
+
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
  * Method:    sendDataN
@@ -119,6 +150,19 @@ JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_sendDat
   return(makeObject(env, str, fname));
 }
 
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeSendN
+  (JNIEnv *env, jobject jobj, jstring str) {
+  char fname[100];
+  sprintf(fname, "%s", __func__);
+  return(makeMsg(env, str, fname));
+}
+
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareRcvnN
+  (JNIEnv *env, jobject jobj, jstring str) {
+  char fname[100];
+  sprintf(fname, "%s", __func__);
+  return(makeMsg(env, str, fname));
+}
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
  * Method:    rcvDataN
@@ -129,6 +173,13 @@ JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_rcvData
   char fname[100];
   sprintf(fname, "%s", __func__);
   return(makeObject(env, str, fname));
+}
+
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeRcvN
+  (JNIEnv *env, jobject jobj, jstring str) {
+  char fname[100];
+  sprintf(fname, "%s", __func__);
+  return(makeMsg(env, str, fname));
 }
 
 /*
