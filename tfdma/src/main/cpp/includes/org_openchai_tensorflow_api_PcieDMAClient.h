@@ -50,10 +50,10 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_prepare
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAClient
  * Method:    readN
- * Signature: (Ljava/lang/String;[B[B)Lorg/openchai/tensorflow/api/DMAStructures/ReadResultStruct;
+ * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/ReadResultStruct;
  */
 JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_readN
-  (JNIEnv *, jobject, jstring, jbyteArray, jbyteArray);
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAClient
@@ -73,10 +73,10 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_shutdow
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAClient
- * Method:    readDataN
+ * Method:    readLocalN
  * Signature: ([B)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_readDataN
+JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_readLocalN
   (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus

@@ -26,34 +26,6 @@ char *rfind(char *haystack, char c) {
    }
  }
 
-//char *rfind(char *haystack, char *needle) {
-//  int ind = lastIndexOf(haystack, needle);
-//  if (ind < 0) {
-//    return NULL;
-//  } else {
-//    int n = strlen(needle)+1;
-//    return memcpy((char *)malloc(n),haystack,n+1);
-//   }
-// }
-
-
-//int lastIndexOf(char *haystack, *needle) {
-//  if (!haystack || !needle || strlen(needle) > strlen(haystack)) {
-//  return -1;
-//  } else if (strlen(haystack)==0 || strlen(needle) == 0) {
-//   return 0;
-//   } else {
-//    for (int i=strlen(haystack)-strlen(needle)-1;i>=0;i--) {
-//      if (strncmp(haystack[i],needle,strlen(needle))) {
-//        return i;
-//      }
-//    }
-//    return -1;
-//   }
-//}
-//
-
-
 
 // SHB: Helper for generating an output string
 jstring makeMsg(JNIEnv *env, jstring str, char* fname) {
@@ -94,13 +66,13 @@ jobject makeObject(JNIEnv *env, jstring str, char* fname) {
    sprintf(msg, "Server %s says: %s. Oh and have a nice day.", fname, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
    puts(msg);
-    // 	static class RcvResultStruct{Timestamp ts; DataStruct dataStruct;}
+    // 	static class ReadResultStruct{Timestamp ts; DataStruct dataStruct;}
     jclass dataStructClass = (*env)->FindClass(env, "org/openchai/tensorflow/api/DMAStructures$DataStruct");
     // TODO: need to instantiate the class via constructor
     // jmethodID constructor = (*env)->GetMethodID(env, cls, "<init>", "void(V)");
     // TODO: need to set data into the dataStruct
     // jobject outobj = (*env)->NewObject(env, cls, constructor, obj, 5, 6);
-    jclass rcvResultClass = (*env)->FindClass(env, "org/openchai/tensorflow/api/DMAStructures$RcvResultStruct");
+    jclass rcvResultClass = (*env)->FindClass(env, "org/openchai/tensorflow/api/DMAStructures$ReadResultStruct");
     // TODO: Need to do stuff to the rcvResult including setting the dataStruct into it..
 //    rcvResultClass->
     jobject rcvResult;
@@ -131,7 +103,7 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_registe
   return(makeMsg(env, str, fname));
 }
 
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareSendN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareWriteN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);
@@ -140,24 +112,24 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepare
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    sendDataN
- * Signature: (Ljava/lang/String;[B)Lorg/openchai/tensorflow/api/DMAStructures/SendResultStruct;
+ * Method:    writeN
+ * Signature: (Ljava/lang/String;[B)Lorg/openchai/tensorflow/api/DMAStructures/WriteResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_sendDataN
-  (JNIEnv *env, jobject jobj, jstring str, jbyteArray jarr) {
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_writeN
+  (JNIEnv *env, jobject jobj, jstring str, jbyteArray jarr, jbyteArray jarr2) {
   char fname[100];
   sprintf(fname, "%s", __func__);
   return(makeObject(env, str, fname));
 }
 
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeSendN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeWriteN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);
   return(makeMsg(env, str, fname));
 }
 
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareRcvnN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareReadN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);
@@ -165,17 +137,17 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepare
 }
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    rcvDataN
- * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/RcvResultStruct;
+ * Method:    readN
+ * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/ReadResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_rcvDataN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);
   return(makeObject(env, str, fname));
 }
 
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeRcvN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeReadN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);
@@ -196,10 +168,10 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_shutdow
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    readDataN
+ * Method:    readLocalN
  * Signature: ([B)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readDataN
+JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readLocalN
   (JNIEnv *env, jobject jobj, jstring str) {
   char fname[100];
   sprintf(fname, "%s", __func__);

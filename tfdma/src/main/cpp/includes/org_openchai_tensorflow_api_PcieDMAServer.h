@@ -25,50 +25,50 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_registe
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    prepareSendN
+ * Method:    prepareWriteN
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareSendN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareWriteN
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    sendDataN
- * Signature: (Ljava/lang/String;[B)Lorg/openchai/tensorflow/api/DMAStructures/SendResultStruct;
+ * Method:    writeN
+ * Signature: (Ljava/lang/String;[B)Lorg/openchai/tensorflow/api/DMAStructures/WriteResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_sendDataN
-  (JNIEnv *, jobject, jstring, jbyteArray);
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_writeN
+  (JNIEnv *, jobject, jstring, jbyteArray, jbyteArray);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    completeSendN
- * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/SendResultStruct;
+ * Method:    completeWriteN
+ * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/WriteResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeSendN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeWriteN
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    prepareRcvN
+ * Method:    prepareReadN
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareRcvN
+JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepareReadN
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    rcvDataN
- * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/RcvResultStruct;
+ * Method:    readN
+ * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/ReadResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_rcvDataN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readN
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    completeRcvN
- * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/RcvResultStruct;
+ * Method:    completeReadN
+ * Signature: (Ljava/lang/String;)Lorg/openchai/tensorflow/api/DMAStructures/ReadResultStruct;
  */
-JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeRcvN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_completeReadN
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -81,10 +81,10 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_shutdow
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
- * Method:    readDataN
+ * Method:    readLocalN
  * Signature: ([B)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readDataN
+JNIEXPORT jbyteArray JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_readLocalN
   (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus
