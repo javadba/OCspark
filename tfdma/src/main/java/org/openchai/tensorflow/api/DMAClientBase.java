@@ -41,7 +41,7 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
   }
 
   @Override
-  public DMAStructures.ReadResultStruct read(String configJson, byte[] data, byte[] md5) {
+  public DMAStructures.ReadResultStruct read(String configJson) {
     return null;
   }
 
@@ -56,7 +56,7 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
   }
 
   @Override
-  public byte[] readData(byte[] dataptr) {
+  public byte[] readLocal(byte[] dataptr) {
     return new byte[0];
   }
 }

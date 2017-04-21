@@ -15,13 +15,13 @@ public class TcpDMAServer extends DMAServerBase implements TensorFlowIf.DMAServe
   }
 
   @Override
-  public DMAStructures.SendResultStruct sendData(String configJson, byte[] dataPtr) {
-    return super.sendData(configJson, dataPtr);
+  public DMAStructures.WriteResultStruct write(String configJson, byte[] dataPtr) {
+    return super.write(configJson, dataPtr);
   }
 
   @Override
-  public DMAStructures.RcvResultStruct rcvData(String configJson) {
-    return super.rcvData(configJson);
+  public DMAStructures.ReadResultStruct read(String configJson) {
+    return super.read(configJson);
   }
 
   @Override

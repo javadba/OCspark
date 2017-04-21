@@ -28,38 +28,38 @@ public class DMAServerBase implements TensorFlowIf.DMAServer {
   }
 
   @Override
-  public String prepareSend(String configJson) {
-    info(f("prepareSend for %s", configJson));
-    return toJson(f("prepareSend completed for %s", configJson));
+  public String prepareWrite(String configJson) {
+    info(f("prepareWrite for %s", configJson));
+    return toJson(f("prepareWrite completed for %s", configJson));
   }
 
   @Override
-  public DMAStructures.SendResultStruct completeSend(String configJson) {
-    info(f("completeSend for %s", configJson));
-    return new DMAStructures.SendResultStruct();
+  public DMAStructures.WriteResultStruct completeWrite(String configJson) {
+    info(f("completeWrite  for %s", configJson));
+    return new DMAStructures.WriteResultStruct();
   }
 
   @Override
-  public DMAStructures.SendResultStruct sendData(String configJson, byte[] dataPtr) {
-    info(f("sendData for %s and dataLen=%d", configJson, dataPtr.length));
-    return new DMAStructures.SendResultStruct();
+  public DMAStructures.WriteResultStruct write(String configJson, byte[] dataPtr) {
+    info(f("write for %s and dataLen=%d", configJson, dataPtr.length));
+    return new DMAStructures.WriteResultStruct();
   }
 
   @Override
-  public String prepareRcv(String configJson) {
-    info(f("prepareRcv for %s", configJson));
-    return toJson(f("prepareRcv completed for %s", configJson));
+  public String prepareRead(String configJson) {
+    info(f("prepareRead for %s", configJson));
+    return toJson(f("prepareRead completed for %s", configJson));
   }
 
-  public DMAStructures.RcvResultStruct rcvData(String configJson) {
-    info(f("rcvData for %s", configJson));
-    return new DMAStructures.RcvResultStruct();
+  public DMAStructures.ReadResultStruct read(String configJson) {
+    info(f("read for %s", configJson));
+    return new DMAStructures.ReadResultStruct();
   }
 
   @Override
-  public DMAStructures.RcvResultStruct completeRcv(String configJson) {
-    info(f("completeRcv for %s", configJson));
-    return new DMAStructures.RcvResultStruct();
+  public DMAStructures.ReadResultStruct completeRead(String configJson) {
+    info(f("completeRead for %s", configJson));
+    return new DMAStructures.ReadResultStruct();
   }
 
   public String shutdownChannel(String shutdownJson) {

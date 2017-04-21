@@ -27,12 +27,12 @@ public class PcieDMAServerTest {
     info("Starting Server battery ..");
     setUp();
     setupChannel();
-    prepareSend();
-    sendData();
-    completeSend();
-    prepareRcv();
-    rcvData();
-    completeRcv();
+    prepareWrite();
+    write();
+    completeWrite();
+    prepareRead();
+    read();
+    completeRead();
     shutdownChannel();
     tearDown();
   }
@@ -47,12 +47,12 @@ public class PcieDMAServerTest {
   public void register() throws Exception {
     String res = server.register(new TensorFlowIf.DMACallback() {
       @Override
-      public DMAStructures.SendResultStruct dataSent() {
+      public DMAStructures.WriteResultStruct dataSent() {
         return null;
       }
 
       @Override
-      public DMAStructures.RcvResultStruct dataReceived() {
+      public DMAStructures.ReadResultStruct dataReceived() {
         return null;
       }
     });
@@ -60,44 +60,44 @@ public class PcieDMAServerTest {
   }
 
   @Test
-  public void prepareSend() throws Exception {
-    String x = server.prepareSend(toJson("PrepareSend"));
-    p("prepareSend result: %s", x);
+  public void prepareWrite() throws Exception {
+    String x = server.prepareWrite(toJson("PrepareSend"));
+    p("prepareWrite result: %s", x);
 
   }
 
   @Test
-  public void sendData() throws Exception {
-    DMAStructures.SendResultStruct x = server.sendData(toJson("blah"),
+  public void write() throws Exception {
+    DMAStructures.WriteResultStruct x = server.write(toJson("blah"),
             "hello there".getBytes());
-    p("sendData result: %s", x);
+    p("write result: %s", x);
   }
 
   @Test
-  public void completeSend() throws Exception {
-    String x = server.prepareSend(toJson("completeSend"));
-    p("completeSend result: %s", x);
-
-  }
-
-  @Test
-  public void prepareRcv() throws Exception {
-    String x = server.prepareSend(toJson("PrepareRcv"));
-    p("prepareRcv result: %s", x);
+  public void completeWrite() throws Exception {
+    String x = server.prepareWrite(toJson("completeSend"));
+    p("completeWrite  result: %s", x);
 
   }
 
   @Test
-  public void rcvData() throws Exception {
-    DMAStructures.RcvResultStruct x = server.rcvData(toJson("rcvData"));
-    p("rcvData result: %s", x);
+  public void prepareRead() throws Exception {
+    String x = server.prepareWrite(toJson("PrepareRcv"));
+    p("prepareRead result: %s", x);
 
   }
 
   @Test
-  public void completeRcv() throws Exception {
-    DMAStructures.RcvResultStruct x = server.rcvData(toJson("completeRcv"));
-    p("completeRcv result: %s", x);
+  public void read() throws Exception {
+    DMAStructures.ReadResultStruct x = server.read(toJson("read"));
+    p("read result: %s", x);
+
+  }
+
+  @Test
+  public void completeRead() throws Exception {
+    DMAStructures.ReadResultStruct x = server.read(toJson("completeRcv"));
+    p("completeRead result: %s", x);
 
   }
 

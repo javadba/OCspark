@@ -1,7 +1,5 @@
 package org.openchai.tensorflow.api;
 
-import static org.openchai.tensorflow.api.JsonUtils.*;
-
 public class TcpDMAClient extends DMAClientBase implements TensorFlowIf.DMAClient {
 
   @Override
@@ -30,8 +28,8 @@ public class TcpDMAClient extends DMAClientBase implements TensorFlowIf.DMAClien
   }
 
   @Override
-  public DMAStructures.ReadResultStruct read(String configJson, byte[] data, byte[] md5) {
-    return super.read(configJson, data, md5);
+  public DMAStructures.ReadResultStruct read(String configJson) {
+    return super.read(configJson);
   }
 
   @Override
@@ -45,7 +43,7 @@ public class TcpDMAClient extends DMAClientBase implements TensorFlowIf.DMAClien
   }
 
   @Override
-  public byte[] readData(byte[] dataptr) {
-    return super.readData(dataptr);
+  public byte[] readLocal(byte[] dataptr) {
+    return super.readLocal(dataptr);
   }
 }

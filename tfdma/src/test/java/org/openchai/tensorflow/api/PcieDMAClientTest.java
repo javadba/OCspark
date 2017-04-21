@@ -1,24 +1,20 @@
 package org.openchai.tensorflow.api;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.openchai.tcp.util.FileUtils;
-import org.openchai.tcp.util.FileUtils$;
+import org.junit.*;
 
 import static org.openchai.tensorflow.api.JsonUtils.*;
 import static org.openchai.tensorflow.api.Logger.*;
 
-import static org.junit.Assert.*;
 import java.security.MessageDigest;
 
 public class PcieDMAClientTest {
-  PcieDMAServer server = null;
-  PcieDMAClient client = null;
+  static PcieDMAServer server = null;
+  static PcieDMAClient client = null;
 
   public static void main(String[] args) throws Exception {
     PcieDMAClientTest test = new PcieDMAClientTest();
     test.battery();
+    test.tearDown();
   }
 
 
@@ -45,22 +41,21 @@ public class PcieDMAClientTest {
     read();
     completeRead();
     shutdownChannel();
-    tearDown();
   }
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     // TODO: set up server properly
     server = new PcieDMAServer();
     server.setupChannel(toJson(new TestJson("setupChannel","something")));
     server.register(new TensorFlowIf.DMACallback() {
                       @Override
-                      public DMAStructures.SendResultStruct dataSent() {
+                      public DMAStructures.WriteResultStruct dataSent() {
                         return null;
                       }
 
                       @Override
-                      public DMAStructures.RcvResultStruct dataReceived() {
+                      public DMAStructures.ReadResultStruct dataReceived() {
                         return null;
                       }
                     });
@@ -69,8 +64,8 @@ public class PcieDMAClientTest {
 
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     client.shutdownChannel("blah");
     client = null;
   }
@@ -133,9 +128,9 @@ public class PcieDMAClientTest {
   }
 
   @Test
-  public void readData() throws Exception {
+  public void readLocal() throws Exception {
     // TODO: I'm not certain how to represent this dataptr
-    client.readData("some dataptr".getBytes());
+    client.readLocal("some dataptr".getBytes());
   }
 
 

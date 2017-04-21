@@ -2,6 +2,16 @@ package org.openchai.tensorflow.api;
 
 public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClient {
 
+
+  public PcieDMAClient() {
+    String libpath = String.format("%s/%s",System.getProperty("user.dir"),"./src/main/cpp/dmaclient.dylib");
+//    String libpath = "dmaserver.dylib";
+    System.err.println("Loading DMA native library " + libpath + " ..");
+    System.load(libpath);
+
+//    System.loadLibrary(libpath);
+  }
+
   @Override
   public String setupChannel(String setupJson) {
     super.setupChannel(setupJson);
@@ -37,9 +47,9 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
   }
 
   @Override
-  public DMAStructures.ReadResultStruct read(String configJson, byte[] data, byte[] md5) {
-    super.read(configJson, data, md5);
-    return readN(configJson, data, md5);
+  public DMAStructures.ReadResultStruct read(String configJson) {
+    super.read(configJson);
+    return readN(configJson);
   }
 
   @Override
@@ -55,9 +65,9 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
   }
 
   @Override
-  public byte[] readData(byte[] dataptr) {
-    super.readData(dataptr);
-    return readDataN(dataptr);
+  public byte[] readLocal(byte[] dataptr) {
+    super.readLocal(dataptr);
+    return readLocalN(dataptr);
   }
 
   native String setupChannelN(String setupJson);
@@ -65,8 +75,8 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
   native String writeN(String configJson, byte[] data, byte[] md5);
   native DMAStructures.WriteResultStruct completeWriteN(String configJson);
   native String prepareReadN(String configJson);
-  native DMAStructures.ReadResultStruct readN(String configJson, byte[] data, byte[] md5);
+  native DMAStructures.ReadResultStruct readN(String configJson);
   native String completeReadN(String setupJson);
   native String shutdownChannelN(String shutdownJson);
-  native byte[] readDataN(byte[] dataptr);
+  native byte[] readLocalN(byte[] dataptr);
 }

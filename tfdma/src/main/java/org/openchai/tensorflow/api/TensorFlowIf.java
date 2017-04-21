@@ -12,9 +12,9 @@ public interface TensorFlowIf {
   // import DMAStructures.*;
 // DMACallback Interface 
   public static interface DMACallback {
-    SendResultStruct dataSent();
+    WriteResultStruct dataSent();
 
-    RcvResultStruct dataReceived();
+    ReadResultStruct dataReceived();
   }
 
   // DMA Interface
@@ -23,19 +23,19 @@ public interface TensorFlowIf {
 
     String register(DMACallback callbackIf);
 
-    String prepareSend(String configJson);  // Sends "prepare data xfer operation" command to server side
+    String prepareWrite(String configJson);  // Sends "prepare data xfer operation" command to server side
 
-    SendResultStruct sendData(String configJson, byte[] dataPtr);
+    WriteResultStruct write(String configJson, byte[] dataPtr);
 
-    // TODO: I'm unclear if we neeed the completeSend or not .. but keeping it for now
-    SendResultStruct completeSend(String configJson);  // Sends "data xfer completed" notification to server
+    // TODO: I'm unclear if we neeed the completeWrite  or not .. but keeping it for now
+    WriteResultStruct completeWrite(String configJson);  // Sends "data xfer completed" notification to server
 
-    String prepareRcv(String configJson);  // Sends "prepare data xfer operation" command to server side
+    String prepareRead(String configJson);  // Sends "prepare data xfer operation" command to server side
 
-    RcvResultStruct rcvData(String configJson);
+    ReadResultStruct read(String configJson);
 
-    // TODO: I'm unclear if we neeed the completeRcv or not .. but keeping it for now
-    RcvResultStruct completeRcv(String configJson);  // Sends "data xfer completed" notification to server
+    // TODO: I'm unclear if we neeed the completeRead or not .. but keeping it for now
+    ReadResultStruct completeRead(String configJson);  // Sends "data xfer completed" notification to server
 
     String shutdownChannel(String shutdownJson);
 
@@ -54,13 +54,13 @@ public interface TensorFlowIf {
 
     String prepareRead(String configJson);  // Sends "prepare data xfer operation" command to server side
 
-    ReadResultStruct read(String configJson, byte[] data, byte[] md5);  // invoke on DMA channel
+    ReadResultStruct read(String configJson);  // invoke on DMA channel
 
     String completeRead(String configJson);  // Sends "data xfer completed" notification to server
 
     String shutdownChannel(String setupJson);
 
-    byte[] readData(byte[] dataptr); // Retrieve *locally* from dma shared memory location
+    byte[] readLocal(byte[] dataptr); // Retrieve *locally* from dma shared memory location
   }
 }
 

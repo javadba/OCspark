@@ -29,26 +29,26 @@ public class TcpDMAServerTest {
   public void register() throws Exception {
     server.register(new TensorFlowIf.DMACallback() {
       @Override
-      public DMAStructures.SendResultStruct dataSent() {
+      public DMAStructures.WriteResultStruct dataSent() {
         return null;
       }
 
       @Override
-      public DMAStructures.RcvResultStruct dataReceived() {
+      public DMAStructures.ReadResultStruct dataReceived() {
         return null;
       }
     });
   }
 
   @Test
-  public void sendData() throws Exception {
-    DMAStructures.SendResultStruct x = server.sendData("blah", "hello there".getBytes());
+  public void write() throws Exception {
+    DMAStructures.WriteResultStruct x = server.write("blah", "hello there".getBytes());
     p("sendata result: %s", x);
   }
 
   @Test
-  public void rcvData() throws Exception {
-    DMAStructures.RcvResultStruct x = server.rcvData("blah");
+  public void read() throws Exception {
+    DMAStructures.ReadResultStruct x = server.read("blah");
     p("rcvata result: %s", x);
 
   }
@@ -61,7 +61,7 @@ public class TcpDMAServerTest {
   }
 
   @Test
-  public void readData() throws Exception {
+  public void readLocal() throws Exception {
     byte[] dataPtr = "I am a dataPointer".getBytes();
     byte[] x = server.readLocal(dataPtr);
     p("setupChannel result: %s", x);
