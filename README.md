@@ -1,7 +1,9 @@
 # OCspark 
 Spark related contributions from OpenChai
 
-Note: The <b>TensorFlow doc/README</b> may be found in [tfdma/README.md](the tensorflow dir)
+Note: The <b>TensorFlow doc/README</b> may be found in [tf/README.md](the tensorflow dir)
+
+Note: The <b>TensorFlow DMA Client doc/README</b> may be found in [tfdma/README.md](the tensorflow DMA dir)
 
 There are two modules:  <b>P2pRdd</b> and <b>TcpClient</b> 
 
