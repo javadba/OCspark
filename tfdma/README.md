@@ -4,12 +4,13 @@ BUILDING: Run the [build.sh](build.sh) in this directory.
 
 RUNNING: The <b>PcieDMAClientTest</b> runs both the PcieDMAClient and PcieDMAServer. It can be executed by:
     
+<pre>
   $ cd tfdma
-  $mvn test
-
+  $ mvn test
+</pre>
 
 Sample output from PcieDMAClientTest and PcieDMAServerTest
-
+<pre>
 
   -------------------------------------------------------
    T E S T S
@@ -84,6 +85,6 @@ Sample output from PcieDMAClientTest and PcieDMAServerTest
   Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 
   [INFO] ------------------------------------------------------------------------
-
+</pre>
 
 

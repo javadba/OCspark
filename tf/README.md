@@ -5,11 +5,12 @@ BUILDING: mvn package
 
 The <b>TFClientTest</b> sends images from TFClient to TFServer that runs TensorFlow and returns its <b>Image Tagging</b> results.
 
+<pre>
    mvn package -Dmaven.test.skip  exec:java -Dexec.mainClass="org.openchai.tensorflow.TfClient"
-
+</pre>
   
 Sample Output from <b>TFClientTest</b>
-
+<pre>
   Created XferQServerIf
   QReader thread started
   Starting XferConServerIf on TCA0080ALKVTAGB:1234 ..
@@ -120,6 +121,5 @@ Sample Output from <b>TFClientTest</b>
   I tensorflow/examples/label_image/main.cc:206] valley (360): 0.0660103
   I tensorflow/examples/label_image/main.cc:206] suspension bridge (681): 0.0555012)))
   We're done!
-
-       
+</pre>       
 
