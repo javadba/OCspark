@@ -9,11 +9,11 @@ import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.xfer._
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
-class CaosServer(val outQ: BlockingQueue[AnyQEntry], val qTcpParams: TcpParams,
+class CaosServer(val outQ: BlockingQueue[TaggedEntry], val qTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
   val qServer = new QXferServer(outQ, tcpParams, xtcpParams)
-  val caosServer = new TcpServer(qTcpParams.server, qTcpParams.port, new CaosServerIf[AnyQEntry](outQ))
+  val caosServer = new TcpServer(qTcpParams.server, qTcpParams.port, new CaosServerIf[TaggedEntry](outQ))
 
   def start() = {
     qServer.start
@@ -25,14 +25,14 @@ class CaosServer(val outQ: BlockingQueue[AnyQEntry], val qTcpParams: TcpParams,
 }
 
 object CaosServer {
-  def apply(outQ: BlockingQueue[AnyQEntry], qTcpParams: TcpParams, tcpParams: TcpParams,
+  def apply(outQ: BlockingQueue[TaggedEntry], qTcpParams: TcpParams, tcpParams: TcpParams,
     xtcpParams: TcpParams) = {
     val server = new CaosServer(outQ, qTcpParams, tcpParams, xtcpParams)
     server.start
   }
 
   def main(args: Array[String]): Unit = {
-    val q = new ArrayBlockingQueue[AnyQEntry](1000)
+    val q = new ArrayBlockingQueue[TaggedEntry](1000)
     val (host,port,xhost,xport,ahost, aport, configFile) = XferConServer.makeXferConnections(args)
     val server = apply(q,TcpParams(ahost, aport), TcpParams(host,port), TcpParams(xhost,xport))
   }
@@ -73,9 +73,9 @@ class CaosServerIf[T](/*tcpParams: TcpParams, xferServerIf: XferServerIf, */q: B
 
   def shutdown(struct: ShutdownStruct): ShutdownRespStruct = ShutdownRespStruct(1, 0, "Shutdown")
 
-  implicit def arr(qEntry: AnyQEntry): TrainingData = qEntry.asInstanceOf[TrainingData]
+  implicit def arr(qEntry: TaggedEntry): TrainingData = qEntry.asInstanceOf[TrainingData]
 
-//  def arr(qEntry: AnyQEntry) = qEntry.asInstanceOf[TrainingData]
+//  def arr(qEntry: TaggedEntry) = qEntry.asInstanceOf[TrainingData]
 
   override def service(req: P2pReq[_]): P2pResp[_] = {
     req match {
@@ -84,21 +84,21 @@ class CaosServerIf[T](/*tcpParams: TcpParams, xferServerIf: XferServerIf, */q: B
         println(s"Invoking Sync: struct=$struct")
         val resp = sync(struct)
         SyncResp(sync(struct))
-      case o: TrainReq =>
-        val struct = o.value
-        println(s"Invoking Train: struct=$struct")
-        val resp = train(struct, q.take)
-        TrainResp(resp)
-      case o: TrainValidReq =>
-        val struct = o.value
-        println(s"Invoking TrainValid: struct=$struct")
-        val resp = trainValid(struct, q.take, q.take)
-        TrainValidResp(resp)
-      case o: ValidationReq =>
-        val struct = o.value
-        println(s"Invoking Validation: struct=$struct")
-        val resp = validation(struct, q.take)
-        ValidationResp(resp)
+//      case o: TrainReq =>
+//        val struct = o.value
+//        println(s"Invoking Train: struct=$struct")
+//        val resp = train(struct, q.take)
+//        TrainResp(resp)
+//      case o: TrainValidReq =>
+//        val struct = o.value
+//        println(s"Invoking TrainValid: struct=$struct")
+//        val resp = trainValid(struct, q.take, q.take)
+//        TrainValidResp(resp)
+//      case o: ValidationReq =>
+//        val struct = o.value
+//        println(s"Invoking Validation: struct=$struct")
+//        val resp = validation(struct, q.take)
+//        ValidationResp(resp)
       case o: TestModeReq =>
         val struct = o.value
         println(s"Invoking TestMode: struct=$struct")

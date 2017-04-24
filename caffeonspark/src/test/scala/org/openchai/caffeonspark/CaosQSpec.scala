@@ -20,7 +20,7 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import org.openchai.tcp.rpc.TcpParams
 import org.openchai.tcp.util.TcpCommon
-import org.openchai.tcp.xfer.XferConClient
+import org.openchai.tcp.xfer.{TaggedEntry, TypedEntry, XferConClient, XferQClient}
 import org.scalatest.FlatSpec
 
 case class CQTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
@@ -71,7 +71,7 @@ object CaosTest {
 
   def startServer(params: CQTestParams) = {
     val QSize = 1000
-    val qs = new ArrayBlockingQueue[AnyQEntry](QSize)
+    val qs = new ArrayBlockingQueue[TaggedEntry](QSize)
     val qserver = new CaosServer(qs, TcpParams(params.cHost, params.cPort+2),
         TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
     qserver.start
@@ -85,13 +85,13 @@ object CaosTest {
 
     val StringArrayCount=3
     val FloatArrayCount=20
-    val q = new ArrayBlockingQueue[AnyQEntry](QSize)
+    val q = new ArrayBlockingQueue[TypedEntry[Any]](QSize)
     for (i <- 1 to QSize) {
-      q.offer( (Array.tabulate(StringArrayCount){ j => s"Hello there $i-$j"},
-        TcpCommon.serialize(Array.tabulate[Float](FloatArrayCount){ f => f*(f+1.0).toFloat})))
+//      q.offer( (Array.tabulate(StringArrayCount){ j => s"Hello there $i-$j"},
+//        TcpCommon.serializeObject(Array.tabulate[Float](FloatArrayCount){ f => f*(f+1.0).toFloat})))
     }
     val controllers = XferConClient.makeXferControllers(TestControllers)
-    val qclient = new XferQClient[AnyQEntry](q,controllers)
+    val qclient = new XferQClient[Any](q,controllers)
     val sleep = 4000
     println(s"Sleeping $sleep ..")
     Thread.sleep(sleep)

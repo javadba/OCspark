@@ -4,7 +4,11 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
 
 
   public PcieDMAClient() {
-    String libpath = String.format("%s/%s",System.getProperty("user.dir"),"./src/main/cpp/dmaclient.dylib");
+    String parentDir = System.getProperty("user.dir");
+    if (!parentDir.contains("tfdma")) {
+      parentDir += "/tfdma";
+    }
+    String libpath = String.format("%s/%s",parentDir,"src/main/cpp/dmaclient.dylib");
 //    String libpath = "dmaserver.dylib";
     System.err.println("Loading DMA native library " + libpath + " ..");
     System.load(libpath);

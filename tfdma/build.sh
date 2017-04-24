@@ -3,8 +3,6 @@
 echo "[1] Building C header files for java native methods (PcieDMA[Client|Server]) .."
 mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
 javah  -v -stubs -d /git/OCSpark/tfdma/src/main/cpp/includes/ -cp $(cat cp.txt):/git/OCSpark/tfdma/src/main/java org.openchai.tensorflow.api.PcieDMAClient
-#cp=$(mvn dependency:build-classpath)
-#javah  -v -stubs -d /git/OCSpark/tfdma/src/main/cpp/includes/ -cp $(cp):/git/OCSpark/tfdma/src/main/java org.openchai.tensorflow.api.PcieDMAClient
 
 echo "[2] Compiling the C files PcieDMA[Client|Server].c .."
 pushd /git/OCSpark/tfdma/src/main/cpp/ && gcc -dynamiclib -odmaclient.dylib -shared -v -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/darwin" -fpic /git/OCSpark/tfdma/src/main/cpp/org_openchai_tensorflow_api_PcieDMAClient.c; popd

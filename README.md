@@ -1,6 +1,8 @@
 # OCspark 
 Spark related contributions from OpenChai
 
+Note: The <b>TensorFlow doc/README</b> may be found in [tfdma/README.md](the tensorflow dir)
+
 There are two modules:  <b>P2pRdd</b> and <b>TcpClient</b> 
 
 Within the <b><font size="+1">TcpClient</font></b> there is a <b>Controller Channel "XferCon"</b> and a <b>Data Transfer ("XferIf") channel</b> . The XferCon provides coordination of activities between a client and a server.  The XferIf provides data transfers: initially over (slow) TCP but pluggable for use by high performance direct memory access or shared memory approaches.

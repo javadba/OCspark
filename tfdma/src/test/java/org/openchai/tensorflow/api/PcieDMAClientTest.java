@@ -13,6 +13,7 @@ public class PcieDMAClientTest {
 
   public static void main(String[] args) throws Exception {
     PcieDMAClientTest test = new PcieDMAClientTest();
+    test.setUp();
     test.battery();
     test.tearDown();
   }
@@ -20,7 +21,7 @@ public class PcieDMAClientTest {
 
   byte[] md5(byte[] arr) {
     MessageDigest md = null;
-    try {
+    try {                               
       md = MessageDigest.getInstance("MD5");
     } catch(Exception e) {
       e.printStackTrace();
@@ -32,7 +33,7 @@ public class PcieDMAClientTest {
   @Test
   public void battery() throws Exception {
     info("Starting battery ..");
-    setUp();
+    // setUp();
     setupChannel();
     prepareWrite();
     write();
@@ -40,7 +41,7 @@ public class PcieDMAClientTest {
     prepareRead();
     read();
     completeRead();
-    shutdownChannel();
+//    shutdownChannel();
   }
 
   @BeforeClass
@@ -80,54 +81,45 @@ public class PcieDMAClientTest {
     public String payload;
   }
 
-  @Test
   public void setupChannel() throws Exception {
     client.setupChannel(toJson(new TestJson("setupChannel","something")));
   }
 
-  @Test
   public void prepareWrite() throws Exception {
     client.prepareWrite(toJson(new TestJson("prepareWrite","something")));
 
   }
 
-  @Test
   public void write() throws Exception {
     byte[] data = "some data to write".getBytes();
     client.write(toJson(new TestJson("write","something")), data,
             md5(data));
   }
 
-  @Test
   public void completeWrite() throws Exception {
     client.completeWrite(toJson(new TestJson("completeWrite","something")));
 
   }
 
-  @Test
   public void prepareRead() throws Exception {
     client.prepareRead(toJson(new TestJson("prepareRead","something")));
 
   }
 
-  @Test
   public void read() throws Exception {
 
   }
 
-  @Test
   public void completeRead() throws Exception {
     client.completeRead(toJson(new TestJson("completeRead","something")));
 
   }
 
-  @Test
   public void shutdownChannel() throws Exception {
     client.shutdownChannel(toJson(new TestJson("shutdownChannel","something")));
 
   }
 
-  @Test
   public void readLocal() throws Exception {
     // TODO: I'm not certain how to represent this dataptr
     client.readLocal("some dataptr".getBytes());

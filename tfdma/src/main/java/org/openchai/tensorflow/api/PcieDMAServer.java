@@ -5,12 +5,14 @@ import static org.openchai.tensorflow.api.TensorFlowIf.*;
 public class PcieDMAServer extends DMAServerBase implements TensorFlowIf.DMAServer {
 
   public PcieDMAServer() {
-    String libpath = String.format("%s/%s",System.getProperty("user.dir"),"./src/main/cpp/dmaserver.dylib");
-//    String libpath = "dmaserver.dylib";
+    String parentDir = System.getProperty("user.dir");
+    if (!parentDir.contains("tfdma")) {
+      parentDir += "/tfdma";
+    }
+    String libpath = String.format("%s/%s",parentDir,"src/main/cpp/dmaserver.dylib");
     System.err.println("Loading DMA native library " + libpath + " ..");
     System.load(libpath);
 
-//    System.loadLibrary(libpath);
   }
 
   @Override

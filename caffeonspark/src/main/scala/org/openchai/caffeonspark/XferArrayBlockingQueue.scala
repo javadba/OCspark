@@ -1,6 +1,6 @@
 package org.openchai.caffeonspark
 
-import org.openchai.tcp.xfer.{XferConClient, XferConCommon}
+import org.openchai.tcp.xfer.{XferConClient, XferConCommon, XferQClient}
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -21,7 +21,7 @@ import org.openchai.tcp.xfer.{XferConClient, XferConCommon}
 import reflect.runtime.universe.TypeTag
 class XferArrayBlockingQueue[T: TypeTag](val capacity: Int) extends java.util.concurrent.ArrayBlockingQueue[T](capacity) {
   val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
-  val qclient = new XferQClient[T](this,controllers)
+//  val qclient = new XferQClient[T](this,controllers)
 
 //  override def offer(e: T): Boolean = {
  //   qclient.

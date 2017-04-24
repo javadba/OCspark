@@ -25,7 +25,7 @@ import org.openchai.tcp.xfer._
  */
 class CaosQClient {
 
-  val qClient = new XferQClient(new ArrayBlockingQueue[Any](1000),
+  val qClient = new XferQClient(new ArrayBlockingQueue[TypedEntry[Any]](1000),
     XferConClient.makeXferControllers(XferConCommon.TestControllers))
 
   val client = new CaosConClient(new TcpParams(XferConCommon.TestControllers.conHost,
@@ -137,7 +137,7 @@ case class CaosConClientIf(tcpParams: TcpParams, config: CaosConfig, qClient: Xf
 
   def train(s: TrainStruct, data: TrainingData): TrainResp = {
     println(s"Train with dataSize= ${data.length} ..")
-    qClient.queue.offer(data)
+//    qClient.queue.offer(data)
     val resp = getRpc().request(TrainReq(s))
     println(s"Train response: $resp")
     resp.asInstanceOf[TrainResp]
@@ -145,8 +145,8 @@ case class CaosConClientIf(tcpParams: TcpParams, config: CaosConfig, qClient: Xf
 
   def trainValid(s: TrainValidStruct, train: TrainingData, valid: TrainingData): TrainValidResp = {
     println(s"TrainValid..")
-    qClient.queue.offer(train)
-    qClient.queue.offer(valid)
+//    qClient.queue.offer(train)
+//    qClient.queue.offer(valid)
     val resp = getRpc().request(TrainValidReq(s))
     println(s"TrainValid response: $resp")
     resp.asInstanceOf[TrainValidResp]

@@ -34,11 +34,13 @@ object TfClient {
       rbuf, md5))
     println(s"Received label result: $label")
   }
+
   def main(args: Array[String]): Unit = {
     TfServer.main(Array.empty[String])
     testClient
     println("We're done!")
   }
+  
 }
 
 case class TfConfig(name: String, imgDir: String = "/tmp/images") // placeholder
