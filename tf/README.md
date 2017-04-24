@@ -1,6 +1,9 @@
-# Tensorflow DMA Module 
+# Tensorflow Module 
 
-BUILDING: mvn package 
+BUILDING:
+<pre>
+   mvn package 
+</pre>
 
 
 The <b>TFClientTest</b> sends images from TFClient to TFServer that runs TensorFlow and returns its <b>Image Tagging</b> results.

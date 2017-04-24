@@ -1,6 +1,10 @@
 # Tensorflow DMA Module 
 
-BUILDING: Run the [build.sh](build.sh) in this directory.
+BUILDING: 
+
+<pre>
+   ./build.sh
+</pre> 
 
 RUNNING: The <b>PcieDMAClientTest</b> runs both the PcieDMAClient and PcieDMAServer. It can be executed by:
     
