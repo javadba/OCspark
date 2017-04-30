@@ -13,7 +13,7 @@ public class TcpDMAClient extends DMAClientBase implements TensorFlowIf.DMAClien
   }
 
   @Override
-  public String write(String configJson, byte[] data, byte[] md5) {
+  public DMAStructures.WriteResultStruct write(String configJson, byte[] data, byte[] md5) {
     return super.write(configJson, data, md5);
   }
 

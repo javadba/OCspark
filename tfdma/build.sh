@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GITDIR=/git/OCSpark/
+export GITDIR=/git/OCSpark/
 
 # if `mvn package install` already done you can comment out next line
 pushd $GITDIR && mvn package install; popd

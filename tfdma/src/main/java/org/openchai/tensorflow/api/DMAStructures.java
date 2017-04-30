@@ -3,8 +3,8 @@ import java.sql.Timestamp;
    // DMA Server Side API
 /* public static */ public interface DMAStructures {
 	// type byte[] byte[]
-	static class DataStruct{int rc; int dataLen; byte[] dataPtr; /* handle to data */ byte[] md5; }
-	static class WriteResultStruct{int rc; Timestamp ts; String exception; DataStruct dataStruct;}
-	static class ReadResultStruct{int rc; Timestamp ts; String exception; DataStruct dataStruct;}
+	public static class DataStruct{public int rc; public int dataLen; public byte[] data; /* handle to data */ public byte[] md5; }
+	public static class WriteResultStruct{public int rc; public Timestamp ts; public String exception; public DataStruct dataStruct;}
+	public static class ReadResultStruct{public int rc; public Timestamp ts; public String exception; public DataStruct dataStruct;}
 }
 

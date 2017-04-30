@@ -48,7 +48,7 @@ public interface TensorFlowIf {
 
     String prepareWrite(String configJson);  // Sends "prepare data xfer operation" command to server side
 
-    String write(String configJson, byte[] data, byte[] md5);  // invoke on DMA channel
+    WriteResultStruct write(String configJson, byte[] data, byte[] md5);  // invoke on DMA channel
 
     WriteResultStruct completeWrite(String configJson);  // Sends "data xfer completed" notification to server
 

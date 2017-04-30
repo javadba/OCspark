@@ -26,9 +26,9 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_prepare
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAClient
  * Method:    writeN
- * Signature: (Ljava/lang/String;[B[B)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;[B[B)Lorg/openchai/tensorflow/api/DMAStructures/WriteResultStruct;
  */
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_writeN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_writeN
   (JNIEnv *, jobject, jstring, jbyteArray, jbyteArray);
 
 /*

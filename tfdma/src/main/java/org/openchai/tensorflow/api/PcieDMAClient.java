@@ -30,7 +30,7 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
   }
 
   @Override
-  public String write(String configJson, byte[] data, byte[] md5) {
+  public DMAStructures.WriteResultStruct write(String configJson, byte[] data, byte[] md5) {
 
     super.write(configJson, data, md5);
     return writeN(configJson, data, md5);
@@ -76,7 +76,7 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
 
   native String setupChannelN(String setupJson);
   native String prepareWriteN(String configJson);
-  native String writeN(String configJson, byte[] data, byte[] md5);
+  native DMAStructures.WriteResultStruct writeN(String configJson, byte[] data, byte[] md5);
   native DMAStructures.WriteResultStruct completeWriteN(String configJson);
   native String prepareReadN(String configJson);
   native DMAStructures.ReadResultStruct readN(String configJson);

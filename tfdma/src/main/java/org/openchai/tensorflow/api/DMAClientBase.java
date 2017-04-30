@@ -26,8 +26,8 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
   }
 
   @Override
-  public String write(String configJson, byte[] data, byte[] md5) {
-    return toJson(new Result("write", 1, "Foo"));
+  public DMAStructures.WriteResultStruct write(String configJson, byte[] data, byte[] md5) {
+    return new DMAStructures.WriteResultStruct();
   }
 
   @Override

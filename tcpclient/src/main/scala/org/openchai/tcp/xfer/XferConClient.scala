@@ -18,45 +18,55 @@ case class PrepResp(val value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
 case class CompletedResp(value: PrepRespStruct) extends P2pResp[PrepRespStruct]
 
+
+trait XferConIf {
+  def prepareWrite(config: XferConfig): PrepResp
+  def completeWrite(config: XferConfig): CompletedResp
+  def prepareRead(params: XferConfig): PrepResp
+  def completeRead(config: XferConfig): CompletedResp
+}
+
 /** XferController Interface.  Handles the
 * signalling to Prepare and Complete the data transfers
 */
-case class XferConIf(tcpParams: TcpParams, config: XferConfig) extends ServiceIf("XferCon") {
+class XferConIfBase(tcpParams: TcpParams, config: XferConfig) extends ServiceIf("XferCon")  with XferConIf {
 
   private val nReqs = new AtomicInteger(0)
 
-  def prepareWrite(config: XferConfig): PrepResp = {
+  override def prepareWrite(config: XferConfig): PrepResp = {
     println(s"PrepareWrite ..")
     val resp = getRpc().request(PrepWriteReq(config))
     println(s"PrepareWrite response: $resp")
     resp.asInstanceOf[PrepResp]
   }
 
-  def completeWrite(config: XferConfig): CompletedResp = {
+  override def completeWrite(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(new CompleteWriteReq(config))
     println(s"CompleteWrite response: $resp")
     resp.asInstanceOf[CompletedResp]
   }
 
-  def prepareRead(params: XferConfig): PrepResp = {
+  override def prepareRead(params: XferConfig): PrepResp = {
     val resp = getRpc().request(PrepReadReq(params))
     resp.asInstanceOf[PrepResp]
   }
 
-  def completeRead(config: XferConfig): CompletedResp = {
+  override def completeRead(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(CompleteReadReq(config))
     resp.asInstanceOf[CompletedResp]
   }
 }
 
+
 /** XferController Client Interface.  Invoke this one first which handles the
 * signalling to Prepare , Invoke (via Xfer interface), and Complete the data transfers
 */
 case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: XferConfig)
-  extends TcpClient(tcpParams, XferConIf(tcpParams, config)) {
+  extends TcpClient(tcpParams, new XferConIfBase(tcpParams, config)) {
 
-  val xferConIf = serviceIf.asInstanceOf[XferConIf]
-  val xferIf = new XferIfClient(xferTcpParams, config)
+  val xferConIf = serviceIf.asInstanceOf[XferConIfBase]
+  val tcpXferIf = new TcpXferIfClient(xferTcpParams, config)
+  var xferIf: XferIfClient = tcpXferIf
 
   def write(params: XferConfig, writeParams: XferWriteParams) = {
     println(s"Client: beginning Write Controller for $params")

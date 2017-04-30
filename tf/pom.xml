@@ -71,6 +71,12 @@
           <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.openchai.ocspark</groupId>
+            <artifactId>tfdma</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
 </project>

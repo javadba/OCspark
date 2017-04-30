@@ -108,7 +108,7 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_prepare
  * Method:    writeN
  * Signature: (Ljava/lang/String;[B[B)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_writeN
+JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAClient_writeN
   (JNIEnv *env, jobject jobj, jstring str, jbyteArray jarr, jbyteArray jarr2) {
   char fname[100];
   sprintf(fname, "%s", __func__);

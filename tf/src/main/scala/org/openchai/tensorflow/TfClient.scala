@@ -10,7 +10,7 @@ object TfClient {
   def apply() = {
 
     import XferConCommon._
-    val controllers =XferConClient.makeXferControllers(TestControllers)
+    val controllers =DmaXferConClient.makeDmaXferControllers(TestControllers)
     val client = new TfClient(AppTcpArgs, TfConfig("TestLabeler"), controllers.client)
     client
   }
@@ -57,14 +57,13 @@ case class LabelImgRespStruct(cmdResult: ExecResult)
 
 case class LabelImgResp(val value: LabelImgRespStruct) extends P2pResp[LabelImgRespStruct]
 
-class TfClient(val tcpParams: TcpParams, val config: TfConfig, val xferClient: XferConClient)
+class TfClient(val tcpParams: TcpParams, val config: TfConfig, val xferClient: DmaXferConClient)
   extends TcpClient(tcpParams, TfClientIf(tcpParams, config, xferClient)) {
-
   val tfIf = serviceIf.asInstanceOf[TfClientIf]
 
   def labelImg(struct: LabelImgStruct) = tfIf.labelImg(struct)
 }
-case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: XferConClient) extends ServiceIf("TfClient") {
+case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: DmaXferConClient) extends ServiceIf("TfClient") {
 
 //  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
   def labelImg(s: LabelImgStruct): LabelImgResp = {
@@ -74,10 +73,11 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: XferConC
     val wparams = XferWriteParams("FunnyPicTag", tfClient.config,
       TcpCommon.serializeObject(TaggedEntry("funnyPic", s.data)))
     val xferConf = TcpXferConfig("blah", s.fpath)
-    tfClient.xferConIf.prepareWrite(xferConf)
-    tfClient.xferIf.write(XferWriteParams("TestWriteTag", xferConf, s.data))
-    tfClient.xferConIf.completeWrite(xferConf)
-    val wres = tfClient.write(tfClient.config, wparams)
+    tfClient.prepareWrite(xferConf)
+    tfClient.write(XferWriteParams("TestWriteTag", xferConf, s.data))
+    tfClient.completeWrite(xferConf)
+//    val wres = tfClient.write(tfClient.config, wparams)
+    val wres = tfClient.write(wparams)
     val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
     println(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
