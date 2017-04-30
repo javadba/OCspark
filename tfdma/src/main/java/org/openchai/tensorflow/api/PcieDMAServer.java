@@ -9,7 +9,8 @@ public class PcieDMAServer extends DMAServerBase implements TensorFlowIf.DMAServ
     if (!parentDir.contains("tfdma")) {
       parentDir += "/tfdma";
     }
-    String libpath = String.format("%s/%s",parentDir,"src/main/cpp/dmaserver.dylib");
+    String ext = System.getProperty("os.name").equals("Mac OS X") ? ".dylib" : ".so";
+    String libpath = String.format("%s/%s%s",parentDir,"src/main/cpp/dmaserver",ext);
     System.err.println("Loading DMA native library " + libpath + " ..");
     System.load(libpath);
 
