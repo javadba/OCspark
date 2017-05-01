@@ -36,7 +36,7 @@ object TfClient {
   }
 
   def main(args: Array[String]): Unit = {
-    TfServer.main(Array.empty[String])
+//    TfServer.main(Array.empty[String])
     testClient
     println("We're done!")
   }
