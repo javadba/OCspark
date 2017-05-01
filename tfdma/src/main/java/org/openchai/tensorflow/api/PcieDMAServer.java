@@ -12,7 +12,11 @@ public class PcieDMAServer extends DMAServerBase implements TensorFlowIf.DMAServ
     String ext = System.getProperty("os.name").equals("Mac OS X") ? ".dylib" : ".so";
     String libpath = String.format("%s/%s%s",parentDir,"src/main/cpp/dmaserver",ext);
     System.err.println("Loading DMA native library " + libpath + " ..");
-    System.load(libpath);
+    try {
+      System.load(libpath);
+    } catch(Exception e) {
+      System.err.println("Unable to load native library %s: %s".format( libpath, e.getMessage()));
+    }
 
   }
 
