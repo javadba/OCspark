@@ -14,9 +14,10 @@ cp -p $JAVA_HOME/include/linux/*.h $JAVA_HOME/include
 
 echo "[2] Compiling the C files PcieDMA[Client|Server].c .."
 
-for f in org_openchai_tensorflow_api_PcieDMAClient.c org_openchai_tensorflow_api_PcieDMAServer.c; do  pushd $GITDIR/tfdma/src/main/cpp/ && gcc -v -shared  -I'$JAVA_HOME/include' -I'$JAVA_HOME/include/linux' -odmaserver.so -fpic $GITDIR/tfdma/src/main/cpp/$f; popd; done
+pushd $GITDIR/tfdma/src/main/cpp/ && gcc -v -shared  -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -odmaserver.so -fpic $GITDIR/tfdma/src/main/cpp/org_openchai_tensorflow_api_PcieDMAServer.c; popd
+pushd $GITDIR/tfdma/src/main/cpp/ && gcc -v -shared  -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -odmaclient.so -fpic $GITDIR/tfdma/src/main/cpp/org_openchai_tensorflow_api_PcieDMAClient.c; popd
 echo "**Entry points for dylibs** "
-find . -name \*.dylib | xargs nm -gU | awk '{print $3}'
+find . -name \*.so | xargs nm -g | awk '{print $3}'
 
 echo "[3] Compiling java sources and building release jar.."
 mvn package
