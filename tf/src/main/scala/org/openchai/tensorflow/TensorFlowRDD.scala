@@ -14,12 +14,12 @@ case class TFSubmitter() {
 }
 object TFSubmitter {
 
-  def runSparkJob(master: String, dir: String, nPartitions: Int = 10) = {
+  def runSparkJob(master: String, tfServer: String, dir: String, nPartitions: Int = 10) = {
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val irdd = sc.binaryFiles(dir,nPartitions)
     val out = irdd.mapPartitionsWithIndex{ case (np, part) =>
-      val tfClient = TfClient()
+      val tfClient = TfClient(tfServer)
       part.map { case (path,contents) =>
       val label = s"${TcpUtils.getLocalHostname}-Part$np-$path"
       val bytes = contents.toArray
@@ -36,8 +36,8 @@ object TFSubmitter {
 
 
   def main(args: Array[String]): Unit = {
-    val (master,dir,nPartitions) = (args(0), args(1), args(2))
+    val Array(master,tfServer, dir,nPartitions) = args
     val dir2 = s"${System.getProperty("user.dir")}/tf/src/main/resources/images/"
-    runSparkJob(master,s"file:///$dir2",nPartitions.toString.toInt)
+    runSparkJob(master,tfServer, s"file:///$dir2",nPartitions.toString.toInt)
   }
 }

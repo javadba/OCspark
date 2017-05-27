@@ -15,6 +15,13 @@ object TfClient {
     client
   }
 
+  def apply(server: String) = {
+    import XferConCommon._
+    val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server))
+    val client = new TfClient(remoteTcpArgs(server), TfConfig("TestLabeler"), controllers.client)
+    client
+  }
+
   def testClient(): Unit = {
 //    val testImg = "/images/pilatus800.jpg"
     val testImg = "/images/JohnNolteAndDad.jpg"
