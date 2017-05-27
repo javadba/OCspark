@@ -64,10 +64,16 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
   }
 
   override def start() = {
+	Console.println("setting preferIpv4Stack")
+    System.setProperty("java.net.preferIPv4Stack" , "true");
     serverSocket = new ServerSocket()
     println(s"Starting ${serverIf.name} on $host:$port ..")
     try {
-      serverSocket.bind(new InetSocketAddress(host, port))
+      if (host=="*") {
+	serverSocket.bind(new InetSocketAddress(port))
+	} else {
+          serverSocket.bind(new InetSocketAddress(host, port))
+      }
     } catch {
       case e: Exception => throw new Exception(s"BindException on $host:$port", e)
     }

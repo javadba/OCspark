@@ -26,12 +26,13 @@ class TfServer(val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
 object TfServer {
 
   val isTx1 = System.getProperty("os.name") == "Linux"
-  val tfExec = if (isTx1) {
-    s"${System.getProperty("user.dir")}/bin/fake_label_image.sh"
+  val (tfExec,tfExecDir): (String,String) = if (isTx1) {
+    // s"${System.getProperty("user.dir")}/bin/fake_label_image.sh"
+    (s"${System.getProperty("openchai.tensorflow.cmdline")}",s"${System.getProperty("openchai.tensorflow.dir")}")
   } else {
-    "/shared/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image"
+    ("/shared/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image","/shared/tensorflow")
   }
-  val tfExecDir = "/shared/tensorflow"
+  // val tfExecDir = "/shared/tensorflow"
   val imagesDir = "/tmp/images"
   val f = new java.io.File(imagesDir)
   if (!f.exists() && !f.mkdirs) {

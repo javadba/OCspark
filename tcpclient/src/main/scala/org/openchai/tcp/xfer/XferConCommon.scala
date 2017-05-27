@@ -23,10 +23,11 @@ ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non 
     configFile: String, data: Array[Byte], outboundDataPaths: (String,String), inboundDataPath: String)
 
 
-  val TestControllers = XferControllerArgs(TcpUtils.getLocalHostname, 1234,TcpUtils.getLocalHostname, 1235, TcpUtils.getLocalHostname, 1236,
+	val server = "*" // server
+  val TestControllers = XferControllerArgs(server, 61234,server, 61235, server, 61236,
     "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
 
-  val AppTcpArgs = TcpParams(TcpUtils.getLocalHostname, 1236)
+  val AppTcpArgs = TcpParams(server, 61236)
 
   def remoteControllers(server: String)  = XferControllerArgs(server, 1234,server, 1235, server, 1236,
     "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
