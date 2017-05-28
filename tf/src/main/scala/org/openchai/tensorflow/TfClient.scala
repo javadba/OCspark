@@ -15,8 +15,8 @@ object TfClient {
     client
   }
 
+  import XferConCommon._
   def apply(server: String) = {
-    import XferConCommon._
     val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server))
     val client = new TfClient(remoteTcpArgs(server), TfConfig("TestLabeler"), controllers.client)
     client

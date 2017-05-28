@@ -26,8 +26,12 @@ object TcpCommon {
   def deserializeObject(a: Array[Byte]): Any = {
     import java.io._
     // TODO: determine how to properly size the bos
+    println(s"deserializeObject: inputlen=${a.length}")
+    println(s"input bytes = ${new String(a.slice(0,100))}")
     val bis = new ByteArrayInputStream(a)
+    println(s"bis length = ${bis.available}")
     val ois = new ObjectInputStream(bis)
+    println(s"ois ${ois.available}")
     val o = ois.readObject
     o
   }

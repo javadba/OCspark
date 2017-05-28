@@ -29,9 +29,9 @@ ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non 
 
   val AppTcpArgs = TcpParams(server, 61236)
 
-  def remoteControllers(server: String)  = XferControllerArgs(server, 1234,server, 1235, server, 1236,
+  def remoteControllers(server: String)  = XferControllerArgs(server, 61234,server, 61235, server, 61236,
     "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
 
-  def remoteTcpArgs(server: String) = TcpParams(server, 1236)
+  def remoteTcpArgs(server: String) = TcpParams(server, 61236)
 
 }
