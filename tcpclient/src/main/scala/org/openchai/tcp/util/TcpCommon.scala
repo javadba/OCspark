@@ -3,7 +3,7 @@ package org.openchai.tcp.util
 import java.io.{ByteArrayOutputStream, File, FileOutputStream, ObjectOutputStream}
 import java.nio.file.{Files, Path, Paths}
 
-import org.openchai.tcp.xfer.{DataPtr, PackedData, RawData, UnpackedData}
+import org.openchai.tcp.xfer._
 
 object TcpCommon {
 
@@ -11,8 +11,14 @@ object TcpCommon {
 
   def serializeObject(a: Any): Array[Byte] = {
     // TODO: determine how to properly size the bos
-    val bos = new ByteArrayOutputStream(2 ^ 22)
+    val bos = new ByteArrayOutputStream(2 ^ 20)
     val oos = new ObjectOutputStream(bos)
+    println(s"serializeObject: a is ${a.toString}")
+    if (a.isInstanceOf[XferWriteReq]) {
+      println(s"serializeObject: XferWriteReq: datalen=${a.asInstanceOf[XferWriteReq].value.data.length}")
+    } else {
+      println(s"NOT XferWriteReq .. Type is ${a.getClass.getName}")
+    }
     oos.writeObject(a)
     val out = bos.toByteArray
     //    Files.write(Paths.get("/tmp/xout"),out)
@@ -51,3 +57,4 @@ object TcpCommon {
     (packed._1, obj, packed._3)
   }
 }
+

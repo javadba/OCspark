@@ -66,7 +66,9 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     val buf = new Array[Byte](Math.pow(2,20).toInt)
     val serreq = serializeStream(pack(req.path, req))
     os.write(serreq)
+    os.flush
     val nread = is.read(buf)
+
     info(s"request: received $nread bytes")
     val (path, o, md5) = unpack(buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
