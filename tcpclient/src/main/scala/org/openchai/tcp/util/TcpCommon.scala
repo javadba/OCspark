@@ -42,19 +42,19 @@ object TcpCommon {
     o
   }
 
-  def pack(path: DataPtr, o: Any): PackedData = {
+  def pack(/* path: DataPtr, */ o: Any): PackedData = {
     val ser = serializeObject(o)
     val md5 = FileUtils.md5(ser)
-    (path, ser, md5)
+    ser // (path, ser, md5)
   }
 
   def unpack(raw: RawData): UnpackedData = {
     val packedAny = deserializeStream(raw)
     val packed = packedAny.asInstanceOf[PackedData]
-    FileUtils.checkMd5(packed)
-    val obj = deserializeObject(packed._2)
+//    FileUtils.checkMd5(packed)
+    val obj = deserializeObject(packed)
     println(s"unpacked ${obj.getClass.getName}")
-    (packed._1, obj, packed._3)
+    obj
   }
 }
 

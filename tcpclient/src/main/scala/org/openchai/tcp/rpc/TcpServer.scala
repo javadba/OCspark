@@ -109,11 +109,12 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
           if (!msgPrinted) { debug("Listening for messages.."); msgPrinted = true }
           val nread = is.read(buf)
           val unpacked = unpack(buf.slice(0,nread))
-          val req = unpacked._2.asInstanceOf[P2pReq[_]]
+          val req = unpacked.asInstanceOf[P2pReq[_]]
+//          val req = unpacked._2.asInstanceOf[P2pReq[_]]
           debug(s"Message received: ${req.toString}")
           val resp = serverIf.service(req)
           debug(s"Sending response:  ${resp.toString}")
-          val ser = serializeStream(pack(unpacked._1, resp))
+          val ser = serializeStream(pack(resp))
           os.write(ser)
           os.flush
         } while (!reconnectEveryRequest)

@@ -10,8 +10,10 @@ package object xfer {
 
   type AnyQEntry = Any
 
-  type PackedData = (DataPtr, RawData, RawData)
-  type UnpackedData = (DataPtr, Any, RawData)
+  type PackedData = RawData
+//  type PackedData = (DataPtr, RawData, RawData)
+//  type UnpackedData = (DataPtr, Any, RawData)
+  type UnpackedData = Any
 
   case class TaggedEntry(tag: String, data: Array[Byte])
 

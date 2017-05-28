@@ -27,7 +27,8 @@ import scala.collection.mutable.ArrayBuffer
 
 object FileUtils {
 
-  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
+//  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
+//  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
 
   def checkMd5(path: DataPtr, data: Array[Byte], md5In: RawData) = {
     if (!compareBytes(md5(data), md5In)) {
