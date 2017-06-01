@@ -104,10 +104,11 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
       override def run() = {
         val is = new BufferedInputStream(socket.getInputStream)
         val os = new BufferedOutputStream(socket.getOutputStream)
-        val buf = new Array[Byte](BufSize)
         do {
+          val buf = new Array[Byte](BufSize)
           if (!msgPrinted) { debug("Listening for messages.."); msgPrinted = true }
           val nread = is.read(buf)
+          println(s"Nread=$nread")
           val unpacked = unpack(buf.slice(0,nread))
           val req = unpacked.asInstanceOf[P2pReq[_]]
 //          val req = unpacked._2.asInstanceOf[P2pReq[_]]
@@ -126,3 +127,4 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
 
   override def stop(): Boolean = ???
 }
+
