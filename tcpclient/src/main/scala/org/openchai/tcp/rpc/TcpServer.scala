@@ -27,7 +27,7 @@ import scala.util.Try
 
 object TcpServer {
   val DefaultPort = 8989
-  val BufSize = (Math.pow(2, 20) - 1).toInt
+  val BufSize = (Math.pow(2, 22) - 1).toInt
 }
 
 case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
@@ -47,40 +47,40 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     import scala.concurrent.duration._
     val socketTimeout = 200
     val duration: Duration = 10 seconds
-//    if (CheckPort) {
-//      val result =
-//        Future {
-//          Try {
-//            val socket = new java.net.Socket()
-//            socket.connect(new InetSocketAddress("localhost", port), socketTimeout)
-//            socket.close()
-//            port
-//          } toOption
-//        }
-//      Try {
-//        Await.result(result, duration)
-//      }.toOption.getOrElse(Nil)
-//    }
+    //    if (CheckPort) {
+    //      val result =
+    //        Future {
+    //          Try {
+    //            val socket = new java.net.Socket()
+    //            socket.connect(new InetSocketAddress("localhost", port), socketTimeout)
+    //            socket.close()
+    //            port
+    //          } toOption
+    //        }
+    //      Try {
+    //        Await.result(result, duration)
+    //      }.toOption.getOrElse(Nil)
+    //    }
   }
 
   override def start() = {
-	Console.println("setting preferIpv4Stack")
-    System.setProperty("java.net.preferIPv4Stack" , "true");
+    Console.println("setting preferIpv4Stack")
+    System.setProperty("java.net.preferIPv4Stack", "true");
     serverSocket = new ServerSocket()
     println(s"Starting ${serverIf.name} on $host:$port ..")
     try {
-      if (host=="*") {
-	serverSocket.bind(new InetSocketAddress(port))
-	} else {
-          serverSocket.bind(new InetSocketAddress(host, port))
+      if (host == "*") {
+        serverSocket.bind(new InetSocketAddress(port))
+      } else {
+        serverSocket.bind(new InetSocketAddress(host, port))
       }
     } catch {
       case e: Exception => throw new Exception(s"BindException on $host:$port", e)
     }
-//    checkPort(port) match {
-//      case m: Exception => error(s"Server already running on port $port"); false
-//      case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
-//    }
+    //    checkPort(port) match {
+    //      case m: Exception => error(s"Server already running on port $port"); false
+    //      case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
+    //    }
     serverThread = new Thread() {
       override def run() {
         while (!stopRequested) {
@@ -95,27 +95,44 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
   }
 
   import TcpCommon._
+
   def serve(socket: Socket): Thread = {
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
     val t = new Thread() {
       var msgPrinted = false
       var msgCounter = 0
+
       override def run() = {
         val is = new BufferedInputStream(socket.getInputStream)
         val os = new BufferedOutputStream(socket.getOutputStream)
         do {
           val buf = new Array[Byte](BufSize)
-          if (!msgPrinted) { debug("Listening for messages.."); msgPrinted = true }
-          val nread = is.read(buf)
-          println(s"Nread=$nread")
-          val unpacked = unpack("/tmp/serverReq.out",buf.slice(0,nread))
+          if (!msgPrinted) {
+            debug("Listening for messages.."); msgPrinted = true
+          }
+          var totalRead = 0
+          do {
+            val available = is.available
+            if (available <= 0) {
+              Thread.sleep(100)
+            } else {
+              do {
+                val nread = is.read(buf, totalRead, buf.length - totalRead)
+                totalRead += nread
+                //                debug(s"in loop: nread=$nread totalRead=$totalRead")
+                Thread.sleep(10)
+              } while (is.available > 0)
+            }
+          } while (totalRead <= 0)
+          println(s"Serve: totalRead=$totalRead")
+          val unpacked = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
           val req = unpacked.asInstanceOf[P2pReq[_]]
-//          val req = unpacked._2.asInstanceOf[P2pReq[_]]
-          debug(s"Message received: ${req.toString}")
+          //          val req = unpacked._2.asInstanceOf[P2pReq[_]]
+          //          debug(s"Message received: ${req.toString}")
           val resp = serverIf.service(req)
-          debug(s"Sending response:  ${resp.toString}")
-          val ser = serializeStream("/tmp/serverResp.out",pack("/tmp/serverResp.pack.out",resp))
+          //          debug(s"Sending response:  ${resp.toString}")
+          val ser = serializeStream("/tmp/serverResp.out", pack("/tmp/serverResp.pack.out", resp))
           os.write(ser)
           os.flush
         } while (!reconnectEveryRequest)
