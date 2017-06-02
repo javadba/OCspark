@@ -7,9 +7,9 @@ import org.openchai.tcp.xfer._
 
 object TcpCommon {
 
-  def serializeStream(a: Any): Array[Byte] = serializeObject(a)
+  def serializeStream(path: String, a: Any): Array[Byte] = serializeObject(path, a)
 
-  def serializeObject(a: Any): Array[Byte] = {
+  def serializeObject(path: String, a: Any): Array[Byte] = {
     // TODO: determine how to properly size the bos
     val bos = new ByteArrayOutputStream(2 ^ 22)
     val oos = new ObjectOutputStream(bos)
@@ -26,6 +26,9 @@ object TcpCommon {
     //    val fs = new FileOutputStream(new File("/tmp/xout")).write(out)
     //    val test = deserializeObject(out)
     println(s"serializeObject: out arraylen=${out.length}")
+    val tpath = s"/tmp/${path.substring(math.max(0,path.lastIndexOf("/")))}.${new java.util.Random().nextInt(1000)}"
+    FileUtils.writeBytes(tpath,out)
+    println(s"Wrote received contents (${out.length} bytes) to $tpath")
     out
   }
 
@@ -44,13 +47,16 @@ object TcpCommon {
     o
   }
 
-  def pack(/* path: DataPtr, */ o: Any): PackedData = {
-    val ser = serializeObject(o)
+  def pack(path: DataPtr,o: Any): PackedData = {
+    val ser = serializeObject(path, o)
     val md5 = FileUtils.md5(ser)
     ser // (path, ser, md5)
   }
 
-  def unpack(raw: RawData): UnpackedData = {
+  def unpack(path: String, raw: RawData): UnpackedData = {
+    val tpath = s"/tmp/${path}.${new java.util.Random().nextInt(1000)}"
+    FileUtils.writeBytes(tpath,raw)
+    println(s"Wrote received contents (${raw.length} bytes) to $tpath")
     val packedAny = deserializeStream(raw)
     val packed = packedAny.asInstanceOf[PackedData]
 //    FileUtils.checkMd5(packed)

@@ -123,7 +123,7 @@ class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) exte
   def consume(config: TcpXferConfig): Any = defaultConsume(config)
 
   def defaultConsume(config: TcpXferConfig): Any = {
-    val payload = TcpCommon.unpack(readFile(config.finalPath))
+    val payload = TcpCommon.unpack(config.finalPath, readFile(config.finalPath))
     println(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
     payload
   }

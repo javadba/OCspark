@@ -78,7 +78,7 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: DmaXferC
 
 //    val fdata = FileUtils.readFileBytes(s.fpath)
     val wparams = XferWriteParams("FunnyPicTag", tfClient.config,
-      TcpCommon.serializeObject(TaggedEntry("funnyPic", s.data)))
+      TcpCommon.serializeObject(s.fpath, TaggedEntry("funnyPic", s.data)))
     val xferConf = TcpXferConfig("blah", s.fpath)
     tfClient.prepareWrite(xferConf)
     tfClient.write(XferWriteParams("TestWriteTag", xferConf, s.data))

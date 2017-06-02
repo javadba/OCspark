@@ -64,14 +64,14 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
       connect(savedConnParam)
     }
     val buf = new Array[Byte](Math.pow(2,20).toInt)
-    val serreq = serializeStream(pack(/*req.path,*/ req))
+    val serreq = serializeStream(req.path, pack(req.path, req))
     os.write(serreq)
     os.flush
     val nread = is.read(buf)
 
-    info(s"request: received $nread bytes")
+//    info(s"request: received $nread bytes")
 //    val (path, o, md5) = unpack(buf.slice(0,nread))
-    val o = unpack(buf.slice(0,nread))
+    val o = unpack(req.path,buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
     if (reconnectEveryRequest) {
       sock.close
