@@ -16,10 +16,8 @@
  */
 package org.openchai.tcp.rpc
 
-import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.TcpCommon._
-import org.openchai.tcp.util.{FileUtils, TcpUtils}
-import org.openchai.tcp.xfer.{DataPtr, PackedData, RawData, UnpackedData}
+import org.openchai.tcp.util.TcpUtils
 
 case class TcpParams(server: String, port: Int) extends P2pConnectionParams
 
@@ -31,8 +29,6 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   import java.io._
   import java.net._
 
-  import TcpClient._
-
   import reflect.runtime.universe._
 
   private var sock: Socket = _
@@ -42,6 +38,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   {
       connect(connParams)
   }
+
   override def isConnected: Boolean = is != null && os != null
 
   override def connect(connParam: P2pConnectionParams): Boolean = {
@@ -63,11 +60,12 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     if (!isConnected) {
       connect(savedConnParam)
     }
-    val buf = new Array[Byte](Math.pow(2,20).toInt)
+    val buf = new Array[Byte](Math.pow(2,22).toInt)
     val serreq = serializeStream(req.path, pack(req.path, req))
     os.write(serreq)
     os.flush
-    val nread = is.read(buf)
+    val bis = new BufferedInputStream(is)
+    val nread = bis.read(buf)
 
 //    info(s"request: received $nread bytes")
 //    val (path, o, md5) = unpack(buf.slice(0,nread))
