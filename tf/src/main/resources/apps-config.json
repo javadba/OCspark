@@ -1,0 +1,31 @@
+{
+    "defaults": {
+        "apps": {
+            "tensorflow-labelimage": {
+                "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image --image=$1",
+                "rundir": "${TENSORFLOW_HOME}",
+                "tmpdir": "${TENSORFLOW_HOME}/tmp"
+            },
+            "darknet-yolo": {
+                "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights $1",
+                "rundir": "${DARKNET_HOME}",
+                "tmpdir": "${DARKNET_HOME}/tmp"
+            }
+        }
+    },
+    "environments": {
+        "linux": {
+            "env" : {
+                "TENSORFLOW_HOME": "/home/ubuntu/tensorflow",
+                "DARKNET_HOME": "/git/darknet"
+            }
+        },
+        "osx": {
+            "env" : {
+                "TENSORFLOW_HOME": "/shared/tensorflow",
+                "DARKNET_HOME": "/git/darknet"
+            }
+        }
+    }
+}
+

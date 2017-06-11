@@ -1,0 +1,24 @@
+
+
+Running on Tx1:
+    jvm Tcp server
+        Can invoke any shell script
+        TF
+        any python
+
+Running on CarrierBoard:
+    jvm Tcp client
+    Spark Worker
+    optinally: spark driver
+
+For TF:
+
+    Spark pulls files for use by TF
+    Each worker gets list of TF files
+    Worker sends files to jvm Tcp client
+    Client sends to JVMM Server for probabilistic classification
+    Client receives TF ordered results
+
+
+
+

@@ -53,7 +53,7 @@ object TfClient {
 case class TfConfig(name: String, imgDir: String = "/tmp/images") // placeholder
 
 case class LabelImgStruct(tag: String, fpath: String,
-  data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte]) {
+  data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte], optApp: Option[String] = None) {
   override def toString: DataPtr = s"LabelImg: tag=$tag path=$fpath " +
     s"datalen=${if (data!=null) data.length else -1} md5len=${if (md5!=null) md5.length else -1}"
 }
@@ -74,7 +74,7 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: DmaXferC
 
 //  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
   def labelImg(s: LabelImgStruct): LabelImgResp = {
-    println(s"LabelImg..")
+    println(s"LabelImg: $s")
 
 //    val fdata = FileUtils.readFileBytes(s.fpath)
     val wparams = XferWriteParams("FunnyPicTag", tfClient.config,

@@ -5,7 +5,7 @@ case class ExecResult(params: ExecParams, elapsed: Long, rc: Int, stdout: String
 case class ExecParams(tag: String, process: String, args: Option[Seq[String]] = None,
   env: Option[Seq[String]] = None, dir: String = ".") {
 
-  override def toString: String = dir + "/" + process + args.flatMap(arr => Some(arr.mkString(" "))).getOrElse("")
+  override def toString: String = dir + "/" + process + args.flatMap(arr => Some(arr.mkString(" "," ",""))).getOrElse("")
 
 }
 
@@ -91,7 +91,7 @@ object ProcessUtils {
 
     val pb = new ProcessBuilder((params.process +: params.args.getOrElse(Seq.empty[String])):_*)
     pb.directory(new java.io.File(params.dir))
-    println(s"Exec: $params  pbDir=${pb.directory.getAbsolutePath}")
+    println(s"Exec: $params pbDir=${pb.directory.getAbsolutePath}")
 
     val proc = pb.start()
     proc.waitFor()

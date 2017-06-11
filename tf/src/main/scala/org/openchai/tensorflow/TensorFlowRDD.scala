@@ -1,11 +1,7 @@
 package org.openchai.tensorflow
 
-import org.openchai.tcp.rpc.{P2pConnectionParams, SolverServerIf}
-
-import scala.reflect.ClassTag
-import org.apache.spark
 import org.apache.spark.sql.SparkSession
-import org.openchai.tcp.util.{FileUtils, TcpCommon, TcpUtils}
+import org.openchai.tcp.util.{FileUtils, TcpUtils}
 
 object TensorFlowRDD {
 }
@@ -14,7 +10,7 @@ case class TFSubmitter() {
 }
 object TFSubmitter {
 
-  def runSparkJob(master: String, tfServer: String, dir: String, nPartitions: Int = 10) = {
+  def runSparkJob(master: String, tfServer: String, imgApp: String, dir: String, nPartitions: Int = 10) = {
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val irdd = sc.binaryFiles(dir,nPartitions)
@@ -25,7 +21,7 @@ object TFSubmitter {
       val bytes = contents.toArray
       val md5 = FileUtils.md5(bytes)
       val res = tfClient.labelImg(LabelImgStruct(label,path,
-        bytes, md5))
+        bytes, md5, Option(imgApp)))
         println(s"Received label result: $res")
       res
       }
@@ -36,8 +32,8 @@ object TFSubmitter {
 
 
   def main(args: Array[String]): Unit = {
-    val Array(master,tfServer, dir,nPartitions) = args
+    val Array(master,tfServer, imgApp, dir,nPartitions) = args
     val dir2 = s"${System.getProperty("user.dir")}/tf/src/main/resources/images/"
-    runSparkJob(master,tfServer, s"file:///$dir2",nPartitions.toString.toInt)
+    runSparkJob(master,tfServer, imgApp, s"file:///$dir2",nPartitions.toString.toInt)
   }
 }
