@@ -16,7 +16,7 @@
  */
 package org.openchai.tcp.rpc
 
-import java.io.{BufferedInputStream, BufferedOutputStream}
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream}
 import java.net._
 
 import org.openchai.tcp.util.Logger._
@@ -47,25 +47,10 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     import scala.concurrent.duration._
     val socketTimeout = 200
     val duration: Duration = 10 seconds
-    //    if (CheckPort) {
-    //      val result =
-    //        Future {
-    //          Try {
-    //            val socket = new java.net.Socket()
-    //            socket.connect(new InetSocketAddress("localhost", port), socketTimeout)
-    //            socket.close()
-    //            port
-    //          } toOption
-    //        }
-    //      Try {
-    //        Await.result(result, duration)
-    //      }.toOption.getOrElse(Nil)
-    //    }
   }
 
   override def start() = {
-    Console.println("setting preferIpv4Stack")
-    System.setProperty("java.net.preferIPv4Stack", "true");
+    System.setProperty("java.net.preferIPv4Stack", "true")
     serverSocket = new ServerSocket()
     println(s"Starting ${serverIf.name} on $host:$port ..")
     try {
@@ -77,10 +62,6 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     } catch {
       case e: Exception => throw new Exception(s"BindException on $host:$port", e)
     }
-    //    checkPort(port) match {
-    //      case m: Exception => error(s"Server already running on port $port"); false
-    //      case _ => */ serverSocket.bind(new InetSocketAddress(host, port))
-    //    }
     serverThread = new Thread() {
       override def run() {
         while (!stopRequested) {
@@ -104,7 +85,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
       var msgCounter = 0
 
       override def run() = {
-        val is = new BufferedInputStream(socket.getInputStream)
+        val is = new DataInputStream(socket.getInputStream)
         val os = new BufferedOutputStream(socket.getOutputStream)
         do {
           val buf = new Array[Byte](BufSize)
