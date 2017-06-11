@@ -60,15 +60,17 @@ object TfServer {
 
     def explode(jv: JValue): Any = {
       jv.values match {
-        case m: Map[String, JValue] =>
+        case m: Map[_,_] =>
           m.keys.map { k =>
             val v = m(k)
-            (k, explode(v))
+            (k, explode(v.asInstanceOf[JValue]))
           }.toMap
-        case s: Set[JValue] =>
-          s.map(explode)
-        case lst: Seq[JValue] =>
-          lst.map(explode)
+        case s: Set[_] =>
+	  val s2 = s.asInstanceOf[Set[JValue]]
+          s2.map(explode)
+        case lst: Seq[_] =>
+	  val lst2 = lst.asInstanceOf[List[JValue]]
+          lst2.map(explode)
         case o => o
       }
     }
@@ -124,7 +126,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
 
   val os = System.getProperty("os.name") match {
     case "Mac OS X" => "osx"
-    case x => x
+    case x => x.toLowerCase
   }
 
   //  val isLinux = os == "linux"
