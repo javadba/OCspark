@@ -15,7 +15,6 @@ object TcpCommon {
     // TODO: determine how to properly size the bos
     val bos = new ByteArrayOutputStream(2 ^ 22)
     val oos = new ObjectOutputStream(bos)
-    println(s"serializeObject: a is ${a.toString}")
     oos.writeObject(a)
     val out = bos.toByteArray
     //    Files.write(Paths.get("/tmp/xout"),out)

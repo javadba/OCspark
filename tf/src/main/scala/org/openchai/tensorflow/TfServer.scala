@@ -7,7 +7,6 @@ import com.blazedb.spark.reports.{YamlConf, YamlStruct}
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils}
 import org.openchai.tcp.xfer._
-import org.openchai.tensorflow.api.JsonUtils
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
@@ -48,34 +47,6 @@ object TfServer {
   def readConfig(path: String): YamlConf = {
 //    parseJsonToMap(FileUtils.readFileAsString(path))
     YamlStruct(path)
-  }
-
-  def parseJsonToMap(json: String): YamlConf = {
-    parseJson(json).asInstanceOf[YamlConf]
-  }
-
-  def parseJson(json: String): Any = {
-    import org.json4s._
-    import org.json4s.native.JsonMethods._
-
-    def explode(jv: JValue): Any = {
-      jv.values match {
-        case m: Map[_,_] =>
-          m.keys.map { k =>
-            val v = m(k)
-            (k, explode(v.asInstanceOf[JValue]))
-          }.toMap
-        case s: Set[_] =>
-	  val s2 = s.asInstanceOf[Set[JValue]]
-          s2.map(explode)
-        case lst: Seq[_] =>
-	  val lst2 = lst.asInstanceOf[List[JValue]]
-          lst2.map(explode)
-        case o => o
-      }
-    }
-    val jobj = parse(json)
-    explode(jobj)
   }
 
   def main(args: Array[String]): Unit = {
@@ -120,10 +91,11 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
     FileUtils.writeBytes(path, istruct.data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
     val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
-      Option(estruct.cmdline.replace("${1}",path).split(" ")), Some(Seq(estruct.runDir)), estruct.runDir))
+      Option(estruct.cmdline.replace("${1}",path).split(" ").tail), Some(Seq(estruct.runDir)), estruct.runDir))
     println(s"Result: $exeResult")
     LabelImgRespStruct(exeResult)
   }
+
 
   val os = System.getProperty("os.name") match {
     case "Mac OS X" => "osx"
@@ -139,7 +111,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
         val app = struct.optApp.getOrElse(DefaultApp)
         val envmap = yamlConf.toMap("environments").apply(os).asInstanceOf[MapMap]("env").asInstanceOf[StringMap]
         val emap = yamlConf.toMap("defaults").apply("apps").asInstanceOf[AnyMap](app).asInstanceOf[StringMap].map { case (k, v) =>
-          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => vv.replace(s"$${$ke}", ve) }
+          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => println(vv); vv.replace(s"$${$ke}", ve) }
           (k, vnew)
         }
         println(s"Service: Invoking LabelImg: struct=$struct")
