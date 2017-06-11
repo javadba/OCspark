@@ -12,7 +12,7 @@ import org.openchai.tcp.xfer._
 class CaosServer(val outQ: BlockingQueue[TaggedEntry], val qTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
-  val qServer = new QXferServer(outQ, tcpParams, xtcpParams)
+  val qServer = new QXferConServer(outQ, tcpParams, xtcpParams)
   val caosServer = new TcpServer(qTcpParams.server, qTcpParams.port, new CaosServerIf[TaggedEntry](outQ))
 
   def start() = {

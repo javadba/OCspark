@@ -77,15 +77,16 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: DmaXferC
     println(s"LabelImg: $s")
 
 //    val fdata = FileUtils.readFileBytes(s.fpath)
-    val wparams = XferWriteParams("FunnyPicTag", tfClient.config,
+    val wparams = XferWriteParams(s.tag, tfClient.config,
       TcpCommon.serializeObject(s.fpath, TaggedEntry("funnyPic", s.data)))
     val xferConf = TcpXferConfig("blah", s.fpath)
     tfClient.prepareWrite(xferConf)
-    tfClient.write(XferWriteParams("TestWriteTag", xferConf, s.data))
+    tfClient.write(XferWriteParams(s.tag, xferConf, s.data))
     tfClient.completeWrite(xferConf)
 //    val wres = tfClient.write(tfClient.config, wparams)
     val wres = tfClient.write(wparams)
-    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
+//    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
+    val resp = getRpc().request(LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte])))
     println(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
   }

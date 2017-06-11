@@ -12,7 +12,7 @@ import org.openchai.tcp.xfer._
 class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
-  val xferServer = new QXferServer(outQ.asInstanceOf[BlockingQueue[TaggedEntry]],
+  val xferServer = new QXferConServer(outQ/*.asInstanceOf[BlockingQueue[TaggedEntry]]*/,
     tcpParams, xtcpParams)
   val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(yamlConf, outQ))
 
@@ -79,16 +79,17 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
   def labelImg(estruct: LabelImgExecStruct): LabelImgRespStruct = {
     println(s"LabelImg: processing $estruct ..")
     val istruct = estruct.istruct
-    if (istruct.data.isEmpty) {
-      throw new IllegalStateException(s"Non empty md5 for empty data on $istruct")
-    } else {
-      FileUtils.checkMd5(istruct.fpath, istruct.data, istruct.md5)
-    }
+//    if (istruct.data.isEmpty) {
+//      throw new IllegalStateException(s"Non empty md5 for empty data on $istruct")
+//    } else {
+//      FileUtils.checkMd5(istruct.fpath, istruct.data, istruct.md5)
+//    }
 
-    val e = QXferServer.findInQ(q, istruct.tag)
+    val e = QXferConServer.findInQ(q, istruct.tag)
     println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
+    val data = e.get.data
     val path = s"${TfServer.imagesDir}/${new java.util.Random().nextInt(200) + "." + istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
-    FileUtils.writeBytes(path, istruct.data)
+    FileUtils.writeBytes(path, data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
     val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
       Option(estruct.cmdline.replace("${1}",path).split(" ").tail), Some(Seq(estruct.runDir)), estruct.runDir))

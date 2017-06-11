@@ -96,13 +96,13 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
           do {
             val available = is.available
             if (available <= 0) {
-              Thread.sleep(100)
+              Thread.sleep(250)
             } else {
               do {
                 val nread = is.read(buf, totalRead, buf.length - totalRead)
                 totalRead += nread
                 //                debug(s"in loop: nread=$nread totalRead=$totalRead")
-                Thread.sleep(10)
+                Thread.sleep(250)
               } while (is.available > 0)
             }
           } while (totalRead <= 0)

@@ -1,63 +1,32 @@
 package org.openchai.tcp.xfer
 
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{FileUtils, TcpCommon}
 
-class QXferConServer(q: ArrayBlockingQueue[TaggedEntry], override val tcpParams: TcpParams, override val xtcpParams: TcpParams)
-  extends XferConServer(tcpParams, xtcpParams) {
 
-  override val xferServerIf: XferServerIf = new QXferServerIf(q, xtcpParams)
-
-  xferServerThread = new Thread() {
-    override def run() = {
-      QXferServer.main(Array(xtcpParams.server, xtcpParams.port.toString))
-    }
-  }
-
-  override def start() = {
-    xferServerThread.start
-    server = TcpServer(tcpParams.server, tcpParams.port,
-      new XferConServerIf(/*tcpParams, xferServerIf)*/))
-    server.start
-    this
-  }
-
-  def makeXferControllers(q: ArrayBlockingQueue[TaggedEntry], args: XferControllerArgs) = {
-    val tcpParams = TcpParams(args.conHost, args.conPort)
-    val xtcpParams = TcpParams(args.dataHost, args.dataPort)
-    val server = new QXferConServer(q, tcpParams, xtcpParams /*, xferConf */)
-    server
-  }
-
-}
-
-object QXferConServer {
-
- def main(args: Array[String]): Unit = {
-    val (host,port,xhost,xport,ahost, aport, configFile) = XferConServer.makeXferConnections(args)
-    val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
-   server.start
-    Thread.currentThread.join
-  }
-}
 
 case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
 
   var server: TcpServer = _
-  var xferServerThread: Thread = _
 
-  val xferServerIf: XferServerIf = new NioXferServerIf(xtcpParams)
+  lazy val xferServerIf: XferServerIf = {
+    if (System.currentTimeMillis > 0) {
+      throw new IllegalStateException("Why in xferserverif should be overwritten")
+    }
+    new NioXferServerIf(xtcpParams)
+  }
 
-  xferServerThread = new Thread() {
+  lazy val  xferServerThread = new Thread() {
     override def run() = {
       XferServer.main(Array(xtcpParams.server, xtcpParams.port.toString))
     }
   }
 
   def start() = {
+    if (System.currentTimeMillis > 0) {
+      throw new IllegalStateException("Why are we inside XferConServer.start: should be overridden")
+
+    }
     xferServerThread.start
     server = TcpServer(tcpParams.server, tcpParams.port,
       new XferConServerIf(/*tcpParams, xferServerIf)*/))

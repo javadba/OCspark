@@ -26,7 +26,9 @@ class QXferServerIf(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) extends
 
   def writeQ(path: DataPtr, data: TaggedEntry) = {
 //    val _md5 = md5(buf.array.slice(0,buf.position))
+//    println(s"writeq: data with tag=${data.tag} len=${data.data.length}")
     q.offer(data)
+//    println(s"After writeQ: qsize=${q.size}")
   }
 
   override def service(req: P2pReq[_]): P2pResp[_] = {
@@ -47,52 +49,3 @@ class QXferServerIf(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) extends
 
 }
 
-// The main thing we need to override here is using XferQConServerIf inside the server object
-class QXferServer(outQ: BlockingQueue[TaggedEntry], tcpParams: TcpParams, xtcpParams: TcpParams)
-  extends XferConServer(tcpParams, xtcpParams) {
-  override val xferServerIf = new QXferServerIf(outQ, xtcpParams)
-
-  override def start() = {
-    xferServerThread.start
-    // Notice the use of XferQConServerIf as third parameter: but still using xferServerIf inside that constructor
-    server = TcpServer(tcpParams.server, tcpParams.port, new XferQServerIf(outQ, tcpParams, xferServerIf))
-    server.start
-    this
-  }
-
-}
-
-object QXferServer {
-  def findInQ(q: BlockingQueue[TaggedEntry],tag: String) = {
-    val aq = q.asInstanceOf[ArrayBlockingQueue[TaggedEntry]]
-    println(s"FindInQ: looking for $tag: entries=${aq.size}")
-    val e = {
-      var p: Option[TaggedEntry] = None
-        while (aq.iterator.hasNext && !aq.isEmpty) {
-          val pv = aq.iterator.next
-          println(s"Queue entry: ${pv}")
-          if (pv.tag == tag) {
-            println(s"Found entry ${pv.tag}")
-            p = Option(pv)
-            aq.remove(pv)
-          } else {
-            None
-          }
-        }
-      p
-    }
-    e.flatMap { ee => println(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
-    e
-  }
-
-  def main(args: Array[String]): Unit = {
-    val q = new ArrayBlockingQueue[TaggedEntry](1000)
-
-    import org.openchai.tcp.xfer.XferConCommon._
-    val cont = TestControllers
-    val params = QTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)
-    val qserver = new QXferServer(q, TcpParams(params.cHost, params.cPort), TcpParams(params.sHost, params.sPort))
-    qserver.start
-    Thread.currentThread.join
-  }
-}
