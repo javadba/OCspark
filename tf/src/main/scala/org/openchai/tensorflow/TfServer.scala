@@ -119,7 +119,8 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
     val path = s"${TfServer.imagesDir}/${new java.util.Random().nextInt(200) + "." + istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
     FileUtils.writeBytes(path, istruct.data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
-    val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}", Option(s"""--image=$path""".split(" ")), Some(Seq(estruct.runDir)), estruct.runDir))
+    val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
+      Option(estruct.cmdline.replace("${1}",path).split(" ")), Some(Seq(estruct.runDir)), estruct.runDir))
     println(s"Result: $exeResult")
     LabelImgRespStruct(exeResult)
   }

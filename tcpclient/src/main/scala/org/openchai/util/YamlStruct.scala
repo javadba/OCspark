@@ -23,7 +23,7 @@ case class YamlStruct(ymlFile: String) extends YamlConf {
     o match {
       case lst: java.util.List[_] =>
         Seq(lst.asScala.map{ o => expand(o) })
-      case m: java.util.Map[String, _] =>
+      case m: java.util.Map[_, _] =>
         m.asScala.map { case (k, v) =>
           (k, expand(v))
         }.toMap
