@@ -15,7 +15,7 @@ object QXferConServer {
         val it = aq.iterator
         while (it.hasNext && !aq.isEmpty) {
           val pv = it.next
-          println(s"Queue entry: ${pv}")
+//          println(s"Queue entry: ${pv}")
           if (pv.tag == tag) {
             println(s"Found entry ${pv.tag}")
             p = Option(pv)

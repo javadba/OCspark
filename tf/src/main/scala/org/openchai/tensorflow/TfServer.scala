@@ -5,7 +5,7 @@ import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
 import com.blazedb.spark.reports.{YamlConf, YamlStruct}
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils}
+import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils, TcpCommon}
 import org.openchai.tcp.xfer._
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
@@ -87,7 +87,8 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
 
     val e = QXferConServer.findInQ(q, istruct.tag)
     println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
-    val data = e.get.data
+    val tEntry = TcpCommon.deserializeObject(e.get.data).asInstanceOf[TaggedEntry]
+    val data = tEntry.data
     val path = s"${TfServer.imagesDir}/${new java.util.Random().nextInt(200) + "." + istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
     FileUtils.writeBytes(path, data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
