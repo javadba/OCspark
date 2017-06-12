@@ -16,14 +16,13 @@
  */
 package org.openchai.tcp.rpc
 
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream}
+import java.io.{BufferedOutputStream, DataInputStream}
 import java.net._
 
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.TcpCommon
 
 import scala.collection.mutable
-import scala.util.Try
 
 object TcpServer {
   val DefaultPort = 8989
@@ -77,6 +76,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
 
   import TcpCommon._
 
+  val MaxTcpWaitSecs = 1
   def serve(socket: Socket): Thread = {
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
@@ -90,19 +90,31 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         do {
           val buf = new Array[Byte](BufSize)
           if (!msgPrinted) {
-            debug("Listening for messages.."); msgPrinted = true
+            debug("Listening for messages..");
+            msgPrinted = true
           }
           var totalRead = 0
           do {
             val available = is.available
             if (available <= 0) {
-              Thread.sleep(250)
+              Thread.sleep(200)
             } else {
               do {
-                val nread = is.read(buf, totalRead, buf.length - totalRead)
-                totalRead += nread
-                //                debug(s"in loop: nread=$nread totalRead=$totalRead")
-                Thread.sleep(250)
+                var innerWait = 0
+                do {
+                  val nread = is.read(buf, totalRead, buf.length - totalRead)
+                  totalRead += nread
+                  //                debug(s"in loop: nread=$nread totalRead=$totalRead")
+                  Thread.sleep(50)
+                  innerWait += 1
+                  if (innerWait %20==0) {println(s"InnerWait=%d")}
+                } while (is.available > 0)
+                var outerLoopCnt = 0
+                do {
+                  Thread.sleep(100)
+                  outerLoopCnt += 1
+                  println(s"OuterloopCnt=$outerLoopCnt")
+                } while (totalRead > 5000 && is.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
               } while (is.available > 0)
             }
           } while (totalRead <= 0)

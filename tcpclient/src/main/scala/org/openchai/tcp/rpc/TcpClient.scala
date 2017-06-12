@@ -35,6 +35,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   private var os: OutputStream = _
   private var is: InputStream = _
 
+  val MaxTcpWaitSecs = 2
+
   {
       connect(connParams)
   }
@@ -64,12 +66,37 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     val serreq = serializeStream(req.path, pack(req.path, req))
     os.write(serreq)
     os.flush
-    val bis = new BufferedInputStream(is)
-    val nread = bis.read(buf)
 
+    val dis = new DataInputStream(is)
+      var totalRead = 0
+      do {
+        val available = dis.available
+        if (available <= 0) {
+          Thread.sleep(200)
+        } else {
+          do {
+            var innerWait = 0
+            do {
+              val nread = dis.read(buf, totalRead, buf.length - totalRead)
+              totalRead += nread
+              //                debug(s"in loop: nread=$nread totalRead=$totalRead")
+              Thread.sleep(50)
+              innerWait += 1
+              if (innerWait %20==0) {println(s"InnerWait=%d")}
+            } while (dis.available > 0)
+            var outerLoopCnt = 0
+            do {
+              Thread.sleep(100)
+              outerLoopCnt += 1
+              println(s"OuterloopCnt=$outerLoopCnt")
+            } while (totalRead > 5000 && dis.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
+          } while (dis.available > 0)
+        }
+      } while (totalRead <= 0)
+      println(s"Serve: totalRead=$totalRead")
+      val o = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
 //    info(s"request: received $nread bytes")
 //    val (path, o, md5) = unpack(buf.slice(0,nread))
-    val o = unpack(req.path,buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
     if (reconnectEveryRequest) {
       sock.close
