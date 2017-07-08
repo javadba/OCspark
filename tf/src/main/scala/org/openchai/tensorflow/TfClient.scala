@@ -1,5 +1,6 @@
 package org.openchai.tensorflow
 
+import com.blazedb.spark.reports.YamlStruct
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
 import org.openchai.tcp.xfer._
@@ -43,7 +44,6 @@ object TfClient {
   }
 
   def main(args: Array[String]): Unit = {
-//    TfServer.main(Array.empty[String])
     testClient
     println("We're done!")
   }
