@@ -33,7 +33,7 @@ object TFSubmitter {
 
   def main(args: Array[String]): Unit = {
     val Array(master,tfServer, imgApp, dir,nPartitions) = args
-    val dir2 = s"${System.getProperty("user.dir")}/tf/src/main/resources/images/"
+    val dir2 = s"${System.getProperty("user.dir")}/src/main/resources/images/"
     runSparkJob(master,tfServer, imgApp, s"file:///$dir2",nPartitions.toString.toInt)
   }
 }

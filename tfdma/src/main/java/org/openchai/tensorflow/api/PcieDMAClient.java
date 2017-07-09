@@ -6,7 +6,7 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
   public PcieDMAClient() {
     String parentDir = System.getProperty("user.dir");
     if (!parentDir.contains("tfdma")) {
-      parentDir += "/tfdma";
+      parentDir += "../tfdma";
     }
     String ext = System.getProperty("os.name").equals("Mac OS X") ? ".dylib" : ".so";
     String libpath = String.format("%s/%s%s",parentDir,"src/main/cpp/dmaclient",ext);
