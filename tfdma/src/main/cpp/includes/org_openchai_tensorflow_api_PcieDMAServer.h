@@ -37,7 +37,7 @@ JNIEXPORT jstring JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_prepare
  * Signature: (Ljava/lang/String;[B)Lorg/openchai/tensorflow/api/DMAStructures/WriteResultStruct;
  */
 JNIEXPORT jobject JNICALL Java_org_openchai_tensorflow_api_PcieDMAServer_writeN
-  (JNIEnv *, jobject, jstring, jbyteArray, jbyteArray);
+  (JNIEnv *, jobject, jstring, jbyteArray);
 
 /*
  * Class:     org_openchai_tensorflow_api_PcieDMAServer
