@@ -87,7 +87,7 @@ case class TfClientIf(tcpParams: TcpParams, config: TfConfig, tfClient: DmaXferC
     val wres = tfClient.write(wparams)
 //    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
     val resp = getRpc().request(LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte])))
-    println(s"LabelImg response: $resp")
+//    println(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
   }
 

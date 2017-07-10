@@ -82,13 +82,15 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
               //                debug(s"in loop: nread=$nread totalRead=$totalRead")
               Thread.sleep(50)
               innerWait += 1
-              if (innerWait %20==0) {println(s"InnerWait=%d")}
+              if (innerWait %20==0) {
+//                println(s"InnerWait=%d")
+              }
             } while (dis.available > 0)
             var outerLoopCnt = 0
             do {
               Thread.sleep(100)
               outerLoopCnt += 1
-              println(s"OuterloopCnt=$outerLoopCnt")
+//              println(s"OuterloopCnt=$outerLoopCnt")
             } while (totalRead > 5000 && dis.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
           } while (dis.available > 0)
         }

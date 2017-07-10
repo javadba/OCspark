@@ -113,7 +113,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
                 do {
                   Thread.sleep(100)
                   outerLoopCnt += 1
-                  println(s"OuterloopCnt=$outerLoopCnt")
+//                  println(s"OuterloopCnt=$outerLoopCnt")
                 } while (totalRead > 5000 && is.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
               } while (is.available > 0)
             }

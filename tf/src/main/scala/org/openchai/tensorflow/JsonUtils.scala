@@ -1,8 +1,16 @@
 package org.openchai.tensorflow
 
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
+import org.json4s.DefaultFormats._
+import org.json4s.jackson.Serialization.write
+
 import com.blazedb.spark.reports.YamlConf
 
 object JsonUtils {
+  implicit val formats = DefaultFormats // Brings in default date formats etc.
+
   def parseJsonToMap(json: String): YamlConf = {
     parseJson(json).asInstanceOf[YamlConf]
   }
@@ -30,5 +38,28 @@ object JsonUtils {
 
     val jobj = parse(json)
     explode(jobj)
+  }
+
+  import scala.reflect.runtime.universe.TypeTag
+  def parseJsonToCaseClass[A <: Product: Manifest](inJson: String): A = {
+    val json1 = inJson.replace("\\","")
+    val json = json1.substring(1,json1.length-1)  // Remove double quotes around whole json doc..
+//    val x = """{"name":"john", "age": 28}"""
+//    val jsValue = parse(x)
+//    case class Person(name:String, age: Int)
+//    val p = jsValue.extract[Person]
+//    println(p.getClass.getName)
+    try {
+      val p = parse(json)
+      p.extract[A]
+    } catch {
+      case t: Throwable =>
+        t.printStackTrace
+        null.asInstanceOf[A]
+    }
+  }
+
+  def toJson(a: AnyRef) = {
+    compact(write(a))
   }
 }

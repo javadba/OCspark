@@ -16,7 +16,7 @@
  */
 package org.openchai.tcp.util
 
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io._
 import java.nio.file.Paths
 import java.util.Scanner
 import java.util.concurrent.{Callable, Executors, Future}
@@ -105,14 +105,17 @@ object FileUtils {
     readPath0(path)
   }
 
-  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
-
-  def readFileAsString(fpath: String) = {
-//    val content = new Scanner(Paths.get(fpath)).useDelimiter("\\Z").next()
-    val content = scala.io.Source.fromFile(fpath,"ISO-8859-1").getLines.mkString("")
-    content
+//  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
+  def readFileBytes(fpath: String): Array[Byte] = {
+    val file = new File(fpath)
+    val  bytes = new Array[Byte](file.length.toInt)
+    val dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fpath)))
+    dis.readFully(bytes)
+    dis.close()
+    bytes
   }
 
+  def readFileAsString(fpath: String) =  new String(readFileBytes(fpath),"ISO-8859-1")
 
   import java.security.MessageDigest
 
