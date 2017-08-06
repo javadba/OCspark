@@ -1,6 +1,5 @@
 package org.openchai.tensorflow
 
-import com.blazedb.spark.reports.YamlStruct
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
 import org.openchai.tcp.xfer._
@@ -17,9 +16,10 @@ object TfClient {
   }
 
   import XferConCommon._
-  def apply(server: String) = {
-    val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server))
-    val client = new TfClient(remoteTcpArgs(server), TfConfig("TestLabeler"), controllers.client)
+  def apply(server: String, port: Int = 0) = {
+    val base = if (port > 0) port else 61234
+    val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server, base))
+    val client = new TfClient(remoteTcpArgs(server,base), TfConfig("TestLabeler"), controllers.client)
     client
   }
 

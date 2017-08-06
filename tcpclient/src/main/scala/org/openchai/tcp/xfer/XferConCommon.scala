@@ -29,9 +29,12 @@ ligula scelerisque, lobortis est sit amet, dignissim leo. Ut laoreet, augue non 
 
   val AppTcpArgs = TcpParams(server, 61236)
 
-  def remoteControllers(server: String)  = XferControllerArgs(server, 61234,server, 61235, server, 61236,
-    "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
+  def remoteControllers(server: String, port: Int = 0)  = {
+    val base = if (port > 0) port else 61234
+    XferControllerArgs(server, base, server, base+1, server, base+2,
+      "foobar.properties", LoremIpsum.getBytes("ISO-8859-1"), ("/tmp/xferout1", "/tmp/xferout2"), "/tmp/xferin")
+  }
 
-  def remoteTcpArgs(server: String) = TcpParams(server, 61236)
+  def remoteTcpArgs(server: String, port:Int=61236) = TcpParams(server, port)
 
 }
