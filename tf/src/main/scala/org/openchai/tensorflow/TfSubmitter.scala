@@ -10,10 +10,14 @@ case class LabelImgRest(restHostAndPort: Option[String], tfServerHost: String, w
 
 object LabelImgRest {
   def apply(liwreq: LabelImgWebRest) = {
-    val bytes = Base64.getDecoder.decode(liwreq.contentsBase64)
-    //    val outf = "/tmp/base64.after.dat"
-    //    println(s"Writing decoded base64 bytes to $outf..")
-    //    FileUtils.writeBytes(outf, bytes)
+    val bytes = if (liwreq.restHostAndPort.startsWith("/")) {
+      FileUtils.readFileBytes(liwreq.restHostAndPort)
+    } else {
+      Base64.getDecoder.decode(liwreq.contentsBase64)
+      //    val outf = "/tmp/base64.after.dat"
+      //    println(s"Writing decoded base64 bytes to $outf..")
+      //    FileUtils.writeBytes(outf, bytes)
+    }
     new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.tfServerHost, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outputTag,
       bytes)
   }

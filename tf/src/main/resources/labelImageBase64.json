@@ -1,0 +1,9 @@
+{
+	"restHostAndPort": "localhost:8190",
+	"tfServerHost": "localhost",
+	"workerName": "TFViaRest",
+	"imgApp": "tensorflow-labelimage",
+	"path": "/git/OCspark/tf/src/main/resources/images/JohnNolteAndDad.jpg",
+	"outputTag": "JohnAndDad",
+	"contentsBase64": ""
+}
