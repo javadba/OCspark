@@ -34,15 +34,15 @@ class XferConIfBase(tcpParams: TcpParams, config: XferConfig) extends ServiceIf(
   private val nReqs = new AtomicInteger(0)
 
   override def prepareWrite(config: XferConfig): PrepResp = {
-    println(s"PrepareWrite ..")
+//    println(s"PrepareWrite ..")
     val resp = getRpc().request(PrepWriteReq(config))
-    println(s"PrepareWrite response: $resp")
+//    println(s"PrepareWrite response: $resp")
     resp.asInstanceOf[PrepResp]
   }
 
   override def completeWrite(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(new CompleteWriteReq(config))
-    println(s"CompleteWrite response: $resp")
+//    println(s"CompleteWrite response: $resp")
     resp.asInstanceOf[CompletedResp]
   }
 

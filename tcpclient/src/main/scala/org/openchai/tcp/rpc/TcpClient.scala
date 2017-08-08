@@ -101,7 +101,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
           } while (dis.available > 0)
         }
       } while (totalRead <= 0)
-      println(s"Serve: totalRead=$totalRead")
+//      println(s"Serve: totalRead=$totalRead")
       val o = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
 //    info(s"request: received $nread bytes")
 //    val (path, o, md5) = unpack(buf.slice(0,nread))

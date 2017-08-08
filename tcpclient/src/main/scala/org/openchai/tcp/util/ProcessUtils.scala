@@ -83,7 +83,8 @@ object ProcessUtils {
   def exec(tag: String, cmd: String): ExecResult = {
     val toks = cmd.split(" ")
     val (exe, args) = (toks.head, toks.tail)
-    exec(ExecParams(tag, exe, Some(args), None, exe.substring(0,exe.lastIndexOf("/"))))
+    exec(ExecParams(tag, exe, Some(args), None,
+      if (exe.indexOf("/")>=0) exe.substring(0,exe.lastIndexOf("/")) else System.getProperty("user.dir")))
   }
 
   def exec(params: ExecParams): ExecResult = {

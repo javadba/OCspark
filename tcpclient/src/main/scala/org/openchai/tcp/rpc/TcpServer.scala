@@ -118,7 +118,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
               } while (is.available > 0)
             }
           } while (totalRead <= 0)
-          println(s"Serve: totalRead=$totalRead")
+//          println(s"Serve: totalRead=$totalRead")
           val unpacked = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
           val req = unpacked.asInstanceOf[P2pReq[_]]
           //          val req = unpacked._2.asInstanceOf[P2pReq[_]]

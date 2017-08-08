@@ -5,7 +5,7 @@ import java.util.Base64
 import java.util.concurrent.{Callable, ConcurrentNavigableMap, Executors}
 
 import org.apache.spark.sql.SparkSession
-import org.openchai.tcp.util.{FileUtils, TcpUtils}
+import org.openchai.tcp.util.{FileUtils, ProcessUtils, TcpUtils}
 import org.openchai.tensorflow.JsonUtils._
 import org.openchai.tensorflow.web.{HttpUtils, TfWebServer}
 
@@ -102,36 +102,53 @@ object TfSubmitter {
       println(s"runSparkJobs: there are ${workers.length < inUse.keySet.size} workers still busy from earlier jobs ..")
     }
     val nWorkers = workers.length
-    var ixs = mutable.ArrayBuffer[Int]()
-    var cursum: Int = 0
+    var ixs = mutable.ArrayBuffer[(Int,Long)]()
+    var cursum: Long = 0L
     for (i <- Range(0,files.length)) {
-      cursum += files(i)._2.toInt
+      cursum += files(i)._2.toLong
       if (cursum >= totSize / nWorkers) {
-        ixs += i
+        ixs += Tuple2(i,cursum)
+        cursum = 0
       }
     }
+    ixs += Tuple2(files.length-1,cursum)
+    println(s"Group sizes = ${ixs.mkString(",")}")
     import java.nio.file._
-    val franges = Range(0,Math.min(nWorkers,ixs.length)).map { p =>
+    val franges = Range(0,Math.min(nWorkers,ixs.length+1)).map { p =>
       val ndir = s"$dir/${workers(p).getKey}"
       new File(ndir).mkdir
-      files.slice(if (p == 0) 0 else (p - 1), ixs(p)).map { case (path, len) =>
+      files.slice(if (p == 0) 0 else ixs(p - 1)._1, ixs(p)._1).map { case (path, len) =>
 //        new File(path).renameTo(new File(s"$ndir/${new File(path).getName}"))
-        Files.createSymbolicLink(Paths.get(s"$ndir/${new File(path).getName}"),Paths.get(path))
+        val link = s"$ndir/${new File(path).getName}"
+        if (!new File(link).exists) {
+          Files.createSymbolicLink(Paths.get(link), Paths.get(path))
+        }
       }
       (ndir, new File(ndir).listFiles)
     }
-    println(s"Dividing work into: ${franges.mkString("\n")}")
+    println(s"Dividing work into: ${franges.map(fr=> s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
     franges.zipWithIndex.foreach { case ((dir, files),ix) =>
       pool.submit(
         new Callable[String]() {
           override def call(): String = {
             val workerNum = workers(ix).getKey
             inUse.put(workerNum,true)
-            val res =runSparkJob(master, tfServerHostAndPort, imgApp, dir, ix + 1)
-            import java.nio.file._
-            Files.delete(Paths.get(dir))
+            val res =runSparkJob(master, tfServerHostAndPort, imgApp, dir, ix)
+//            println(s"Callable: result from worker=$workerNum = $res")
+            assert(dir.length >= 8)
+            try {
+              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
+            } catch {
+              case e: Exception =>
+                println(s"Callable: ERROR: unable to delete $dir")
+                e.printStackTrace
+            }
+            if (new File(dir).exists) {
+              println(s"Callable: ERROR: unable to delete $dir")
+            } else {
+              println(s"Callable: Finished worker $ix")
+            }
             inUse.put(workerNum,false)
-            println(s"Callable: result from worker=$workerNum = $res")
             res
           }
         }
@@ -162,6 +179,7 @@ object TfSubmitter {
       }
     }
     val c = out.collect
+    println(s"Finished runSparkJob for tx1=$tx1Num")
     c.mkString("\n")
   }
 

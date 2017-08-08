@@ -2,7 +2,7 @@
     "defaults": {
         "apps": {
             "tensorflow-labelimage": {
-                "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image --image=${1}",
+                "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image.sh --image=${1}",
                 "rundir": "${TENSORFLOW_HOME}",
                 "tmpdir": "${TENSORFLOW_HOME}/tmp"
             },
@@ -17,13 +17,15 @@
         "linux": {
             "env" : {
                 "TENSORFLOW_HOME": "/home/ubuntu/tensorflow",
-                "DARKNET_HOME": "/git/darknet"
+                "DARKNET_HOME": "/git/darknet",
+                "TF_CPP_MIN_LOG_LEVEL": "2"
             }
         },
         "osx": {
             "env" : {
                 "TENSORFLOW_HOME": "/shared/tensorflow",
-                "DARKNET_HOME": "/git/darknet"
+                "DARKNET_HOME": "/git/darknet",
+                "TF_CPP_MIN_LOG_LEVEL": "2"
             }
         }
     }

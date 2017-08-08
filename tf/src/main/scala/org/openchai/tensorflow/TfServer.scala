@@ -87,7 +87,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
 //    }
 
     val e = QXferConServer.findInQ(q, istruct.tag)
-    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
+//    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
     val tEntry = TcpCommon.deserializeObject(e.get.data).asInstanceOf[TaggedEntry]
     val data = tEntry.data
     val path = s"${TfServer.imagesDir}/${new java.util.Random().nextInt(200) + "." + istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
@@ -114,7 +114,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
         val app = struct.optApp.getOrElse(DefaultApp)
         val envmap = yamlConf.toMap("environments").apply(os).asInstanceOf[MapMap]("env").asInstanceOf[StringMap]
         val emap = yamlConf.toMap("defaults").apply("apps").asInstanceOf[AnyMap](app).asInstanceOf[StringMap].map { case (k, v) =>
-          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => println(vv); vv.replace(s"$${$ke}", ve) }
+          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => /* println(vv); */ vv.replace(s"$${$ke}", ve) }
           (k, vnew)
         }
         println(s"Service: Invoking LabelImg: struct=$struct")
