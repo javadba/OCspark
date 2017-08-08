@@ -3,10 +3,10 @@ package org.openchai.tensorflow
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
-import com.blazedb.spark.reports.{YamlConf, YamlStruct}
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils, TcpCommon}
 import org.openchai.tcp.xfer._
+import org.openchai.util.{YamlConf, YamlStruct}
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
@@ -14,7 +14,8 @@ class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val
 
   val xferServer = new QXferConServer(outQ/*.asInstanceOf[BlockingQueue[TaggedEntry]]*/,
     tcpParams, xtcpParams)
-  val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(yamlConf, outQ))
+  println(s"*** TfServer")
+  val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(yamlConf, outQ, tfTcpParams.port))
 
   def start() = {
     xferServer.start
@@ -64,7 +65,7 @@ object TfServer {
 }
 
 
-class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) extends ServerIf("TfServerIf") {
+class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port: Int = 0) extends ServerIf("TfServerIf") {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 
@@ -121,7 +122,8 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry]) exte
         val estruct = LabelImgExecStruct(struct, emap("cmdline"), app, emap("rundir"), emap("tmpdir"))
         val resp = labelImg(estruct)
         LabelImgResp(resp)
-      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
+      case _ =>
+        throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName} on port ${port}")
     }
   }
 

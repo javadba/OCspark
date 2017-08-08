@@ -5,8 +5,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.json4s.DefaultFormats._
 import org.json4s.jackson.Serialization.write
-
-import com.blazedb.spark.reports.YamlConf
+import org.openchai.util.YamlConf
 
 object JsonUtils {
   implicit val formats = DefaultFormats // Brings in default date formats etc.

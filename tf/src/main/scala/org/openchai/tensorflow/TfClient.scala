@@ -3,24 +3,26 @@ package org.openchai.tensorflow
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
 import org.openchai.tcp.xfer._
+import org.openchai.tensorflow.DmaXferConClient.DmaXferControllers
+import XferConCommon._
 
 
 object TfClient {
 
-  def apply() = {
+  def apply(controllers: DmaXferControllers, tcpParams: TcpParams) = {
 
-    import XferConCommon._
-    val controllers =DmaXferConClient.makeDmaXferControllers(TestControllers)
-    val client = new TfClient(AppTcpArgs, TfConfig("TestLabeler"), controllers.client)
+    val client = new TfClient(tcpParams, TfConfig("TestLabeler"), controllers.client)
     client
   }
 
-  import XferConCommon._
-  def apply(server: String, port: Int = 0) = {
+  def apply(): TfClient = {
+    apply(DmaXferConClient.makeDmaXferControllers(TestControllers), AppTcpArgs)
+  }
+
+  def apply(server: String, port: Int = 0): TfClient = {
     val base = if (port > 0) port else 61234
     val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server, base))
-    val client = new TfClient(remoteTcpArgs(server,base), TfConfig("TestLabeler"), controllers.client)
-    client
+    apply(controllers, remoteTcpArgs(server,base+2))
   }
 
   def testClient(): Unit = {
@@ -44,7 +46,8 @@ object TfClient {
   }
 
   def main(args: Array[String]): Unit = {
-    testClient
+    val resp = testClient
+    println(resp)
     println("We're done!")
   }
   

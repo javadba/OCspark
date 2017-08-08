@@ -107,12 +107,17 @@ object FileUtils {
 
 //  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
   def readFileBytes(fpath: String): Array[Byte] = {
-    val file = new File(fpath)
-    val  bytes = new Array[Byte](file.length.toInt)
-    val dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fpath)))
-    dis.readFully(bytes)
-    dis.close()
-    bytes
+    try {
+      val file = new File(fpath).getCanonicalFile
+      val bytes = new Array[Byte](file.length.toInt)
+      val dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fpath)))
+      dis.readFully(bytes)
+      dis.close()
+      bytes
+    } catch {
+      case fnfe: FileNotFoundException =>
+        throw new FileNotFoundException(s"readFileBytes: unable to find $fpath")
+    }
   }
 
   def readFileAsString(fpath: String) =  new String(readFileBytes(fpath),"ISO-8859-1")

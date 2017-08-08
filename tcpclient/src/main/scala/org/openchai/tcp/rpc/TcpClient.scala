@@ -52,6 +52,12 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     is = sock.getInputStream
     bind(this, serviceIf)
     println(s"TcpClient: Bound ${serviceIf.name} to ${tconn.server}:${tconn.port}")
+//    try {
+//      throw new IllegalStateException("foo is bad state")
+//    } catch {
+//      case e => e.printStackTrace
+//    }
+
     is != null && os != null
   }
 

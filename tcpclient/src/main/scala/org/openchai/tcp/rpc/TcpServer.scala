@@ -53,7 +53,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     serverSocket = new ServerSocket()
     println(s"Starting ${serverIf.name} on $host:$port ..")
     try {
-      if (host == "*") {
+      if (host == "*" || host == "all" || host == "localhost") {
         serverSocket.bind(new InetSocketAddress(port))
       } else {
         serverSocket.bind(new InetSocketAddress(host, port))

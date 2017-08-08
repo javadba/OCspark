@@ -1,4 +1,4 @@
-package com.blazedb.spark.reports
+package org.openchai.util
 
 import java.io.FileInputStream
 
@@ -17,7 +17,6 @@ case class YamlStruct(ymlFile: String) extends YamlConf {
   val yaml = new Yaml
 
   import collection.JavaConverters._
-  import collection.mutable
 
   def expand(o: Any): Any = {
     o match {
@@ -28,18 +27,14 @@ case class YamlStruct(ymlFile: String) extends YamlConf {
           (k, expand(v))
         }.toMap
       case _ =>
-//        println("o type is %s".format(o.getClass.getName))
         o
     }
-//          omap.++=(sm.iterator)
   }
   val yamlConf = {
     val iy = (for (y <- yaml.loadAll(new FileInputStream(ymlFile)).iterator.asScala) yield y).toList.head // toMap[String,Any]
-//    val omap = new mutable.HashMap[String, _]()
     val omap = expand(iy).asInstanceOf[Map[String,_]]
     println(s"omap: ${omap}")
     omap
-//    collection.immutable.HashMap[String,String](omap.iterator.toSeq:_*)
   }
 
   def getConfiguration = yamlConf

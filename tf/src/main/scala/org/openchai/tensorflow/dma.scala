@@ -10,7 +10,8 @@ case class DmaConfig(name: String)
 class DmaXferConClient(val dmaConfig: DmaConfig, val tcpParams: TcpParams, val xferTcpParams: TcpParams, val config: XferConfig) extends XferConIf with XferIfClient {
   val controller = XferConClient(tcpParams, xferTcpParams, config)
   val tcpXferIf = controller.tcpXferIf
-  val dmaXferIf = new DmaXferIfClient(new DmaParams("blah"), dmaConfig, tcpParams, config)
+  val dmaXferIfTcpParams = TcpParams(tcpParams.server, tcpParams.port)
+  val dmaXferIf = new DmaXferIfClient(new DmaParams("blah"), dmaConfig, dmaXferIfTcpParams, config)
   controller.xferIf = tcpXferIf  // TODO: decide how to do switching tcp/dma
 //  override var xferIf: XferIfClient = controller.xferIf
 

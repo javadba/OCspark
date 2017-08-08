@@ -29,7 +29,7 @@ case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
     }
     xferServerThread.start
     server = TcpServer(tcpParams.server, tcpParams.port,
-      new XferConServerIf(/*tcpParams, xferServerIf)*/))
+      new XferConServerIf(tcpParams))
     server.start
     this
   }
@@ -66,7 +66,7 @@ object XferConServer {
   }
 }
 
-class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) extends ServerIf("XferConServerIf") {
+class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") {
 
 //  val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 //
@@ -126,7 +126,8 @@ class XferConServerIf(/*tcpParams: TcpParams, xferServerIf: XferServerIf*/) exte
 //        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }
-      case _ => throw new IllegalArgumentException(s"Unknown service type ${req.getClass.getName}")
+      case _ => throw new IllegalArgumentException(s"XferConServerIf: Unknown service type ${req.getClass.getName} " +
+        s"on port ${tcpParams.port}")
     }
   }
 

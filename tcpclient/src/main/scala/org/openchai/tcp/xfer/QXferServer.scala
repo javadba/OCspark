@@ -9,7 +9,7 @@ import org.openchai.tcp.util.{FileUtils, TcpCommon}
 case class QTestParams(master: String, cHost: String, cPort: Int, sHost: String, sPort: Int)
 
 class XferQServerIf(outQ: BlockingQueue[TaggedEntry], tcpParams: TcpParams, qServerIf: QXferServerIf)
-  extends XferConServerIf(/*tcpParams, qServerIf */) {
+  extends XferConServerIf(tcpParams) {
   println("Created XferQServerIf")
 
   override def consume(config: TcpXferConfig) = {
