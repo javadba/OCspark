@@ -30,6 +30,9 @@ sudo mkdir /shared
 sudo chmod 777 /shared
 ln -s $(pwd) /shared/orajava
 
+scp -rp txa1:~ubuntu/tensorflow /shared/
+sudo ln -s /shared/tensorflow ~ubuntu/tensorflow
+
 git config --global user.email javadba@gmail.com
 git config --global user.name javadba
 git config --global push.default current
@@ -40,10 +43,15 @@ sudo apt-add-repository universe
 sudo apt-get update
 aptget maven
 
+
 cd /git
 gitc https://OpenChaiSpark:simit-domates-peynir@github.com/OpenChaiSpark/OCspark
+mkdir /shared/conf
 ln -s /git/OCspark/tf/src/main/resources/apps-config.yml /shared/conf/
 cd /git/OCspark
 bin/buildtf.sh
 
-bin/runtf.sh
+bin/runtf.sh 65254
+
+
+

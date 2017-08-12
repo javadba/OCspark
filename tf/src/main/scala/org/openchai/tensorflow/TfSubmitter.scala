@@ -77,7 +77,9 @@ object TfSubmitter {
 
   lazy val getTx1s = {
     val f = "/shared/tx1-slaves.txt"
-    scala.io.Source.fromFile(f).getLines.map{ l => l.split(":")}.map{ arr => (arr(0),arr(1).toInt)}.toSeq
+    val slaves = scala.io.Source.fromFile(f).getLines.map{ l => l.split(":")}.map{ arr => (arr(0),arr(1).toInt)}.toSeq
+    println(s"Slaves from $f: ${slaves.mkString(",")}")
+    slaves
   }
 
   lazy val pool = Executors.newFixedThreadPool(getTx1s.length)
