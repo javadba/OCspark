@@ -129,7 +129,8 @@ object TfSubmitter {
             println(s"Callable: result from worker=$workerNum = $res")
             assert(dir.length >= 8)
             try {
-              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
+//              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
+              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir /tmp/${new java.util.Random().nextInt(9999)}/")
             } catch {
               case e: Exception =>
                 println(s"TX$ix: Callable: ERROR: unable to delete $dir")
