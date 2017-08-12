@@ -48,6 +48,8 @@ cd /git
 gitc https://OpenChaiSpark:simit-domates-peynir@github.com/OpenChaiSpark/OCspark
 mkdir /shared/conf
 ln -s /git/OCspark/tf/src/main/resources/apps-config.yml /shared/conf/
+sudo ln -s /git/OCspark/bin/label_image.sh    /home/ubuntu/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image.sh
+sudo ln -s /home/ubuntu/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image /home/ubuntu/tensorflow/bazel-bin/tensorflow/examples/label_image/label_image_bin
 cd /git/OCspark
 bin/buildtf.sh
 

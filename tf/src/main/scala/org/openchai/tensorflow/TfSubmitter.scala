@@ -126,7 +126,7 @@ object TfSubmitter {
             val workerNum = workers(ix).getKey
             inUse.put(workerNum,true)
             val res =runSparkJob(master, tfServerHostAndPort, imgApp, dir, ix)
-//            println(s"Callable: result from worker=$workerNum = $res")
+            println(s"Callable: result from worker=$workerNum = $res")
             assert(dir.length >= 8)
             try {
               ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
