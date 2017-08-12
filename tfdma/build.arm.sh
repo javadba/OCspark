@@ -3,7 +3,7 @@
 export GITDIR=/git/OCspark/
 
 # if `mvn package install` already done you can comment out next line
-pushd $GITDIR && mvn package install; popd
+# pushd $GITDIR && mvn package install; popd
 
 echo "[1] Building C header files for java native methods (PcieDMA[Client|Server]) .."
 mvn dependency:build-classpath -Dmdep.outputFile=cp.txt

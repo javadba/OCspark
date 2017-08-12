@@ -21,9 +21,6 @@ object LabelImgRest {
         FileUtils.readFileBytes(liwreq.restHostAndPort)
       } else {
         Base64.getDecoder.decode(liwreq.contentsBase64)
-        //    val outf = "/tmp/base64.after.dat"
-        //    println(s"Writing decoded base64 bytes to $outf..")
-        //    FileUtils.writeBytes(outf, bytes)
       }
       new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.master, liwreq.tfServerHostAndPort, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outputTag, bytes)
     } else {
@@ -48,8 +45,6 @@ object TfSubmitter {
 
   def process(params: Map[String, String]) = {
     val UseSpark = true // TODO: make configurable with direct
-    // call to TfSubmitter.labelImg if desired. for now we don't want
-    // too many config knobs so hardcode to spark
 
     if (!params.contains("json")) {
       s"ERROR: no json in payload"
@@ -74,12 +69,9 @@ object TfSubmitter {
 
 
   def labelImg(tfClient: TfClient, lireq: LabelImgRest) = {
-//    val (s,p) = lireq.tfServerHostAndPort.split(":").grouped(2).map(arr => (arr(0),arr(1).toInt)).toSeq.head
-//    val tfClient = TfClient(s,p)
     val md5 = FileUtils.md5(lireq.contents)
     val res = tfClient.labelImg(LabelImgStruct(lireq.outputTag, lireq.path,
       lireq.contents, md5, Option(lireq.imgApp)))
-    //      println(s"${lireq.workerName}: Received label result: $res")
     res
   }
 
@@ -90,7 +82,6 @@ object TfSubmitter {
 
   lazy val pool = Executors.newFixedThreadPool(getTx1s.length)
   val inUse: ConcurrentNavigableMap[Int,Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int,Boolean]()
-//  Range(0,getTx1s.length).map{ ix  => inUse.put(ix,getTx1s(ix))}
   Range(0,getTx1s.length).map{ ix  => inUse.put(ix,true)}
 
   def runSparkJobs(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, nPartitions: Int = 1) = synchronized {
@@ -118,7 +109,6 @@ object TfSubmitter {
       val ndir = s"$dir/${workers(p).getKey}"
       new File(ndir).mkdir
       files.slice(if (p == 0) 0 else ixs(p - 1)._1, ixs(p)._1).map { case (path, len) =>
-//        new File(path).renameTo(new File(s"$ndir/${new File(path).getName}"))
         val link = s"$ndir/${new File(path).getName}"
         if (!new File(link).exists) {
           Files.createSymbolicLink(Paths.get(link), Paths.get(path))
@@ -140,13 +130,13 @@ object TfSubmitter {
               ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
             } catch {
               case e: Exception =>
-                println(s"Callable: ERROR: unable to delete $dir")
+                println(s"TX$ix: Callable: ERROR: unable to delete $dir")
                 e.printStackTrace
             }
             if (new File(dir).exists) {
-              println(s"Callable: ERROR: unable to delete $dir")
+              println(s"TX$ix: Callable: ERROR: unable to delete $dir")
             } else {
-              println(s"Callable: Finished worker $ix")
+              println(s"TX$ix: Callable: Finished worker $ix")
             }
             inUse.put(workerNum,false)
             res
@@ -157,61 +147,34 @@ object TfSubmitter {
     s"Submitted ${franges.length} groups of image processing jobs"
   }
 
-  def runSparkJob(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, tx1Num: Int) = {
+  def runSparkJob(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, ntx1: Int) = {
 
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
-    val bcTx1= sc.broadcast(getTx1s.apply(tx1Num))
+    val bcTx1= sc.broadcast(getTx1s.apply(ntx1))
     val irdd = sc.binaryFiles(dir,1)
-    println(s"runsparkJob($tx1Num): binary files rdd on $dir ready")
+    println(s"TX$ntx1: runsparkJob($ntx1): binary files rdd on $dir ready")
     val out = irdd.mapPartitionsWithIndex { case (np, part) =>
-      println(s"MapPartitions for part=$np on tx1#$tx1Num")
+      println(s"TX$ntx1: MapPartitions for part=$np on tx1#$ntx1")
       val (tx1Host, tx1Port) = bcTx1.value
       val tfClient = TfClient(tx1Host, tx1Port)
-      println(s"Running on tx1=(${bcTx1.value}")
+      println(s"TX$ntx1: Running on tx1=(${bcTx1.value}")
       part.map { case (path, contents) =>
         val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
         val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outputTag, contents.toArray)
-        println(s"Running labelImage on tx1=(${bcTx1.value} for $imgLabel")
+        println(s"TX$ntx1: Running labelImage on tx1=(${bcTx1.value} for $imgLabel")
         val res = labelImg(tfClient, imgLabel)
-        println(s"LabelImage result from ${bcTx1.value}: $res")
+        val pout =res.toString.split("\n").map{ l => s"TX$ntx1: $l"}
+        println(s"TX$ntx1: LabelImage result from ${bcTx1.value}: $pout")
         res
       }
     }
     val c = out.collect
-    println(s"Finished runSparkJob for tx1=$tx1Num")
+    println(s"Finished runSparkJob for tx1=$ntx1")
     c.mkString("\n")
   }
 
-  def runSparkJobOld(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, nPartitions: Int = 1) = {
-
-    val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
-    val sc = spark.sparkContext
-    val tx1s =  getTx1s
-    val nparts = tx1s.length
-    val bcTx1s = sc.broadcast(tx1s)
-    val irdd = sc.binaryFiles(dir, nparts)
-    val out = irdd.mapPartitionsWithIndex { case (np, part) =>
-      val tx1s = bcTx1s.value
-      val serverNum = np % tx1s.length
-      println(s"mapPartitions: associating partition #$np with server#$serverNum")
-      val (tx1Host, tx1Port) = bcTx1s.value(serverNum)
-      val tfClient = TfClient(tx1Host, tx1Port)
-      part.map { case (path, contents) =>
-        val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
-        val res = labelImg(tfClient, LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outputTag, contents.toArray))
-        res
-      }
-    }
-    val c = out.collect
-    c
-  }
-
   def labelImgViaRest(lireq: LabelImgRest) = {
-    //    println(s"POSTing $lireq")
-    //    val outf="/tmp/base64.before-post.dat"
-    //    println(s"labelImg: writing data before POST to file $outf..")
-    //    FileUtils.writeBytes(outf,lireq.contents)
     println(s"Sending labelImgRequest to webserver: $lireq ..")
     val map = Map("json" -> JsonUtils.toJson(LabelImgWebRest(lireq)))
     val resp = if (UseWeb) {
@@ -232,8 +195,6 @@ object TfSubmitter {
       val res = if (args(0).equalsIgnoreCase("--rest")) {
         val Array(restHost, tfServerHost, master, imgApp, imgPath, imgTag) = args.slice(1, args.length)
         labelImgViaRest(LabelImgRest(Option(restHost), tfServerHost, master, "TFViaRest", imgApp, imgPath, imgTag, null))
-//        val bytes = FileUtils.readFileBytes(imgPath)
-//        labelImgViaRest(LabelImgRest(Option(restHost), tfServerHost, master, "TFViaRest", imgApp, imgPath, imgTag, bytes))
       } else {
         val Array(master, tfServerHost, imgApp, imgPath, imgTag) = args
         labelImg(TfClient(), LabelImgRest(None, master, tfServerHost, "TFCommandLine", imgApp, imgPath, imgTag, FileUtils.readFileBytes(imgPath)))
