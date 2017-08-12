@@ -119,6 +119,7 @@ object TfSubmitter {
       (ndir, new File(ndir).listFiles)
     }
     println(s"Dividing work into: ${franges.map(fr=> s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
+    val ts = System.currentTimeMillis.toString.substring(4,10)
     franges.zipWithIndex.foreach { case ((dir, files),ix) =>
       pool.submit(
         new Callable[String]() {
@@ -130,7 +131,7 @@ object TfSubmitter {
             assert(dir.length >= 8)
             try {
 //              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
-              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir /tmp/${new java.util.Random().nextInt(9999)}/")
+              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
             } catch {
               case e: Exception =>
                 println(s"TX$ix: Callable: ERROR: unable to delete $dir")
