@@ -1,3 +1,4 @@
 export OCDIR=/git/OCspark
 cd $OCDIR/tf
-mvn exec:java -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.openchai.tensorflow.TfServer -Dexec.args="" -Dopenchai.tfserver.config.file=/shared/conf/apps-config.yml
+port="${1-65234}"
+mvn exec:java -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.openchai.tensorflow.TfServer -Dexec.args="* $port foo.cfg" -Dopenchai.tfserver.config.file=/shared/conf/apps-config.yml
