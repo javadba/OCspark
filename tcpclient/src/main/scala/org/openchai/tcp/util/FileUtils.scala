@@ -61,7 +61,10 @@ object FileUtils {
       .map(_.flatMap(f => rmdirs(f.getPath))).getOrElse(Array()) :+ (dir -> new File(dir).delete)
   }
 
-  def write(path: String, data: String): Unit = tools.nsc.io.File(path).writeAll(data)
+  def write(path: String, data: String): Unit = {
+    println(s"Writing to $path with datalen=${data.length}")
+    tools.nsc.io.File(path).writeAll(data)
+  }
 
   def writeBytes(fpath: String, data: Array[Byte]) = {
     println(s"Writing ${data.length} bytes to $fpath ..")

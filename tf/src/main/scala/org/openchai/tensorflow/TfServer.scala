@@ -96,7 +96,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
     val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
       Option(estruct.cmdline.replace("${1}",path).split(" ").tail), Some(Seq(estruct.runDir)), estruct.runDir))
     println(s"Result: $exeResult")
-    LabelImgRespStruct(exeResult)
+    LabelImgRespStruct(istruct.tag, istruct.fpath,exeResult)
   }
 
 

@@ -194,6 +194,9 @@ object TfSubmitter {
       }
     }
     val c = out.collect
+    c.foreach { li =>
+      FileUtils.writeBytes(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
+    }
     println(s"Finished runSparkJob for tx1=$ntx1")
     c.mkString("\n")
   }

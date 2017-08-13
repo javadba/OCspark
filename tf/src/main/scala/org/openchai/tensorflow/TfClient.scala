@@ -63,7 +63,7 @@ case class LabelImgStruct(tag: String, fpath: String,
 
 case class LabelImgReq(value: LabelImgStruct) extends P2pReq[LabelImgStruct]
 
-case class LabelImgRespStruct(cmdResult: ExecResult)
+case class LabelImgRespStruct(tag: String, fpath: String, cmdResult: ExecResult)
 
 case class LabelImgResp(val value: LabelImgRespStruct) extends P2pResp[LabelImgRespStruct]
 
