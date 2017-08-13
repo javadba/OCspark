@@ -11,6 +11,21 @@
                 "rundir": "${DARKNET_HOME}",
                 "tmpdir": "${DARKNET_HOME}/tmp"
             }
+            "pointrflow-a1": {
+                "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
+                "rundir": "${DARKNET_HOME}",
+                "tmpdir": "${DARKNET_HOME}/tmp"
+            }
+            "pointrflow-a2": {
+                "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
+                "rundir": "${DARKNET_HOME}",
+                "tmpdir": "${DARKNET_HOME}/tmp"
+            }
+            "pointrflow-a2": {
+                "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
+                "rundir": "${DARKNET_HOME}",
+                "tmpdir": "${DARKNET_HOME}/tmp"
+            }
         }
     },
     "environments": {

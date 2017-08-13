@@ -1,8 +1,8 @@
 alias aptget='sudo apt-get install -y'
-sudo add-apt-repository ppa:webupd8team/java
-sudo apt-get update
-sudo apt-get install oracle-java8-installer
-sudo apt-get install oracle-java8-set-default
+#sudo add-apt-repository ppa:webupd8team/java
+#sudo apt-get update
+#sudo apt-get install oracle-java8-installer
+#sudo apt-get install oracle-java8-set-default
 
 #sudo apt-get remove scala-library scala
 sudo wget www.scala-lang.org/files/archive/scala-2.11.8.deb
@@ -53,7 +53,4 @@ sudo ln -s /home/ubuntu/tensorflow/bazel-bin/tensorflow/examples/label_image/lab
 cd /git/OCspark
 bin/buildtf.sh
 
-bin/runtf.sh 65254
-
-
-
+# bin/runtf.sh 65254
