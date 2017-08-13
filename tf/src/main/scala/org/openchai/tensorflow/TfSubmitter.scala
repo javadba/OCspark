@@ -170,24 +170,26 @@ object TfSubmitter {
 
   def runSparkJob(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, ntx1: Int) = {
 
-    def txPrint(tx1: String, msg: String) = {
-      println(("\n" + msg).replace("\n", s"\n$tx1 >> "))
+    def txPrint(tx1: Int, msg: String) = {
+      def ix = Array(92,91,93,94,95,96,32,33,35,36,97,37)
+//      println(("\n" + msg).replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> \033[0m"))
+      println(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))
     }
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val bcTx1= sc.broadcast(getTx1s.apply(ntx1))
     val irdd = sc.binaryFiles(dir,1)
-    txPrint(s"TX$ntx1",s"runsparkJob: binary files rdd on $dir ready")
+    txPrint(ntx1,s"runsparkJob: binary files rdd on $dir ready")
     val out = irdd.mapPartitionsWithIndex { case (np, part) =>
       val (tx1Host, tx1Port) = bcTx1.value
       val tfClient = TfClient(tx1Host, tx1Port)
       part.map { case (path, contents) =>
         val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
         val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outputTag, contents.toArray)
-        txPrint(s"TX$ntx1",s"Running labelImage for $imgLabel")
+        txPrint(ntx1,s"Running labelImage for $imgLabel")
         val res = labelImg(tfClient, imgLabel)
 //        val pout =res.toString.split("\n").map{ l => s"TX$ntx1: $l"}
-        txPrint(s"TX$ntx1",s"LabelImage result: $res")
+        txPrint(ntx1,s"LabelImage result: $res")
         res
       }
     }
