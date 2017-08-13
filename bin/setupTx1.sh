@@ -22,6 +22,7 @@ cd ~
 scp txa2:~/bashrc ~
 source ~/.bashrc
 echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64" >> ~/.bashrc
+aptget screen
 
 sudo mkdir /git
 sudo chown steve:steve /git

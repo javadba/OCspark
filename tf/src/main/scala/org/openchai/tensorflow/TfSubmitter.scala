@@ -86,22 +86,39 @@ object TfSubmitter {
   val inUse: ConcurrentNavigableMap[Int,Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int,Boolean]()
   Range(0,getTx1s.length).map{ ix  => inUse.put(ix,true)}
 
+  val sizeWeight = 0.4 // 40% size 60% evenly distributed by count
+  val countWeight = 1-sizeWeight
+
   def runSparkJobs(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, nPartitions: Int = 1) = synchronized {
-    val files = new File(dir).listFiles.map{ f => (f.getAbsolutePath, f.length) }.sortBy(_._1).toSeq
-    val totSize = files.map(_._2).sum
+    var files = mutable.ArrayBuffer[(String,Long)](new File(dir).listFiles.map{ f => (f.getAbsolutePath, f.length) }.sortBy(_._1).toSeq:_*)
     import collection.JavaConverters._
     val workers = inUse.entrySet.asScala.filter(_.getValue).toSeq.sortBy(_.getKey)
     if (workers.length < inUse.keySet.size) {
       println(s"runSparkJobs: there are ${workers.length < inUse.keySet.size} workers still busy from earlier jobs ..")
     }
     val nWorkers = workers.length
+    var nGroupsRemaining = nWorkers
     var ixs = mutable.ArrayBuffer[(Int,Long)]()
     var cursum: Long = 0L
+    var totItems: Int = 0
+    var totSize: Long = 0L
+    var curItems: Int = 0
     for (i <- Range(0,files.length)) {
+      if (totItems ==0) {
+        totItems = files.length -i
+        totSize = files.slice(i,files.length).map(_._2).sum
+      }
+      curItems += 1
       cursum += files(i)._2.toLong
-      if (cursum >= totSize / nWorkers) {
+      val level = sizeWeight * (cursum * 1.0/totSize) + (1-sizeWeight)*(curItems*1.0/totItems)
+      println(s"$level with $nGroupsRemaining remaining..")
+      if (level >= 1.0/nGroupsRemaining) {
         ixs += Tuple2(i,cursum)
+        curItems = 0
         cursum = 0
+        totSize = 0
+        totItems = 0
+        nGroupsRemaining -= 1
       }
     }
     ixs += Tuple2(files.length-1,cursum)
@@ -127,7 +144,7 @@ object TfSubmitter {
             val workerNum = workers(ix).getKey
             inUse.put(workerNum,true)
             val res =runSparkJob(master, tfServerHostAndPort, imgApp, dir, ix)
-            println(s"Callable: result from worker=$workerNum = $res")
+            // println(s"Callable: result from worker=$workerNum = $res")
             assert(dir.length >= 8)
             try {
 //              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
@@ -153,23 +170,24 @@ object TfSubmitter {
 
   def runSparkJob(master: String, tfServerHostAndPort: String, imgApp: String, dir: String, ntx1: Int) = {
 
+    def txPrint(tx1: String, msg: String) = {
+      println(("\n" + msg).replace("\n", s"\n$tx1 >> "))
+    }
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val bcTx1= sc.broadcast(getTx1s.apply(ntx1))
     val irdd = sc.binaryFiles(dir,1)
-    println(s"TX$ntx1: runsparkJob($ntx1): binary files rdd on $dir ready")
+    txPrint(s"TX$ntx1",s"runsparkJob: binary files rdd on $dir ready")
     val out = irdd.mapPartitionsWithIndex { case (np, part) =>
-      println(s"TX$ntx1: MapPartitions for part=$np on tx1#$ntx1")
       val (tx1Host, tx1Port) = bcTx1.value
       val tfClient = TfClient(tx1Host, tx1Port)
-      println(s"TX$ntx1: Running on tx1=(${bcTx1.value}")
       part.map { case (path, contents) =>
         val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
         val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outputTag, contents.toArray)
-        println(s"TX$ntx1: Running labelImage on tx1=(${bcTx1.value} for $imgLabel")
+        txPrint(s"TX$ntx1",s"Running labelImage for $imgLabel")
         val res = labelImg(tfClient, imgLabel)
-        val pout =res.toString.split("\n").map{ l => s"TX$ntx1: $l"}
-        println(s"TX$ntx1: LabelImage result from ${bcTx1.value}: $pout")
+//        val pout =res.toString.split("\n").map{ l => s"TX$ntx1: $l"}
+        txPrint(s"TX$ntx1",s"LabelImage result: $res")
         res
       }
     }
