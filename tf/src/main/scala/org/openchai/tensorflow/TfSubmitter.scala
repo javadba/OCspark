@@ -123,10 +123,11 @@ object TfSubmitter {
     }
     ixs += Tuple2(files.length-1,cursum)
     println(s"Group sizes = ${ixs.mkString(",")}")
+    val ts = System.currentTimeMillis.toString.substring(6,10)
     import java.nio.file._
     val franges = Range(0,Math.min(nWorkers,ixs.length+1)).map { p =>
-      val ndir = s"$dir/${workers(p).getKey}"
-      new File(ndir).mkdir
+      val ndir = s"$dir/$ts/${workers(p).getKey}"
+      new File(ndir).mkdirs
       files.slice(if (p == 0) 0 else ixs(p - 1)._1, ixs(p)._1).map { case (path, len) =>
         val link = s"$ndir/${new File(path).getName}"
         if (!new File(link).exists) {
@@ -136,7 +137,6 @@ object TfSubmitter {
       (ndir, new File(ndir).listFiles)
     }
     println(s"Dividing work into: ${franges.map(fr=> s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
-    val ts = System.currentTimeMillis.toString.substring(4,10)
     franges.zipWithIndex.foreach { case ((dir, files),ix) =>
       pool.submit(
         new Callable[String]() {
@@ -148,16 +148,11 @@ object TfSubmitter {
             assert(dir.length >= 8)
             try {
 //              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
-              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
+//              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
             } catch {
               case e: Exception =>
                 println(s"TX$ix: Callable: ERROR: unable to delete $dir")
                 e.printStackTrace
-            }
-            if (new File(dir).exists) {
-              println(s"TX$ix: Callable: ERROR: unable to delete $dir")
-            } else {
-              println(s"TX$ix: Callable: Finished worker $ix")
             }
             inUse.put(workerNum,false)
             res
@@ -195,7 +190,15 @@ object TfSubmitter {
     }
     val c = out.collect
     c.foreach { li =>
-      FileUtils.writeBytes(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
+      val fp = if (li.value.fpath.startsWith("file:")) {
+        val f = li.value.fpath.substring("file:".length)
+        val e = f.zipWithIndex.find{_._1 != '/'}.get._2
+        '/' + f.substring(e)
+      } else {
+        li.value.fpath
+      }
+      FileUtils.writeBytes(s"$fp.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
+//      println(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
     }
     println(s"Finished runSparkJob for tx1=$ntx1")
     c.mkString("\n")
@@ -216,7 +219,7 @@ object TfSubmitter {
     if (args(0).equalsIgnoreCase("--spark")) {
       val Array(master, tfServerHostAndPort, imgApp, dir, nPartitions) = args.slice(1, args.length)
       val dir2 = s"${System.getProperty("user.dir")}/src/main/resources/images/"
-      val res = runSparkJobs(master, tfServerHostAndPort, imgApp, s"file:///$dir2", nPartitions.toString.toInt)
+      val res = runSparkJobs(master, tfServerHostAndPort, imgApp, s"file://$dir2", nPartitions.toString.toInt)
       println("results: " + res)
     } else {
       val res = if (args(0).equalsIgnoreCase("--rest")) {

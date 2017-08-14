@@ -68,7 +68,11 @@ object FileUtils {
 
   def writeBytes(fpath: String, data: Array[Byte]) = {
     println(s"Writing ${data.length} bytes to $fpath ..")
-    new FileOutputStream(fpath).write(data)
+    val fos = new FileOutputStream(fpath)
+    fos.write(data)
+    fos.flush
+    fos.close
+    println(s"Writing ${data.length} bytes to $fpath .. done ..")
   }
 
   def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): TaskResult = {
@@ -127,11 +131,14 @@ object FileUtils {
 
   import java.security.MessageDigest
 
-  val md = MessageDigest.getInstance("MD5")
 
   def md5(arr: Array[Byte]) = {
+    val md = MessageDigest.getInstance("MD5")
     md.update(arr)
     md.digest
   }
 
+  def main(args: Array[String]): Unit = {
+    writeBytes("/tmp/abc.txt"," here is stuff".getBytes("ISO-8859-1"))
+  }
 }

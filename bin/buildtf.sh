@@ -1,4 +1,3 @@
-export OCDIR=/git/OCspark
 cd $OCDIR/tcpclient
 mvn package install
 cd $OCDIR/tfdma
