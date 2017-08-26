@@ -46,6 +46,9 @@ object LabelImgWebRest {
 case class TfSubmitter() {
 }
 
+object ImagesMeta {
+  val whiteListExt = "txt jpg jpeg png gif svg tiff".split(" ").toSeq
+}
 object TfSubmitter {
   val UseWeb = false
 
@@ -61,12 +64,12 @@ object TfSubmitter {
       val json = params("json")
       val labelImgWebReq = parseJsonToCaseClass[LabelImgWebRest](json)
       val resp = if (UseSpark) {
-        info(s"TfWebServer: TfSubmitter.runSparkJob..")
+        debug(s"TfWebServer: TfSubmitter.runSparkJob..")
         val lr = labelImgWebReq
-        val lresp = TfSubmitter.runSparkJobs(conf, lr.master, lr.tfServerHostAndPort, lr.imgApp, lr.path, lr.outDir)
+        val lresp = TfSubmitter.runSparkJobs(conf, lr.master, lr.tfServerHostAndPort, lr.imgApp, lr.path, lr.outDir, continually=false)
         lresp
       } else {
-        info(s"TfWebServer: TfSubmitter.labelImg..")
+        debug(s"TfWebServer: TfSubmitter.labelImg..")
         val lresp = TfSubmitter.labelImg(TfClient(conf), LabelImgRest(labelImgWebReq))
         lresp.value.toString
       }
@@ -92,112 +95,158 @@ object TfSubmitter {
 
   lazy val pool = Executors.newFixedThreadPool(getTx1s.length)
   val inUse: ConcurrentNavigableMap[Int,Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int,Boolean]()
-  Range(0,getTx1s.length).map{ ix  => inUse.put(ix,true)}
+  Range(1,getTx1s.length+1).map{ ix  => inUse.put(ix,false)}
 
   val sizeWeight = 0.4 // 40% size 60% evenly distributed by count
   val countWeight = 1-sizeWeight
 
-  def runSparkJobs(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String, nPartitions: Int = 1) = synchronized {
-    var files = mutable.ArrayBuffer[(String,Long)](
-      new File(dir).listFiles.map{
-        f => (f.getAbsolutePath, f.length) }
-        .sortBy(_._1)
-        .toSeq:_*)
-    import collection.JavaConverters._
-    val workers = inUse.entrySet.asScala.filter(_.getValue).toSeq.sortBy(_.getKey)
-    if (workers.length < inUse.keySet.size) {
-      info(s"runSparkJobs: there are ${workers.length < inUse.keySet.size} workers still busy from earlier jobs ..")
-    }
-    val nWorkers = workers.length
-    var nGroupsRemaining = nWorkers
-    var ixs = mutable.ArrayBuffer[(Int,Long)]()
-    var cursum: Long = 0L
-    var totItems: Int = 0
-    var totSize: Long = 0L
-    var curItems: Int = 0
-    for (i <- Range(0,files.length)) {
-      if (totItems ==0) {
-        totItems = files.length -i
-        totSize = files.slice(i,files.length).map(_._2).sum
+  @inline def getWatermarkFileName(dir: String) = {
+    s"$dir/watermark.txt"
+  }
+
+  def runSparkJobs(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String,
+    nPartitions: Int = 1, continually: Boolean=true) = {
+    var warnPrinted = false
+    val res = for (iters <- Range(0,if (continually) Integer.MAX_VALUE else 1)) yield {
+      var watermark = FileUtils.readFileOption(getWatermarkFileName(dir)).flatMap(s => Option(s.toLong)).getOrElse(0L)
+      debug(s"watermark=$watermark")
+      var files = mutable.ArrayBuffer[(String, Long)](
+        new File(dir).listFiles
+          .filter(f => f.isFile
+            && f.lastModified > watermark
+            && f.getName.contains(".")
+            && ImagesMeta.whiteListExt.contains(f.getName.toLowerCase.substring(f.getName.lastIndexOf(".")+1))
+          ).map { f => (f.getAbsolutePath, f.length) }
+          .sortBy(_._1)
+          .toSeq: _*)
+      watermark = System.currentTimeMillis
+      import collection.JavaConverters._
+      val workers = inUse.entrySet.asScala.filter(!_.getValue).toSeq.sortBy(_.getKey)
+      if (workers.length < inUse.keySet.size) {
+        debug(s"runSparkJobs: there are ${inUse.keySet.size - workers.length} workers still busy from earlier jobs ..")
       }
-      curItems += 1
-      cursum += files(i)._2.toLong
-      val level = sizeWeight * (cursum * 1.0/totSize) + (1-sizeWeight)*(curItems*1.0/totItems)
-      info(s"$level with $nGroupsRemaining remaining..")
-      if (level >= 1.0/nGroupsRemaining) {
-        ixs += Tuple2(i,cursum)
-        curItems = 0
-        cursum = 0
-        totSize = 0
-        totItems = 0
-        nGroupsRemaining -= 1
+      if (!warnPrinted) {
+        if (files.isEmpty) {
+          info(s"No files are present to process: reset/delete the watermark.txt to reprocess the existing images")
+        } else if (workers.isEmpty) {
+          info("No workers/tx1's are presently available: please wait for them to complete existing work")
+        }
+        warnPrinted = true
       }
-    }
-    ixs += Tuple2(files.length-1,cursum)
-    info(s"Group sizes = ${ixs.mkString(",")}")
-    val ts = System.currentTimeMillis.toString.substring(6,10)
-    import java.nio.file._
-    val franges = Range(0,Math.min(nWorkers,ixs.length+1)).map { p =>
-      val ndir = s"$dir/$ts/${workers(p).getKey}"
-      new File(ndir).mkdirs
-      files.slice(if (p == 0) 0 else ixs(p - 1)._1, ixs(p)._1).map { case (path, len) =>
-        val link = s"$ndir/${new File(path).getName}"
-        if (!new File(link).exists) {
-          Files.createSymbolicLink(Paths.get(link), Paths.get(path))
+      val nWorkers = workers.length
+      var nGroupsRemaining = nWorkers
+      var ixs = mutable.ArrayBuffer[(Int, Long)]()
+      var cursum: Long = 0L
+      var totItems: Int = 0
+      var totSize: Long = 0L
+      var curItems: Int = 0
+      for (i <- Range(0, files.length)) {
+        if (totItems == 0) {
+          totItems = files.length - i
+          totSize = files.slice(i, files.length).map(_._2).sum
+        }
+        curItems += 1
+        cursum += files(i)._2.toLong
+        val level = sizeWeight * (cursum * 1.0 / totSize) + (1 - sizeWeight) * (curItems * 1.0 / totItems)
+        debug(s"$level with $nGroupsRemaining remaining..")
+        if (level >= 1.0 / nGroupsRemaining) {
+          ixs += Tuple2(i, cursum)
+          curItems = 0
+          cursum = 0
+          totSize = 0
+          totItems = 0
+          nGroupsRemaining -= 1
         }
       }
-      (ndir, new File(ndir).listFiles)
-    }
-    info(s"Dividing work into: ${franges.map(fr=> s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
-    franges.zipWithIndex.foreach { case ((dir, files),ix) =>
-      pool.submit(
-        new Callable[String]() {
-          override def call(): String = {
-            val workerNum = workers(ix).getKey
-            inUse.put(workerNum,true)
-            val res =runSparkJob(conf, master, tfServerHostAndPort, imgApp, dir, outDir, ix)
-            // info(s"Callable: result from worker=$workerNum = $res")
-            assert(dir.length >= 8)
-            try {
-//              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
-//              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
-            } catch {
-              case e: Exception =>
-                info(s"TX$ix: Callable: ERROR: unable to delete $dir")
-                e.printStackTrace
-            }
-            inUse.put(workerNum,false)
-            res
+      ixs += Tuple2(files.length - 1, cursum)
+      if (ixs.length == 1 && ixs(0)._2 == 0) {
+        ixs.clear
+      }
+      if (ixs.nonEmpty) {
+        debug(s"Group sizes = ${ixs.mkString(",")}")
+      }
+      val ts = System.currentTimeMillis.toString.substring(6, 10)
+      import java.nio.file._
+      val franges = Range(0, Math.min(nWorkers, ixs.length)).map { p =>
+        val ndir = s"$outDir/${workers(p).getKey}"
+        debug(s"Worker dir=$ndir")
+        new File(ndir).mkdirs
+        files.slice(if (p == 0) 0 else ixs(p - 1)._1, ixs(p)._1).map { case (path, len) =>
+          val link = s"$ndir/${new File(path).getName}"
+          if (!new File(link).exists) {
+            Files.createSymbolicLink(Paths.get(link), Paths.get(path))
           }
         }
-      )
+        (ndir, new File(ndir).listFiles)
+      }
+      if (franges.nonEmpty) {
+        debug(s"Dividing work into: ${franges.map(fr => s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
+      }
+      franges.zipWithIndex.foreach { case ((dir, files), ix) =>
+        info(s"TX$ix: Submitting from dir=$dir for files=${files.mkString(",")}")
+        pool.submit(
+          new Callable[String]() {
+            override def call(): String = {
+              val workerNum = workers(ix).getKey
+              inUse.put(workerNum, true)
+              debug(s"TX$ix: invoking runSparkJob..")
+              val res = runSparkJob(conf, master, tfServerHostAndPort, imgApp, dir, dir, ix)
+              // info(s"Callable: result from worker=$workerNum = $res")
+              assert(dir.length >= 8)
+              try {
+                //              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
+                //              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
+              } catch {
+                case e: Exception =>
+                  info(s"TX$ix: Callable: ERROR: unable to delete $dir")
+                  e.printStackTrace
+              }
+              inUse.put(workerNum, false)
+              res
+            }
+          }
+        )
+      }
+      FileUtils.write(getWatermarkFileName(dir), watermark.toString, silent=true)
+
+      val res = s"Submitted ${franges.length} groups of image processing jobs"
+      debug(res)
+      Thread.sleep(200)
+      res
     }
-    s"Submitted ${franges.length} groups of image processing jobs"
+    res.asInstanceOf[Seq[String]].mkString("\n\n")
   }
 
   def runSparkJob(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String, ntx1: Int) = {
 
-    def txPrint(tx1: Int, msg: String) = {
-      def ix = Array(92,91,93,94,95,96,32,33,35,36,97,37)
-//      info(("\n" + msg).replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> \033[0m"))
-      info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))
-    }
+    def ix = Array(92,91,93,94,95,96,32,33,35,36,97,37)
+    def txDebug(tx1: Int, msg: String) = { debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))}
+    def txInfo(tx1: Int, msg: String) = { debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))}
+    txDebug(ntx1, s"Connecting to spark master $master ..")
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val bcTx1= sc.broadcast(getTx1s.apply(ntx1))
+//    FileUtils.cleanDir(dir,ImagesMeta.whiteListExt :+ "result")
     val irdd = sc.binaryFiles(dir,1)
-    txPrint(ntx1,s"runsparkJob: binary files rdd on $dir ready")
+    txDebug(ntx1,s"runsparkJob: binary files rdd on $dir ready")
     val out = irdd.mapPartitionsWithIndex { case (np, part) =>
       val (tx1Host, tx1Port) = bcTx1.value
       val tfClient = TfClient(conf, tx1Host, tx1Port)
-      part.map { case (path, contents) =>
-        val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
-        val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
-        txPrint(ntx1,s"Running labelImage for $imgLabel")
-        val res = labelImg(tfClient, imgLabel)
-//        val pout =res.toString.split("\n").map{ l => s"TX$ntx1: $l"}
-        txPrint(ntx1,s"LabelImage result: $res")
-        res
+      part.flatMap { case (path, contents) =>
+        if (path.endsWith("result.result")) {
+          error(s"Got a double result path $path")
+        }
+        if (!ImagesMeta.whiteListExt.contains(path.substring(path.lastIndexOf(".")+1).toLowerCase)) {
+          info(s"Skipping non image file $path")
+          None
+        } else {
+          val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
+          val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
+          txInfo(ntx1, s"Running labelImage for $imgLabel")
+          val res = labelImg(tfClient, imgLabel)
+          txInfo(ntx1, s"LabelImage result: $res")
+          Some(res)
+        }
       }
     }
     val c = out.collect
@@ -211,14 +260,14 @@ object TfSubmitter {
       }
       val fname = fp.substring(fp.lastIndexOf("/")+1)
       FileUtils.writeBytes(s"${li.value.outDir}/$fname.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
-//      info(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
+//      debug(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
     }
     info(s"Finished runSparkJob for tx1=$ntx1")
     c.mkString("\n")
   }
 
   def labelImgViaRest(conf: TfAppConfig, lireq: LabelImgRest) = {
-    info(s"Sending labelImgRequest to webserver: $lireq ..")
+    debug(s"Sending labelImgRequest to webserver: $lireq ..")
     val map = Map("json" -> JsonUtils.toJson(LabelImgWebRest(lireq)))
     val resp = if (UseWeb) {
       val resp = HttpUtils.post(s"${TfWebServer.getUri(lireq.restHostAndPort.get)}", map)
@@ -239,7 +288,7 @@ object TfSubmitter {
     val conf = TfConfig.getAppConfig(args(0))
     if (conf.isSpark) {
       val res = runSparkJobs(conf, conf.master, conf.tfServerAndPort, conf.imgApp, s"${conf.inDir}", s"${conf.outDir}",
-        conf.nPartitionsPerTx1.toString.toInt)
+        conf.nPartitionsPerTx1.toString.toInt, continually=true)
       info("results: " + res)
     } else {
       val res = if (conf.isRest) {

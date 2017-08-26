@@ -51,12 +51,16 @@ object TfServer {
 
   def main(args: Array[String]): Unit = {
 
+    val iargs = if (args(0) == getClass.getName) {
+      args.slice(1, args.length)
+    } else args
+
     val q = new ArrayBlockingQueue[TaggedEntry](1000)
     val (host, port, xhost, xport, ahost, aport) = if (args.length == 0) {
       val cont = XferConCommon.TestControllers
       (cont.conHost, cont.conPort, cont.dataHost, cont.dataPort, cont.appHost, cont.appPort)
     } else {
-      XferConServer.makeXferConnections(args)
+      XferConServer.makeXferConnections(iargs)
     }
     val server = apply(yamlConf, q, TcpParams(ahost, aport), TcpParams(host, port), TcpParams(xhost, xport))
   }

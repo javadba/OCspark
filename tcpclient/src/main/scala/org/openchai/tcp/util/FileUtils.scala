@@ -17,18 +17,29 @@
 package org.openchai.tcp.util
 
 import java.io._
-import java.nio.file.Paths
-import java.util.Scanner
 import java.util.concurrent.{Callable, Executors, Future}
 
-import org.openchai.tcp.xfer.{DataPtr, PackedData, RawData}
+import org.openchai.tcp.xfer.{DataPtr, RawData}
 
 import scala.collection.mutable.ArrayBuffer
+import Logger._
 
 object FileUtils {
 
-//  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
-//  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
+  def cleanDir(dir: String, extensions: Seq[String]) = {
+    assert(dir.length >= 8)
+    val toDelete = new File(dir).listFiles(new FileFilter {
+      override def accept(pathname: File) = {
+        pathname.getName.indexOf(".") <= 0 ||
+          !extensions.contains(pathname.getName.substring(pathname.getName.lastIndexOf(".") + 1).toLowerCase())
+      }
+    })
+    toDelete.foreach{ f=> info(s"Deleting ${f.getAbsolutePath} .."); f.delete }
+  }
+
+
+  //  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
+  //  def checkMd5(packed: PackedData): Unit = checkMd5(packed._1, packed._2, packed._3)
 
   def checkMd5(path: DataPtr, data: Array[Byte], md5In: RawData) = {
     if (!compareBytes(md5(data), md5In)) {
@@ -45,6 +56,7 @@ object FileUtils {
   }
 
   import Logger._
+
   type TaskResult = Array[Byte]
 
   def mkdirs(dir: String) = {
@@ -54,15 +66,17 @@ object FileUtils {
       fdir.mkdirs
     }
   }
+
   def rmdirs(dir: String): Array[(String, Boolean)] = {
-//    if (fdir.exists()) {
-//      debug(s"Removing directory ${fdir.getPath}")
+    //    if (fdir.exists()) {
+    //      debug(s"Removing directory ${fdir.getPath}")
     Option(new File(dir).listFiles)
       .map(_.flatMap(f => rmdirs(f.getPath))).getOrElse(Array()) :+ (dir -> new File(dir).delete)
   }
 
-  def write(path: String, data: String): Unit = {
-    info(s"Writing to $path with datalen=${data.length}")
+  def write(path: String, data: String, silent: Boolean = false): Unit = {
+    if (!silent)
+      info(s"Writing to $path with datalen=${data.length}")
     tools.nsc.io.File(path).writeAll(data)
   }
 
@@ -87,11 +101,12 @@ object FileUtils {
         readFileBytes(path)
       }
     }
-//    val sb = new StringBuffer // Make sure StringBUFFER not BUILDER because of multithreaded!!
-    val taskResult = new ArrayBuffer[Byte](1024*128) // Make sure StringBUFFER not BUILDER because of multithreaded!!
+    //    val sb = new StringBuffer // Make sure StringBUFFER not BUILDER because of multithreaded!!
+    val taskResult = new ArrayBuffer[Byte](1024 * 128) // Make sure StringBUFFER not BUILDER because of multithreaded!!
 
     import collection.mutable
     val tasksBuf = mutable.ArrayBuffer[Future[TaskResult]]()
+
     def readPath0(fpath: String): TaskResult = {
       val paths = new File(fpath).listFiles.filter { f => !f.getName.startsWith(".") }
       paths.foreach { f =>
@@ -109,10 +124,11 @@ object FileUtils {
       tasksBuf.foreach { t => taskResult ++= t.get }
       taskResult.toArray
     }
+
     readPath0(path)
   }
 
-//  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
+  //  def readFileBytes(fpath: String): Array[Byte] = readFileAsString(fpath).getBytes("ISO-8859-1")
   def readFileBytes(fpath: String): Array[Byte] = {
     try {
       val file = new File(fpath).getCanonicalFile
@@ -127,10 +143,15 @@ object FileUtils {
     }
   }
 
-  def readFileAsString(fpath: String) =  new String(readFileBytes(fpath),"ISO-8859-1")
+  def readFileAsString(fpath: String) = new String(readFileBytes(fpath), "ISO-8859-1")
 
   import java.security.MessageDigest
 
+  def readFileOption(fpath: String) = try {
+    Some(readFileAsString(fpath))
+  } catch {
+    case fne: FileNotFoundException => warn(s"File $fpath not found"); None
+  }
 
   def md5(arr: Array[Byte]) = {
     val md = MessageDigest.getInstance("MD5")
@@ -139,6 +160,6 @@ object FileUtils {
   }
 
   def main(args: Array[String]): Unit = {
-    writeBytes("/tmp/abc.txt"," here is stuff".getBytes("ISO-8859-1"))
+    writeBytes("/tmp/abc.txt", " here is stuff".getBytes("ISO-8859-1"))
   }
 }

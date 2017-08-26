@@ -95,7 +95,7 @@ object ProcessUtils {
 
     val pb = new ProcessBuilder((procName +: params.args.getOrElse(Seq.empty[String])):_*)
     pb.directory(new java.io.File(params.dir))
-    error(s"Exec: [$procName ${params.args.get.mkString(" ")}] pbDir=${pb.directory.getAbsolutePath}")
+    warn(s"Exec: [$procName ${params.args.get.mkString(" ")}] pbDir=${pb.directory.getAbsolutePath}")
 
     val proc = pb.start()
     proc.waitFor()
@@ -107,7 +107,7 @@ object ProcessUtils {
     val elapsed = System.currentTimeMillis() - startt
 
     val res = ExecResult(params, elapsed, exit, stdout, stderr)
-    error(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
+    warn(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
     res
 
   }

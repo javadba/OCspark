@@ -17,12 +17,12 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
 
   @Override
   public String setupChannel(String setupJson) {
-    return toJson(new Result("SetupChannel", 1, "Foo"));
+    return toJson(new Result("SetupChannel", 1, "TestMessage"));
   }
 
   @Override
   public String prepareWrite(String configJson) {
-    return toJson(new Result("prepareWrite", 1, "Foo"));
+    return toJson(new Result("prepareWrite", 1, "TestMessage"));
   }
 
   @Override
@@ -37,7 +37,7 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
 
   @Override
   public String prepareRead(String configJson) {
-        return toJson(new Result("prepareRead", 1, "Foo"));
+        return toJson(new Result("prepareRead", 1, "TestMessage"));
   }
 
   @Override
@@ -47,12 +47,12 @@ public class DMAClientBase implements TensorFlowIf.DMAClient {
 
   @Override
   public String completeRead(String configJson) {
-        return toJson(new Result("completeRead", 1, "Foo"));
+        return toJson(new Result("completeRead", 1, "TestMessage"));
   }
 
   @Override
   public String shutdownChannel(String setupJson) {
-        return toJson(new Result("shutdownChannel", 1, "Foo"));
+        return toJson(new Result("shutdownChannel", 1, "TestMessage"));
   }
 
   @Override

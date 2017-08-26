@@ -47,6 +47,7 @@ case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
 
 object XferConServer {
   def makeXferConnections(args: Array[String]) = {
+    error(s"XferConServer args: ${args.mkString(" ")}")
     val host = args(0)
     val port = args(1).toInt
     val xhost = host

@@ -41,7 +41,7 @@ object DmaXferConClient {
     val tcpParams = TcpParams(args.conHost, args.conPort)
     val xtcpParams = TcpParams(args.dataHost, args.dataPort)
     val xferConf = TcpXferConfig(args.outboundDataPaths._1, args.outboundDataPaths._2)
-    val client = new DmaXferConClient(DmaConfig("foo"), tcpParams, xtcpParams, xferConf)
+    val client = new DmaXferConClient(DmaConfig("tbd"), tcpParams, xtcpParams, xferConf)
     val wparams = XferWriteParams("WriteParams", xferConf, args.data)
     val rparams = XferReadParams("ReadParams", xferConf, args.inboundDataPath)
     DmaXferControllers(client, xferConf, wparams, rparams)

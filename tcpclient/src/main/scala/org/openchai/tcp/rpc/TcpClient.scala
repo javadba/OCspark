@@ -29,21 +29,21 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   override def isConnected: Boolean = is != null && os != null
 
   override def connect(connParam: P2pConnectionParams): Boolean = {
-    savedConnParam = connParam
-    val tconn = connParams.asInstanceOf[TcpParams]
-    info(s"TcpClient: Connecting ${serviceIf.name} to ${tconn.server}:${tconn.port} ..")
-    sock = new Socket(tconn.server, tconn.port)
-    os = sock.getOutputStream
-    is = sock.getInputStream
-    bind(this, serviceIf)
-    info(s"TcpClient: Bound ${serviceIf.name} to ${tconn.server}:${tconn.port}")
-//    try {
-//      throw new IllegalStateException("foo is bad state")
-//    } catch {
-//      case e => e.printStackTrace
-//    }
-
-    is != null && os != null
+    try {
+      savedConnParam = connParam
+      val tconn = connParams.asInstanceOf[TcpParams]
+      info(s"TcpClient: Connecting ${serviceIf.name} to ${tconn.server}:${tconn.port} ..")
+      sock = new Socket(tconn.server, tconn.port)
+      os = sock.getOutputStream
+      is = sock.getInputStream
+      bind(this, serviceIf)
+      info(s"TcpClient: Bound ${serviceIf.name} to ${tconn.server}:${tconn.port}")
+      is != null && os != null
+    } catch {
+      case e: Exception =>
+        error(s"Error Connecting to $connParam", e)
+        throw e
+    }
   }
 
   private var savedConnParam: P2pConnectionParams = _
@@ -86,9 +86,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
           } while (dis.available > 0)
         }
       } while (totalRead <= 0)
-//      info(s"Serve: totalRead=$totalRead")
+      debug(s"Serve: totalRead=$totalRead")
       val o = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
-//    info(s"request: received $nread bytes")
 //    val (path, o, md5) = unpack(buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
     if (reconnectEveryRequest) {

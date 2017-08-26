@@ -1,5 +1,7 @@
 package org.openchai.tcp.util
 
+import java.io.{PrintWriter, StringWriter}
+
 trait Logger {
   def f(msg: String) = {
     val d = new java.util.Date
@@ -24,4 +26,13 @@ object Logger {
   def info(msg: Any) = if (LogLevel >= 2) println(s"Info: $msg")
   def warn(msg: Any) = if (LogLevel >= 1) println(s"WARN: $msg")
   def error(msg: Any) = if (LogLevel >= 0) println(s"ERROR: $msg")
+  def error(msg: Any, t: Throwable) = if (LogLevel >= 0) println(s"ERROR: $msg\n${toString(t)}")
+
+  def toString(t: Throwable) = {
+    val sw = new StringWriter()
+    val pw = new PrintWriter(sw)
+    t.printStackTrace(pw)
+    String.format("%s - %s", t.getMessage, sw.toString)
+  }
+
 }
