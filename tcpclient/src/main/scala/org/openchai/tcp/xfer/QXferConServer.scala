@@ -4,20 +4,21 @@ import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
 import org.openchai.tcp.rpc.{TcpParams, TcpServer}
 import org.openchai.tcp.xfer.XferConCommon.XferControllerArgs
+import org.openchai.tcp.util.Logger._
 
 object QXferConServer {
 
   def findInQ(q: BlockingQueue[TaggedEntry],tag: String) = {
     val aq = q.asInstanceOf[ArrayBlockingQueue[TaggedEntry]]
-    println(s"FindInQ: looking for $tag: entries=${aq.size}")
+    info(s"FindInQ: looking for $tag: entries=${aq.size}")
     val e = {
       var p: Option[TaggedEntry] = None
         val it = aq.iterator
         while (it.hasNext && !aq.isEmpty) {
           val pv = it.next
-//          println(s"Queue entry: ${pv}")
+//          info(s"Queue entry: ${pv}")
           if (pv.tag == tag) {
-            println(s"Found entry ${pv.tag}")
+            info(s"Found entry ${pv.tag}")
             p = Option(pv)
             aq.remove(pv)
           } else {
@@ -26,7 +27,7 @@ object QXferConServer {
         }
       p
     }
-    e.flatMap { ee => println(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
+    e.flatMap { ee => info(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
     e
   }
 

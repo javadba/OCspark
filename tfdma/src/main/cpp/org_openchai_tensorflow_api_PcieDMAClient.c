@@ -5,6 +5,13 @@
 extern "C" {
 #endif
 
+int dlevel = 2;
+
+void debug(char *msg) { if (dlevel >= 3) puts(msg); }
+void info(char *msg) { if (dlevel >= 2) puts(msg); }
+void warn(char *msg) { if (dlevel >= 1) puts(msg); }
+void error(char *msg) { if (dlevel >= 0) puts(msg); }
+
 // SHB: utility for lastIndexOf
 int lastIndexOf(char *str, char c) {
   int ind = -1;
@@ -36,7 +43,7 @@ jstring makeMsg(JNIEnv *env, jstring str, char* fname) {
    char *fnameShort = rfind(fname, '_');
    sprintf(msg, "CServer %s: %s", fnameShort, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
-   puts(msg);
+   debug(msg);
    result = (*env)->NewStringUTF(env,msg);
    return(result);
 }
@@ -46,9 +53,9 @@ jbyteArray makeArray(JNIEnv *env, jstring str, char* fname) {
   const char *name = (*env)->GetStringUTFChars(env,str, NULL);
    jbyte msg[200];
 
-   sprintf(msg, "Server %s says: %s. Oh and have a nice day.", fname, name);
+   sprintf(msg, "Server %s says: %s.", fname, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
-   puts(msg);
+   debug(msg);
   jbyteArray result=(*env)->NewByteArray(env, strlen(msg));
   (*env)->SetByteArrayRegion(env, result, 0, strlen(msg), msg);
    return(result);
@@ -63,9 +70,9 @@ jobject makeObject(JNIEnv *env, jstring str, char* fname) {
    char msg[200];
    jstring result;
 
-   sprintf(msg, "Server %s says: %s. Oh and have a nice day.", fname, name);
+   sprintf(msg, "Server %s says: %s. ", fname, name);
    (*env)->ReleaseStringUTFChars(env,str, name);
-   puts(msg);
+   debug(msg);
     // 	static class ReadResultStruct{Timestamp ts; DataStruct dataStruct;}
     jclass dataStructClass = (*env)->FindClass(env, "org/openchai/tensorflow/api/DMAStructures$DataStruct");
     // TODO: need to instantiate the class via constructor

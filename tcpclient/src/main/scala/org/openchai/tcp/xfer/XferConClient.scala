@@ -2,6 +2,7 @@ package org.openchai.tcp.xfer
 
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
+import org.openchai.tcp.util.Logger._
 
 import org.openchai.tcp.rpc._
 
@@ -34,15 +35,15 @@ class XferConIfBase(tcpParams: TcpParams, config: XferConfig) extends ServiceIf(
   private val nReqs = new AtomicInteger(0)
 
   override def prepareWrite(config: XferConfig): PrepResp = {
-//    println(s"PrepareWrite ..")
+//    info(s"PrepareWrite ..")
     val resp = getRpc().request(PrepWriteReq(config))
-//    println(s"PrepareWrite response: $resp")
+//    info(s"PrepareWrite response: $resp")
     resp.asInstanceOf[PrepResp]
   }
 
   override def completeWrite(config: XferConfig): CompletedResp = {
     val resp = getRpc().request(new CompleteWriteReq(config))
-//    println(s"CompleteWrite response: $resp")
+//    info(s"CompleteWrite response: $resp")
     resp.asInstanceOf[CompletedResp]
   }
 
@@ -69,20 +70,20 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
   var xferIf: XferIfClient = tcpXferIf
 
   def write(params: XferConfig, writeParams: XferWriteParams) = {
-    println(s"Client: beginning Write Controller for $params")
+    info(s"Client: beginning Write Controller for $params")
     val presult = xferConIf.prepareWrite(params)
     val result = xferIf.write(writeParams)
     val cresult = xferConIf.completeWrite(params)
-    println(s"Client: got result $result")
+    info(s"Client: got result $result")
     cresult
   }
 
   def read(params: XferConfig, readParams: XferReadParams) = {
-    println(s"Client: beginning Read Controller for $params")
+    info(s"Client: beginning Read Controller for $params")
     val presult = xferConIf.prepareRead(params)
     val result = xferIf.read(readParams)
     val cresult = xferConIf.completeRead(params)
-    println(s"Client: got result $result")
+    info(s"Client: got result $result")
     cresult
   }
 }
@@ -122,7 +123,7 @@ object XferConClient {
     val wres = controllers.client.write(controllers.xferConf, controllers.wparams)
     val buf = ByteBuffer.allocate(1e4.toInt)
     val rres = controllers.client.read(controllers.xferConf, controllers.rparams)
-    println(rres)
+    info(rres.toString)
   }
 
 }

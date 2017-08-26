@@ -1,0 +1,12 @@
+map:
+  main :
+    isSpark: true
+    isRest: true
+    restHostAndPort: localhost:8190
+    master: local[*]
+    tfServerAndPort: 192.168.0.2
+    imgApp: tensorflow-labelimage
+    inDir: /data/scenery
+    outDir: /data/out/scenery
+    outTag: scenery
+    nPartitionsPerTx1: 2

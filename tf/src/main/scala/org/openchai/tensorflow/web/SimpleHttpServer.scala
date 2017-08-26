@@ -12,6 +12,8 @@ import fi.iki.elonen.NanoHTTPD.IHTTPSession
 import fi.iki.elonen.NanoHTTPD._
 
 import scala.collection.mutable
+import org.openchai.tcp.util.Logger._
+
 
 abstract class SimpleHttpServer(inPort: Int) {
 
@@ -37,7 +39,7 @@ abstract class SimpleHttpServer(inPort: Int) {
           //        server.setExecutor(null)
         }
 
-        println(s"Starting SimpleHttpServer on port $port..")
+        info(s"Starting SimpleHttpServer on port $port..")
         server.start()
         Thread.currentThread.join
       }
@@ -47,7 +49,7 @@ abstract class SimpleHttpServer(inPort: Int) {
 
 
   def handle(session: IHTTPSession) = {
-    println(s"in handle")
+    info(s"in handle")
     val curTs = System.currentTimeMillis
 
     val rawQuery = session.getQueryParameterString
@@ -62,7 +64,7 @@ abstract class SimpleHttpServer(inPort: Int) {
     eparams.update("query", rawQuery)
 
     val resp = process(Map() ++ eparams.toSeq)
-    System.err.println(s"Result (first $MaxPrint chars): ${resp.substring(0, math.min(MaxPrint, resp.length))}")
+    info(s"Result (first $MaxPrint chars): ${resp.substring(0, math.min(MaxPrint, resp.length))}")
     val os = new ByteArrayOutputStream
 //    val outb = resp.getBytes("UTF-8")
     val nout = if (DoNormalize) {

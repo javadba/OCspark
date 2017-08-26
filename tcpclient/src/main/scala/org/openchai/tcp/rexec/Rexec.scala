@@ -80,7 +80,7 @@ object RexecTcpClient {
     val client = RexecTcpClient(TcpParams(host, port))
     val rparams = RexecParams(ExecParams(cmd, cmd, params, env, dir))
     val res = client.run(rparams, 1)
-    println(res)
+    info(res.toString)
   }
 
 }
@@ -94,7 +94,7 @@ case class RexecTcpClient(tcpParams: TcpParams) extends TcpClient(tcpParams, new
 
   def run(rexecParams: RexecParams, nLoops: Int) = {
     val result = rexecIf.run(rexecParams.execParams, nLoops)
-    println(s"Client: got result $result")
+    info(s"Client: got result $result")
   }
 }
 

@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.openchai.tcp.rpc.{P2pReq, P2pResp, TcpParams}
 import org.openchai.tcp.util.FileUtils
+import org.openchai.tcp.util.Logger._
 
 class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
 
@@ -32,7 +33,7 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
   def readNio(path: DataPtr) = {
     val len = Files.size(Paths.get(path))
     assert(len < Int.MaxValue, s"Attempting to read too large file $path len=$len")
-    println(s"Reading path $path of len=$len ..")
+    info(s"Reading path $path of len=$len ..")
     if (len > buf.capacity) {
       buf = java.nio.ByteBuffer.allocate(len.toInt)
     }

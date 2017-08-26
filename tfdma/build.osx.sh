@@ -1,7 +1,7 @@
-export GITDIR=/git/OCspark/
+export BUILDOK="FALSE"
 
+pushd $GITDIR/tfdma
 # if `mvn package install` already done you can comment out next line
-pushd $GITDIR && mvn package install; popd
 
 echo "[1] Building C header files for java native methods (PcieDMA[Client|Server]) .."
 mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
@@ -18,5 +18,8 @@ echo "**Entry points for dylibs** "
 find . -name \*.so | xargs nm -g | awk '{print $3}'
 
 echo "[3] Compiling java sources and building release jar.."
-# mvn package
+mvn package install
+if (( $? != 0 )); then echo 'mvn package tfdma failed' && popd &&  exit 127; fi
+popd
 
+export BUILDOK="TRUE"

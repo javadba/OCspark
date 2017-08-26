@@ -1,5 +1,7 @@
 package org.openchai.spark.util
 
+import Logger._
+
 object ProcessUtils {
 
 case class ExecParams(process: String, args: Option[Seq[String]] = None,
@@ -27,7 +29,7 @@ case class ExecParams(process: String, args: Option[Seq[String]] = None,
     val elapsed = System.currentTimeMillis() - startt
 
     val res = ExecResult(params, elapsed, exit, stdout, stderr)
-    println(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
+    info(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
     res
 
   }

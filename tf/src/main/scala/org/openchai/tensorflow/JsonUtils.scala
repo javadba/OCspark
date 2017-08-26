@@ -6,6 +6,7 @@ import org.json4s.JsonDSL._
 import org.json4s.DefaultFormats._
 import org.json4s.jackson.Serialization.write
 import org.openchai.util.YamlConf
+import org.openchai.tcp.util.Logger._
 
 object JsonUtils {
   implicit val formats = DefaultFormats // Brings in default date formats etc.
@@ -47,7 +48,7 @@ object JsonUtils {
 //    val jsValue = parse(x)
 //    case class Person(name:String, age: Int)
 //    val p = jsValue.extract[Person]
-//    println(p.getClass.getName)
+//    info(p.getClass.getName)
     try {
       val p = parse(json)
       p.extract[A]

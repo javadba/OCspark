@@ -62,17 +62,17 @@ object FileUtils {
   }
 
   def write(path: String, data: String): Unit = {
-    println(s"Writing to $path with datalen=${data.length}")
+    info(s"Writing to $path with datalen=${data.length}")
     tools.nsc.io.File(path).writeAll(data)
   }
 
   def writeBytes(fpath: String, data: Array[Byte]) = {
-    println(s"Writing ${data.length} bytes to $fpath ..")
+    info(s"Writing ${data.length} bytes to $fpath ..")
     val fos = new FileOutputStream(fpath)
     fos.write(data)
     fos.flush
     fos.close
-    println(s"Writing ${data.length} bytes to $fpath .. done ..")
+    debug(s"Writing ${data.length} bytes to $fpath .. done ..")
   }
 
   def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): TaskResult = {

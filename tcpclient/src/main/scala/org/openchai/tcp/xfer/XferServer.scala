@@ -3,6 +3,7 @@ package org.openchai.tcp.xfer
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.util.Logger._
 
 abstract class XferServerIf extends ServerIf("XferServerIf")
 
@@ -32,10 +33,10 @@ object XferServer {
     val q = new ArrayBlockingQueue[TaggedEntry](1000)
     val qreader = new Thread() {
       override def run(): Unit = {
-        println("QReader thread started")
+        info("QReader thread started")
         while (true) {
           val v = q.take
-          println(s"QReader: received $v")
+          info(s"QReader: received $v")
         }
       }
     }

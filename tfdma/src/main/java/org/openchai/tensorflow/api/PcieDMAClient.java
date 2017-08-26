@@ -1,24 +1,20 @@
 package org.openchai.tensorflow.api;
 
+import static org.openchai.tensorflow.api.Logger.*;
+
 public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClient {
 
 
   public PcieDMAClient() {
-    String parentDir = System.getProperty("user.dir");
-    if (System.getProperty("os.name").equals("Mac OS X")) {
-      parentDir += "/tf";
-    }
-    if (!parentDir.contains("tfdma")) {
-      parentDir += "/../tfdma";
-    }
+    String parentDir = System.getenv("GITDIR") + "/tfdma";
     String ext = System.getProperty("os.name").equals("Mac OS X") ? ".dylib" : ".so";
     String libpath = String.format("%s/%s%s",parentDir,"src/main/cpp/dmaclient",ext);
 //    String libpath = "dmaserver.dylib";
-    System.err.println("Loading DMA native library " + libpath + " ..");
+    info("Loading DMA native library " + libpath + " ..");
     try {
       System.load(libpath);
     } catch(Exception e) {
-      System.err.println("Unable to load native library %s: %s".format( libpath, e.getMessage()));
+      error("Unable to load native library %s: %s".format( libpath, e.getMessage()),e);
     }
 
 //    System.loadLibrary(libpath);

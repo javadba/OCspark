@@ -51,7 +51,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
   override def start() = {
     System.setProperty("java.net.preferIPv4Stack", "true")
     serverSocket = new ServerSocket()
-    println(s"Starting ${serverIf.name} on $host:$port ..")
+    info(s"Starting ${serverIf.name} on $host:$port ..")
     try {
       if (host == "*" || host == "all" || host == "localhost") {
         serverSocket.bind(new InetSocketAddress(port))
@@ -107,18 +107,18 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
                   //                debug(s"in loop: nread=$nread totalRead=$totalRead")
                   Thread.sleep(50)
                   innerWait += 1
-                  if (innerWait %20==0) {println(s"InnerWait=%d")}
+                  if (innerWait %20==0) {info(s"InnerWait=%d")}
                 } while (is.available > 0)
                 var outerLoopCnt = 0
                 do {
                   Thread.sleep(100)
                   outerLoopCnt += 1
-//                  println(s"OuterloopCnt=$outerLoopCnt")
+//                  info(s"OuterloopCnt=$outerLoopCnt")
                 } while (totalRead > 5000 && is.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
               } while (is.available > 0)
             }
           } while (totalRead <= 0)
-//          println(s"Serve: totalRead=$totalRead")
+//          info(s"Serve: totalRead=$totalRead")
           val unpacked = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
           val req = unpacked.asInstanceOf[P2pReq[_]]
           //          val req = unpacked._2.asInstanceOf[P2pReq[_]]

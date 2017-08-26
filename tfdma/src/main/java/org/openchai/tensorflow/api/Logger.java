@@ -6,6 +6,12 @@ import java.util.Date;
 
 public class Logger {
 
+  public static int LogLevel() {
+    String slevel = System.getProperty("logger.level");
+    if (slevel == null) slevel = "2";
+    return new Integer(slevel);
+  }
+
   public static void p(String msg) {
     info(msg);
   }
@@ -20,25 +26,35 @@ public class Logger {
   }
 
   public static void debug(String msg) {
-    System.out.println(iformat("Debug: " + msg));
+
+    if (LogLevel() >= 3) {
+      System.out.println(iformat("Debug: " + msg));
+    }
   }
 
   public static void info(String msg) {
-    System.out.println(iformat("Info: " + msg));
+
+    if (LogLevel() >= 2) {
+      System.out.println(iformat("Info: " + msg));
+    }
   }
 
   public static void warn(String msg, Exception e) {
-    System.err.println(String.format("WARN: %s: %s", msg, eToString(e)));
+    if (LogLevel() >= 1) {
+      System.err.println(String.format("WARN: %s: %s", msg, eToString(e)));
+    }
   }
 
   public static void error(String msg, Exception e) {
-    System.err.println(String.format("ERROR: %s: %s", msg, eToString(e)));
+    if (LogLevel() >= 0) {
+      System.err.println(String.format("ERROR: %s: %s", msg, eToString(e)));
+    }
   }
 
   static String iformat(String msg) {
     Date d = new java.util.Date();
-    String dm = String.format("%02d%02d %02d:%02d:%02d.%03d",
-            d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
+    String dm = String.format("%02d:%02d:%02d.%03d",
+            d.getHours(), d.getMinutes(),
             d.getSeconds(), d.getTime() / new Double(10e10).intValue());
     return String.format("[%s] %s",dm, msg);
   }

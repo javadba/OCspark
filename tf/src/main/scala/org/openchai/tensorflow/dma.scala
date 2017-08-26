@@ -11,7 +11,7 @@ class DmaXferConClient(val dmaConfig: DmaConfig, val tcpParams: TcpParams, val x
   val controller = XferConClient(tcpParams, xferTcpParams, config)
   val tcpXferIf = controller.tcpXferIf
   val dmaXferIfTcpParams = TcpParams(tcpParams.server, tcpParams.port)
-  val dmaXferIf = new DmaXferIfClient(new DmaParams("blah"), dmaConfig, dmaXferIfTcpParams, config)
+  val dmaXferIf = new DmaXferIfClient(new DmaParams(dmaConfig.name), dmaConfig, dmaXferIfTcpParams, config)
   controller.xferIf = tcpXferIf  // TODO: decide how to do switching tcp/dma
 //  override var xferIf: XferIfClient = controller.xferIf
 
@@ -53,8 +53,6 @@ case class DmaParams(name: String) // placeholder
 class DmaXferIfClient(dmaParams: DmaParams, dmaConfig: DmaConfig, tcpParams: TcpParams, config: XferConfig) extends XferIfClient {
 
   val tcpXferClient = new TcpXferIfClient(tcpParams, config)
-
-//  override val xferIf = ???
 
   val SetupChannelJson = """{ "SetupChannelKey": "SetupChannelKey Value"}"""
   val PrepareWriteJson = """{ "PrepareWriteKey": "PrepareWrite Value"}"""

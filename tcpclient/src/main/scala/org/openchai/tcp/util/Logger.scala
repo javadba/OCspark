@@ -1,38 +1,27 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.openchai.tcp.util
 
 trait Logger {
   def f(msg: String) = {
     val d = new java.util.Date
-    "%02d%02d-%02d:%02d:%02d.%03d".format(d.getMonth, d.getDate, d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
+//    "%02d%02d-%02d:%02d:%02d.%03d".format(d.getMonth, d.getDate, d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
+    "%02d:%02d.%03d".format(d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
   }
 
   def debug(msg: String) = Logger.debug(msg)
   def info(msg: String) = Logger.info(msg)
+  def warn(msg: String) = Logger.warn(msg)
   def error(msg: String) = Logger.error(msg)
 }
 object Logger {
+
+  val LogLevel = Option(System.getProperty("logger.level")).getOrElse("2").toInt
   def f(msg: String) = {
     val d = new java.util.Date
     "%02d%02d-%02d:%02d:%02d.%03d".format(d.getMonth, d.getDate, d.getHours, d.getMinutes, d.getSeconds, d.getTime / 10e10.toInt)
   }
 
-  def debug(msg: String) = println(s"Debug: $msg")
-  def info(msg: String) = println(s"Info: $msg")
-  def error(msg: String) = println(s"ERROR: $msg")
+  def debug(msg: Any) = if (LogLevel >= 3) println(s"Debug: $msg")
+  def info(msg: Any) = if (LogLevel >= 2) println(s"Info: $msg")
+  def warn(msg: Any) = if (LogLevel >= 1) println(s"WARN: $msg")
+  def error(msg: Any) = if (LogLevel >= 0) println(s"ERROR: $msg")
 }

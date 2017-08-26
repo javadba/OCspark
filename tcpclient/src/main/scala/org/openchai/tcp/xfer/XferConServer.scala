@@ -2,8 +2,7 @@ package org.openchai.tcp.xfer
 
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.{FileUtils, TcpCommon}
-
-
+import org.openchai.tcp.util.Logger._
 
 case class XferConServer(tcpParams: TcpParams, xtcpParams: TcpParams) {
 
@@ -82,7 +81,7 @@ class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") 
 //  def releasePaths(paths: Seq[String], config: TcpXferConfig) = {
 //    for (path <- paths) {
 //      if (!pathsMap.containsKey(path)) {
-//        println(s"WARN: Trying to release Path $path that is not found in the PathsMap ")
+//        info(s"WARN: Trying to release Path $path that is not found in the PathsMap ")
 //      } else {
 //        pathsMap.remove(path, config)
 //      }
@@ -93,7 +92,7 @@ class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") 
 
   def defaultConsume(config: TcpXferConfig): Any = {
     val payload = TcpCommon.unpack(config.finalPath, readFile(config.finalPath))
-    println(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
+    info(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
     payload
   }
 
@@ -103,26 +102,26 @@ class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") 
     req match {
       case o: PrepWriteReq => {
         val config = o.value
-        println(s"Prepping the Datawrite config=$config")
+        info(s"Prepping the Datawrite config=$config")
 //        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteWriteReq => {
         val config = o.value
-        println(s"Completed Write for ${config} the Datawrite config=$config")
+        info(s"Completed Write for ${config} the Datawrite config=$config")
 //        val res = consume(config)
 //        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: PrepReadReq => {
         val config = o.value
-        println(s"Prepping the Datawrite config=$config")
+        info(s"Prepping the Datawrite config=$config")
 //        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteReadReq => {
         val config = o.value
-        println(s"Completed Write for ${config} the Datawrite config=$config")
+        info(s"Completed Write for ${config} the Datawrite config=$config")
 //        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }

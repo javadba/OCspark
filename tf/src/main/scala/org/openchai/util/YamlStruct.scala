@@ -3,6 +3,7 @@ package org.openchai.util
 import java.io.FileInputStream
 
 import org.yaml.snakeyaml.Yaml
+import org.openchai.tcp.util.Logger._
 
 trait YamlConf {
 
@@ -10,7 +11,7 @@ trait YamlConf {
 
   def apply(key: String, default: String): Any
 
-  def toMap(key: String): Map[String,_]
+  def getMap(key: String): Map[String,_]
 }
 
 case class YamlStruct(ymlFile: String) extends YamlConf {
@@ -33,7 +34,7 @@ case class YamlStruct(ymlFile: String) extends YamlConf {
   val yamlConf = {
     val iy = (for (y <- yaml.loadAll(new FileInputStream(ymlFile)).iterator.asScala) yield y).toList.head // toMap[String,Any]
     val omap = expand(iy).asInstanceOf[Map[String,_]]
-    println(s"omap: ${omap}")
+    info(s"omap: ${omap}")
     omap
   }
 
@@ -43,8 +44,7 @@ case class YamlStruct(ymlFile: String) extends YamlConf {
     getConfiguration.mkString(",")
   }
 
-
-  override def toMap(key: String) = apply(key).asInstanceOf[Map[String,_]]
+  override def getMap(key: String) = apply(key).asInstanceOf[Map[String,_]]
 
   override def apply(key: String) = {
     yamlConf(key)
@@ -83,6 +83,6 @@ AnotherKey:
             """
     tools.nsc.io.File(f).writeAll(s)
     val y = new YamlStruct(f.getAbsolutePath)
-    println(y.getConfiguration.map{ case (k,v) => s"$k=$v"}.mkString("\n"))
+    info(y.getConfiguration.map{ case (k,v) => s"$k=$v"}.mkString("\n"))
   }
 }

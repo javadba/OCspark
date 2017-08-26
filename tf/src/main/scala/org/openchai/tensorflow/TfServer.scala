@@ -4,9 +4,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
 import org.openchai.tcp.rpc._
-import org.openchai.tcp.util.{ExecParams, FileUtils, ProcessUtils, TcpCommon}
+import org.openchai.tcp.util._
 import org.openchai.tcp.xfer._
 import org.openchai.util.{YamlConf, YamlStruct}
+import Logger._
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
@@ -14,7 +15,7 @@ class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val
 
   val xferServer = new QXferConServer(outQ/*.asInstanceOf[BlockingQueue[TaggedEntry]]*/,
     tcpParams, xtcpParams)
-  println(s"*** TfServer")
+  info(s"*** TfServer")
   val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(yamlConf, outQ, tfTcpParams.port))
 
   def start() = {
@@ -28,7 +29,7 @@ class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val
 object TfServer {
 
   val cfile = s"${System.getProperty("openchai.tfserver.config.file")}"
-  println(s"Configfile=$cfile")
+  info(s"Configfile=$cfile")
 
   import collection.JavaConverters
 
@@ -78,7 +79,7 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
   case class LabelImgExecStruct(istruct: LabelImgStruct, cmdline: String, appName: String, runDir: String, tmpDir: String)
 
   def labelImg(estruct: LabelImgExecStruct): LabelImgRespStruct = {
-    println(s"LabelImg: processing $estruct ..")
+    info(s"LabelImg: processing $estruct ..")
     val istruct = estruct.istruct
 //    if (istruct.data.isEmpty) {
 //      throw new IllegalStateException(s"Non empty md5 for empty data on $istruct")
@@ -87,16 +88,18 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
 //    }
 
     val e = QXferConServer.findInQ(q, istruct.tag)
-//    println(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
+//    info(s"LabelImg: Found entry ${e.getOrElse("[empty]")}")
     val tEntry = TcpCommon.deserializeObject(e.get.data).asInstanceOf[TaggedEntry]
     val data = tEntry.data
-    val path = s"${TfServer.imagesDir}/${new java.util.Random().nextInt(200) + "." + istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
-    FileUtils.writeBytes(path, data)
+    val dir = s"${estruct.tmpDir}" // /${istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
+    FileUtils.mkdirs(dir)
+    val path = istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)
+    FileUtils.writeBytes(s"$dir/$path", data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
     val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
       Option(estruct.cmdline.replace("${1}",path).split(" ").tail), Some(Seq(estruct.runDir)), estruct.runDir))
-    println(s"Result: $exeResult")
-    LabelImgRespStruct(istruct.tag, istruct.fpath,exeResult)
+    info(s"Result: $exeResult")
+    LabelImgRespStruct(istruct.tag, istruct.fpath, istruct.outPath, exeResult)
   }
 
 
@@ -112,12 +115,12 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
       case o: LabelImgReq =>
         val struct = o.value
         val app = struct.optApp.getOrElse(DefaultApp)
-        val envmap = yamlConf.toMap("environments").apply(os).asInstanceOf[MapMap]("env").asInstanceOf[StringMap]
-        val emap = yamlConf.toMap("defaults").apply("apps").asInstanceOf[AnyMap](app).asInstanceOf[StringMap].map { case (k, v) =>
-          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => /* println(vv); */ vv.replace(s"$${$ke}", ve) }
+        val envmap = yamlConf.getMap("environments").apply(os).asInstanceOf[MapMap]("env").asInstanceOf[StringMap]
+        val emap = yamlConf.getMap("defaults").apply("apps").asInstanceOf[AnyMap](app).asInstanceOf[StringMap].map { case (k, v) =>
+          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => /* info(vv); */ vv.replace(s"$${$ke}", ve) }
           (k, vnew)
         }
-        println(s"Service: Invoking LabelImg: struct=$struct")
+        info(s"Service: Invoking LabelImg: struct=$struct")
 
         val estruct = LabelImgExecStruct(struct, emap("cmdline"), app, emap("rundir"), emap("tmpdir"))
         val resp = labelImg(estruct)

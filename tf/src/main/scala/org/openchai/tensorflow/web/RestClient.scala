@@ -1,6 +1,7 @@
 package org.openchai.tensorflow.web
 
 import org.openchai.util.YamlStruct
+import org.openchai.tcp.util.Logger._
 
 object RestClient {
   def main(args: Array[String]): Unit = {
@@ -9,7 +10,7 @@ object RestClient {
         // startRestServer
       }
       val testInfoFile = args(0)
-      println(s"Reading TfClient setup from $testInfoFile..")
+      info(s"Reading TfClient setup from $testInfoFile..")
       val yml = YamlStruct(testInfoFile)
 
     } else {
@@ -20,7 +21,7 @@ object RestClient {
 object YamlClient {
   def main(args: Array[String]): Unit = {
     val testInfoFile = args(0)
-    println(s"Reading TfClient setup from $testInfoFile..")
+    info(s"Reading TfClient setup from $testInfoFile..")
     val yml = YamlStruct(testInfoFile)
   }
 

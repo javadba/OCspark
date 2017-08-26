@@ -1,4 +1,5 @@
 package org.openchai.tcp.util
+import org.openchai.tcp.util.Logger._
 
 case class ExecResult(params: ExecParams, elapsed: Long, rc: Int, stdout: String, stderr: String)
 
@@ -17,7 +18,7 @@ object ProcessUtils {
   def main(args: Array[String]): Unit = {
      val out = ProcessUtils.exec("ls", "ls -lrta /shared")
 //     val out = ProcessUtils.runBash("ls -lrta /shared/*.tmp")
-    println(s"$out")
+    info(s"$out")
   }
   val Blen = 16*1024
   // ProcessUtils.runBas
@@ -34,13 +35,13 @@ object ProcessUtils {
       val start = System.currentTimeMillis
       val res = block
       val duration = System.currentTimeMillis - start
-      println(s"Timing for $tag: $duration ms")
+      info(s"Timing for $tag: $duration ms")
       res
     }
   }
 
   def runBash(label: String, cmd: String) = {
-    println(s"Running cmd=[$cmd] ..")
+    info(s"Running cmd=[$cmd] ..")
     val res = Timing.time(cmd,
       { val p = Runtime.getRuntime.exec(Array("/bin/bash"))
       val os = p.getOutputStream
@@ -56,10 +57,10 @@ object ProcessUtils {
       val stde = read(stderr)
       stderr.close
       if (stdo.length >= Blen - 4) {
-        System.err.println(s"WARN: stdout from command [$cmd] may not fit in buffer")
+        warn(s"stdout from command [$cmd] may not fit in buffer")
       }
       if (stdo.length >= Blen - 4) {
-        System.err.println(s"WARN: stderr from command [$cmd] may not fit in buffer")
+        warn(s"stderr from command [$cmd] may not fit in buffer")
       }
       os.write("echo $?\n".getBytes)
   //    val oarr = read(stdout)
@@ -94,7 +95,7 @@ object ProcessUtils {
 
     val pb = new ProcessBuilder((procName +: params.args.getOrElse(Seq.empty[String])):_*)
     pb.directory(new java.io.File(params.dir))
-    println(s"Exec: [$procName ${params.args.get.mkString(" ")}] pbDir=${pb.directory.getAbsolutePath}")
+    error(s"Exec: [$procName ${params.args.get.mkString(" ")}] pbDir=${pb.directory.getAbsolutePath}")
 
     val proc = pb.start()
     proc.waitFor()
@@ -106,7 +107,7 @@ object ProcessUtils {
     val elapsed = System.currentTimeMillis() - startt
 
     val res = ExecResult(params, elapsed, exit, stdout, stderr)
-    println(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
+    error(s"Process [${params}] completed in $elapsed with rc=$exit stdoutLen=${stdout.length} stderrLen=${stderr.length}")
     res
 
   }

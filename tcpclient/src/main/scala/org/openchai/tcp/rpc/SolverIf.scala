@@ -146,10 +146,10 @@ object SolverIf {
         val problemSize = 1000
         val nequalities = 30
 
-        println(s"Generating randomized QPs with rank ${problemSize} equalities ${nequalities}")
+        info(s"Generating randomized QPs with rank ${problemSize} equalities ${nequalities}")
         val (aeq, b, bl, bu, q, h) = QpGenerator(problemSize, nequalities)
 
-        println(s"Test QuadraticMinimizer, CG , BFGS and OWLQN with $problemSize variables and $nequalities equality constraints")
+        info(s"Test QuadraticMinimizer, CG , BFGS and OWLQN with $problemSize variables and $nequalities equality constraints")
 
         val ostate = optimizeWithLBFGS(dv,h,q)
         val cost = getCost(h,q)
