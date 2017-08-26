@@ -31,8 +31,6 @@ object TfServer {
   val cfile = s"${System.getProperty("openchai.tfserver.config.file")}"
   info(s"Configfile=$cfile")
 
-  import collection.JavaConverters
-
   val yamlConf = readConfig(cfile)
   val imagesDir = "/tmp/images"
   val f = new java.io.File(imagesDir)
@@ -54,9 +52,9 @@ object TfServer {
   def main(args: Array[String]): Unit = {
 
     val q = new ArrayBlockingQueue[TaggedEntry](1000)
-    val (host, port, xhost, xport, ahost, aport, configFile) = if (args.length == 0) {
+    val (host, port, xhost, xport, ahost, aport) = if (args.length == 0) {
       val cont = XferConCommon.TestControllers
-      (cont.conHost, cont.conPort, cont.dataHost, cont.dataPort, cont.appHost, cont.appPort, cont.configFile)
+      (cont.conHost, cont.conPort, cont.dataHost, cont.dataPort, cont.appHost, cont.appPort)
     } else {
       XferConServer.makeXferConnections(args)
     }

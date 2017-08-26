@@ -49,16 +49,15 @@ object XferConServer {
   def makeXferConnections(args: Array[String]) = {
     val host = args(0)
     val port = args(1).toInt
-    val configFile = args(2)
     val xhost = host
     val xport = port + 1
     val ahost = host
     val aport = port + 2
-    (host, port, xhost, xport, ahost, aport, configFile)
+    (host, port, xhost, xport, ahost, aport)
   }
 
  def main(args: Array[String]): Unit = {
-    val (host,port,xhost,xport,ahost, aport, configFile) = makeXferConnections(args)
+    val (host,port,xhost,xport,ahost, aport) = makeXferConnections(args)
     val server = XferConServer(TcpParams(host, port), TcpParams(xhost, xport))
    server.start
     Thread.currentThread.join

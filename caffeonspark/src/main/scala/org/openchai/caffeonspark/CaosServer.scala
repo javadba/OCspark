@@ -33,7 +33,7 @@ object CaosServer {
 
   def main(args: Array[String]): Unit = {
     val q = new ArrayBlockingQueue[TaggedEntry](1000)
-    val (host,port,xhost,xport,ahost, aport, configFile) = XferConServer.makeXferConnections(args)
+    val (host,port,xhost,xport,ahost, aport) = XferConServer.makeXferConnections(args)
     val server = apply(q,TcpParams(ahost, aport), TcpParams(host,port), TcpParams(xhost,xport))
   }
 
