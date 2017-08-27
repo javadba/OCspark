@@ -25,6 +25,13 @@ import scala.collection.mutable.ArrayBuffer
 import Logger._
 
 object FileUtils {
+  def removeExt(path: String) = if (path.indexOf(".") > 0) path.substring(0,path.lastIndexOf(".")) else path
+
+  def fileName(fp: String) = if (fp.indexOf("/") >= 0) fp.substring(fp.lastIndexOf("/")+1) else fp
+
+  def fileExt(fp: String) = if (!fp.contains(".")) "" else { fp.substring(fp.lastIndexOf(".")+1).toLowerCase }
+
+  def filePath(fp: String) = if (fp.indexOf("/") >= 0) fp.substring(0, fp.lastIndexOf("/")) else ""
 
   def cleanDir(dir: String, extensions: Seq[String]) = {
     assert(dir.length >= 8)
@@ -150,7 +157,7 @@ object FileUtils {
   def readFileOption(fpath: String) = try {
     Some(readFileAsString(fpath))
   } catch {
-    case fne: FileNotFoundException => warn(s"File $fpath not found"); None
+    case fne: FileNotFoundException => /* debug(s"File $fpath not found"); */ None
     case e: Exception => warn(s"Error reading file $fpath ${Logger.toString(e)}"); None
   }
 
