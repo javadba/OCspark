@@ -151,6 +151,7 @@ object FileUtils {
     Some(readFileAsString(fpath))
   } catch {
     case fne: FileNotFoundException => warn(s"File $fpath not found"); None
+    case e: Exception => warn(s"Error reading file $fpath ${Logger.toString(e)}"); None
   }
 
   def md5(arr: Array[Byte]) = {

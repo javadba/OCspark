@@ -83,6 +83,7 @@ object TfSubmitter {
     val md5 = FileUtils.md5(lireq.contents)
     val res = tfClient.labelImg(LabelImgStruct(lireq.outputTag, lireq.path, lireq.outPath,
       lireq.contents, md5, Option(lireq.imgApp)))
+    info(s"TfSubmitter.labelImg: LabelImgResp=$res")
     res
   }
 
@@ -221,7 +222,8 @@ object TfSubmitter {
 
     def ix = Array(92,91,93,94,95,96,32,33,35,36,97,37)
     def txDebug(tx1: Int, msg: String) = { debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))}
-    def txInfo(tx1: Int, msg: String) = { debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))}
+    def txInfo(tx1: Int, msg: String) = { info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1)}m TX$tx1 >> "))}
+
     txDebug(ntx1, s"Connecting to spark master $master ..")
     val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
@@ -259,7 +261,7 @@ object TfSubmitter {
         li.value.fpath
       }
       val fname = fp.substring(fp.lastIndexOf("/")+1)
-      FileUtils.writeBytes(s"${li.value.outDir}/$fname.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
+      FileUtils.writeBytes(s"${li.value.outDir}/$fname.result", (li.value.cmdResult.stdout + li.value.cmdResult.stderr).getBytes("ISO-8859-1"))
 //      debug(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
     }
     info(s"Finished runSparkJob for tx1=$ntx1")
