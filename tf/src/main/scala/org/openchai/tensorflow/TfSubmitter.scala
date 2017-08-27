@@ -109,7 +109,7 @@ object TfSubmitter {
     var warnPrinted = false
     val res = for (iters <- Range(0,if (continually) Integer.MAX_VALUE else 1)) yield {
       var watermark = FileUtils.readFileOption(getWatermarkFileName(dir)).flatMap(s => Option(s.toLong)).getOrElse(0L)
-      debug(s"watermark=$watermark")
+//      debug(s"watermark=$watermark")
       var files = mutable.ArrayBuffer[(String, Long)](
         new File(dir).listFiles
           .filter(f => f.isFile
@@ -123,7 +123,7 @@ object TfSubmitter {
       import collection.JavaConverters._
       val workers = inUse.entrySet.asScala.filter(!_.getValue).toSeq.sortBy(_.getKey)
       if (workers.length < inUse.keySet.size) {
-        debug(s"runSparkJobs: there are ${inUse.keySet.size - workers.length} workers still busy from earlier jobs ..")
+//        debug(s"runSparkJobs: there are ${inUse.keySet.size - workers.length} workers still busy from earlier jobs ..")
       }
       if (!warnPrinted) {
         if (files.isEmpty) {
@@ -237,12 +237,12 @@ object TfSubmitter {
           error(s"Got a double result path $path")
         }
         if (!ImagesMeta.whiteListExt.contains(path.substring(path.lastIndexOf(".")+1).toLowerCase)) {
-          info(s"Skipping non image file $path")
+//          debug(s"Skipping non image file $path")
           None
         } else {
           val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
           val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
-          txInfo(ntx1, s"Running labelImage for $imgLabel")
+          txDebug(ntx1, s"Running labelImage for $imgLabel")
           val res = labelImg(tfClient, imgLabel)
           txInfo(ntx1, s"LabelImage result: $res")
           Some(res)

@@ -20,3 +20,5 @@ starttf() {
   showtf
 
  }
+
+mkTmpDirs() { sshall "echo \$(cat ~/pwd.txt | head -n 1) | sudo -S mkdir -p /data/tmp/tf2 " ; }

@@ -31,6 +31,9 @@ sudo mkdir /shared
 sudo chmod 777 /shared
 ln -s $(pwd) /shared/orajava
 
+sudo mkdir /data
+sudo chmod 777 /data
+
 scp -rp txa1:~ubuntu/tensorflow /shared/
 sudo ln -s /shared/tensorflow ~ubuntu/tensorflow
 

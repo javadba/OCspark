@@ -95,8 +95,8 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
     val data = tEntry.data
     val dir = s"${estruct.tmpDir}" // /${istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)}"
     FileUtils.mkdirs(dir)
-    val path = istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1)
-    FileUtils.writeBytes(s"$dir/$path", data)
+    val path = "%s/%s".format(dir,istruct.fpath.substring(istruct.fpath.lastIndexOf("/") + 1))
+    FileUtils.writeBytes(path, data)
     val exe = estruct.cmdline.substring(0, estruct.cmdline.indexOf(" "))
     val exeResult = ProcessUtils.exec(ExecParams(estruct.appName, s"${exe}",
       Option(estruct.cmdline.replace("${1}",path).split(" ").tail), Some(Seq(estruct.runDir)), estruct.runDir))
