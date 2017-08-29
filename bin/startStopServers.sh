@@ -12,7 +12,6 @@ showtf() { sshall "ps -ef | grep tf-1.0.0.jar | grep -v grep | awk '{print $2}'"
 starttf() {
   stoptf
   showtf
-   # for s in slaves; do echo $s; ssh $s /shared/runtfserver.sh localhost; done
   ssh txa1 'nohup /shared/runtfserver.sh localhost 61230 > ~/tf.out 2>&1 &'
   ssh txa2 'nohup /shared/runtfserver.sh localhost 61240 > ~/tf.out 2>&1 &'
   ssh txa3 'nohup /shared/runtfserver.sh localhost 61250 > ~/tf.out 2>&1 &'
