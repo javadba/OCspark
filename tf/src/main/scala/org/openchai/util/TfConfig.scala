@@ -17,7 +17,10 @@ main :
   outTag: scenery
  */
 case class TfAppConfig(isSpark: Boolean, isRest: Boolean, restHostAndPort: String, master: String,
-  tfServerAndPort: String, imgApp: String, inDir: String, outDir: String, outTag: String, nPartitionsPerTx1: Int)
+  tfServerAndPort: String, imgApp: String, inDir: String, outDir: String, outTag: String, nPartitionsPerTx1: Int,
+    imageExtensions: Seq[String]) {
+
+}
 
 //object TfAppConfigYamlProtocol extends DefaultYamlProtocol {
 //  implicit val appConfigFormat = yamlFormat10(TfAppConfig)

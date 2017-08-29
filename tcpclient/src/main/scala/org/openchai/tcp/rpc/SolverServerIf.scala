@@ -16,9 +16,11 @@
  */
 package org.openchai.tcp.rpc
 
+import java.util
 import java.util.Random
+
 import org.openchai.tcp.util.Logger._
-import breeze.linalg.{DenseVector => BDV}
+//import breeze.linalg.{DenseVector => BDV}
 
 object SolverServerIf {
   val WeightsMergePolicies = Seq("average", "best")
@@ -59,10 +61,12 @@ class SolverServerIf(weightsMergePolicy: String = "best") extends ServerIf("Solv
               curWeightsAndAccuracy
             }
           } else {
-            val sum = allResults.map(x => new BDV[Double](x.W.d))
-              .foldLeft(new BDV[Double](Array.fill(allResults.head.W.d.length)(0.0))) { case (sum, bdv) => sum + bdv }
-            val avg = sum :/ allResults.length.toDouble
-            (avg.toArray, allResults.map(_.accuracy).sum / allResults.length)
+//            val sum = allResults.map(x => new BDV[Double](x.W.d))
+//              .foldLeft(new BDV[Double](Array.fill(allResults.head.W.d.length)(0.0))) { case (sum, bdv) => sum + bdv }
+//            val avg = sum :/ allResults.length.toDouble
+//            (avg.toArray, allResults.map(_.accuracy).sum / allResults.length)
+            val sum = Array.fill(20)(20.0)
+            (sum, allResults.map(_.accuracy).sum / allResults.length)
           }
         }
         SendEpochResultResp(ModelParams(DefaultModel(), DefaultHyperParams(), Some(Weights(epochResult.W.dims, curWeightsAndAccuracy._1))

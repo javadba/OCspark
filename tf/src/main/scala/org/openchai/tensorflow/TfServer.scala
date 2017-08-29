@@ -4,19 +4,19 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util._
 import org.openchai.tcp.xfer._
-import org.openchai.util.{YamlConf, YamlStruct}
-import Logger._
+import org.openchai.util.{AppConfig, YamlConf, YamlStruct}
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
-class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
+class TfServer(val appConfig: AppConfig, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
 
   val xferServer = new QXferConServer(outQ/*.asInstanceOf[BlockingQueue[TaggedEntry]]*/,
     tcpParams, xtcpParams)
   info(s"*** TfServer")
-  val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(yamlConf, outQ, tfTcpParams.port))
+  val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(appConfig, outQ, tfTcpParams.port))
 
   def start() = {
     xferServer.start
@@ -28,30 +28,37 @@ class TfServer(val yamlConf: YamlConf, val outQ: BlockingQueue[TaggedEntry], val
 
 object TfServer {
 
+
   val cfile = s"${System.getProperty("openchai.tfserver.config.file")}"
   info(s"Configfile=$cfile")
 
   val yamlConf = readConfig(cfile)
-  val imagesDir = "/tmp/images"
-  val f = new java.io.File(imagesDir)
-  if (!f.exists() && !f.mkdirs) {
-    throw new IllegalStateException(s"Unable to create image dirs ${f.getAbsolutePath}")
-  }
+//  val imagesDir = s"${yamlConf("tmpdir")}/images"
+//  info(s"Writing images to tmpdir=$imagesDir")
+//  val f = new java.io.File(imagesDir)
+//  if (!f.exists() && !f.mkdirs) {
+//    throw new IllegalStateException(s"Unable to create image dirs ${f.getAbsolutePath}")
+//  }
 
-  def apply(yamlConf: YamlConf, outQ: BlockingQueue[TaggedEntry], tfTcpParams: TcpParams, tcpParams: TcpParams,
+  def apply(yamlConf: AppConfig, outQ: BlockingQueue[TaggedEntry], tfTcpParams: TcpParams, tcpParams: TcpParams,
     xtcpParams: TcpParams) = {
     val server = new TfServer(yamlConf, outQ, tfTcpParams, tcpParams, xtcpParams)
     server.start
   }
 
-  def readConfig(path: String): YamlConf = {
+  def os = System.getProperty("os.name") match {
+    case "Mac OS X" => "osx"
+    case x => x.toLowerCase
+  }
+
+  def readConfig(path: String): AppConfig = {
 //    parseJsonToMap(FileUtils.readFileAsString(path))
-    YamlStruct(path)
+    new AppConfig(path, os)
   }
 
   def main(args: Array[String]): Unit = {
 
-    val iargs = if (args(0) == getClass.getName) {
+    val iargs = if (args.nonEmpty && args(0) == getClass.getName) {
       args.slice(1, args.length)
     } else args
 
@@ -68,7 +75,7 @@ object TfServer {
 }
 
 
-class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port: Int = 0) extends ServerIf("TfServerIf") {
+class TfServerIf(val appConfig: AppConfig, val q: BlockingQueue[TaggedEntry], port: Int = 0) extends ServerIf("TfServerIf") {
 
   val pathsMap = new java.util.concurrent.ConcurrentHashMap[String, TcpXferConfig]()
 
@@ -104,27 +111,15 @@ class TfServerIf(val yamlConf: YamlConf, val q: BlockingQueue[TaggedEntry], port
     LabelImgRespStruct(istruct.tag, istruct.fpath, istruct.outPath, exeResult)
   }
 
-
-  val os = System.getProperty("os.name") match {
-    case "Mac OS X" => "osx"
-    case x => x.toLowerCase
-  }
-
   //  val isLinux = os == "linux"
   override def service(req: P2pReq[_]): P2pResp[_] = {
-    import collection.JavaConverters._
     req match {
       case o: LabelImgReq =>
         val struct = o.value
         val app = struct.optApp.getOrElse(DefaultApp)
-        val envmap = yamlConf.getMap("environments").apply(os).asInstanceOf[MapMap]("env").asInstanceOf[StringMap]
-        val emap = yamlConf.getMap("defaults").apply("apps").asInstanceOf[AnyMap](app).asInstanceOf[StringMap].map { case (k, v) =>
-          val vnew = envmap.foldLeft(v) { case (vv, (ke, ve)) => /* info(vv); */ vv.replace(s"$${$ke}", ve) }
-          (k, vnew)
-        }
         info(s"Service: Invoking LabelImg: struct=$struct")
 
-        val estruct = LabelImgExecStruct(struct, emap("cmdline"), app, emap("rundir"), emap("tmpdir"))
+        val estruct = LabelImgExecStruct(struct, appConfig(app, "cmdline"), app, appConfig(app, "rundir"), appConfig(app, "tmpdir"))
         val resp = labelImg(estruct)
         LabelImgResp(resp)
       case _ =>

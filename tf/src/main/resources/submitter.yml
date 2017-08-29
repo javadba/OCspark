@@ -10,3 +10,11 @@ map:
     outDir: /data/out/scenery
     outTag: scenery
     nPartitionsPerTx1: 2
+    imageExtensions:
+      - jpg
+      - jpeg
+      - png
+      - gif
+      - svg
+      - tiff
+      - mpg

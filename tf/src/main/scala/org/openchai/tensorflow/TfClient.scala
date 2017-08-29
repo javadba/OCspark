@@ -1,12 +1,12 @@
 package org.openchai.tensorflow
 
 import org.openchai.tcp.rpc._
+import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
+import org.openchai.tcp.xfer.XferConCommon._
 import org.openchai.tcp.xfer._
 import org.openchai.tensorflow.DmaXferConClient.DmaXferControllers
-import XferConCommon._
 import org.openchai.tensorflow.api.Logger
-import org.openchai.tcp.util.Logger._
 import org.openchai.util.{TfAppConfig, TfConfig}
 
 

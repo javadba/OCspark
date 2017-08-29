@@ -16,9 +16,10 @@
  */
 package org.openchai.tcp.rpc
 
-import breeze.linalg.{DenseVector => BDV}
-import breeze.optimize.proximal.QpGenerator
-import breeze.optimize.{DiffFunction, ProjectedQuasiNewton}
+//    import breeze.linalg._
+//import breeze.linalg.{DenseVector => BDV}
+//import breeze.optimize.proximal.QpGenerator
+//import breeze.optimize.{DiffFunction, ProjectedQuasiNewton}
 import org.openchai.tcp.util.Logger._
 
 import scala.util.Random
@@ -107,7 +108,6 @@ object SolverIf {
 
   case class DefaultModel() extends Model[MData] {
 
-    import breeze.linalg._
 
     val UseLbfgs = true
 
@@ -115,61 +115,62 @@ object SolverIf {
     var iteration = 0
     override def compute(data: MData): EpochResult = {
 
-      val dv = DenseVector(data.toArray)
-      implicit class MathOps(x: Double) {
-        def :^(y: Double) = Math.pow(x, y)
-      }
-      val (err, state) = if (UseLbfgs) {
-        import breeze.optimize.LBFGS
-        def computeObjective(h: DenseMatrix[Double], q: DenseVector[Double], x: DenseVector[Double]): Double = {
-          val res = (x.t * h * x) * 0.5 + q.dot(x)
-          res
-        }
-
-        case class Cost(H: DenseMatrix[Double],
-          q: DenseVector[Double]) extends DiffFunction[DenseVector[Double]] {
-          def calculate(x: DenseVector[Double]) = {
-            (computeObjective(H, q, x), H * x + q)
-          }
-        }
-
-        def getCost(H: DenseMatrix[Double], q: DenseVector[Double]) =  Cost(H, q)
-
-        def optimizeWithLBFGS(init: DenseVector[Double],
-          H: DenseMatrix[Double],
-          q: DenseVector[Double]) = {
-          val lbfgs = new LBFGS[DenseVector[Double]](-1, 7)
-          val lstate = lbfgs.minimizeAndReturnState(getCost(H,q), init)
-          lstate
-        }
-
-        val problemSize = 1000
-        val nequalities = 30
-
-        info(s"Generating randomized QPs with rank ${problemSize} equalities ${nequalities}")
-        val (aeq, b, bl, bu, q, h) = QpGenerator(problemSize, nequalities)
-
-        info(s"Test QuadraticMinimizer, CG , BFGS and OWLQN with $problemSize variables and $nequalities equality constraints")
-
-        val ostate = optimizeWithLBFGS(dv,h,q)
-        val cost = getCost(h,q)
-        val error = errors(iteration) // new Random.computeObjective(cost.H, cost.q,
-        iteration += 1
-        (error,ostate)
-
-      } else {
-        val optimizer = new ProjectedQuasiNewton(tolerance = 1.0E-5)
-        val f = new DiffFunction[DenseVector[Double]] {
-          def calculate(x: DenseVector[Double]) = {
-            (norm((x - 3.0) :^ 2.0, 1), (x * 2.0) - 6.0)
-          }
-        }
-        val state = optimizer.minimizeAndReturnState(f, dv)
-        val error = errors(iteration) // new Random.computeObjective(cost.H, cost.q,
-        iteration += 1
-        (error, state)
-      }
-      EpochResult(Weights(data.dims, state.x.toArray), state.grad.toArray, err, Math.max(0.01, 1 - err/15.0))
+//      val dv = DenseVector(data.toArray)
+//      implicit class MathOps(x: Double) {
+//        def :^(y: Double) = Math.pow(x, y)
+//      }
+//      val (err, state) = if (UseLbfgs) {
+//        import breeze.optimize.LBFGS
+//        def computeObjective(h: DenseMatrix[Double], q: DenseVector[Double], x: DenseVector[Double]): Double = {
+//          val res = (x.t * h * x) * 0.5 + q.dot(x)
+//          res
+//        }
+//
+//        case class Cost(H: DenseMatrix[Double],
+//          q: DenseVector[Double]) extends DiffFunction[DenseVector[Double]] {
+//          def calculate(x: DenseVector[Double]) = {
+//            (computeObjective(H, q, x), H * x + q)
+//          }
+//        }
+//
+//        def getCost(H: DenseMatrix[Double], q: DenseVector[Double]) =  Cost(H, q)
+//
+//        def optimizeWithLBFGS(init: DenseVector[Double],
+//          H: DenseMatrix[Double],
+//          q: DenseVector[Double]) = {
+//          val lbfgs = new LBFGS[DenseVector[Double]](-1, 7)
+//          val lstate = lbfgs.minimizeAndReturnState(getCost(H,q), init)
+//          lstate
+//        }
+//
+//        val problemSize = 1000
+//        val nequalities = 30
+//
+//        info(s"Generating randomized QPs with rank ${problemSize} equalities ${nequalities}")
+//        val (aeq, b, bl, bu, q, h) = QpGenerator(problemSize, nequalities)
+//
+//        info(s"Test QuadraticMinimizer, CG , BFGS and OWLQN with $problemSize variables and $nequalities equality constraints")
+//
+//        val ostate = optimizeWithLBFGS(dv,h,q)
+//        val cost = getCost(h,q)
+//        val error = errors(iteration) // new Random.computeObjective(cost.H, cost.q,
+//        iteration += 1
+//        (error,ostate)
+//
+//      } else {
+//        val optimizer = new ProjectedQuasiNewton(tolerance = 1.0E-5)
+//        val f = new DiffFunction[DenseVector[Double]] {
+//          def calculate(x: DenseVector[Double]) = {
+//            (norm((x - 3.0) :^ 2.0, 1), (x * 2.0) - 6.0)
+//          }
+//        }
+//        val state = optimizer.minimizeAndReturnState(f, dv)
+//        val error = errors(iteration) // new Random.computeObjective(cost.H, cost.q,
+//        iteration += 1
+//        (error, state)
+//      }
+//      EpochResult(Weights(data.dims, state.x.toArray), state.grad.toArray, err, Math.max(0.01, 1 - err/15.0))
+      null.asInstanceOf[EpochResult]
     }
 
     override def update(params: HyperParams, weights: Weights): Model[MData] = {
