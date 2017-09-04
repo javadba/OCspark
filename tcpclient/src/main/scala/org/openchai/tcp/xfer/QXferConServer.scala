@@ -10,7 +10,8 @@ object QXferConServer {
 
   def findInQ(q: BlockingQueue[TaggedEntry],tag: String) = {
     val aq = q.asInstanceOf[ArrayBlockingQueue[TaggedEntry]]
-    info(s"FindInQ: looking for $tag: entries=${aq.size}")
+    debug(s"FindInQ: entries=${aq.toArray.map{ x => x.asInstanceOf[TaggedEntry].tag}.mkString(",")}")
+    debug(s"FindInQ: looking for $tag: entries=${aq.size}")
     val e = {
       var p: Option[TaggedEntry] = None
         val it = aq.iterator
@@ -19,15 +20,28 @@ object QXferConServer {
 //          info(s"Queue entry: ${pv}")
           if (pv.tag == tag) {
             info(s"Found entry ${pv.tag}")
+            val beforeCnt = aq.size
+            val changed = aq.remove(pv)
             p = Option(pv)
-            aq.remove(pv)
+              aq.remove(pv)
+            assert(changed && aq.size == beforeCnt-1,s"Why is entry not removed from queue??")
           } else {
             None
           }
+//        while (p.isEmpty && it.hasNext && !aq.isEmpty) {
+//          val pv = it.next
+//          info(s"Queue entry: ${pv}")
+//          p = if (pv.tag == tag) {
+//            info(s"Found entry ${pv.tag}")
+//            val beforeCnt = aq.size
+//            val changed = aq.remove(pv)
+//            assert(changed && aq.size == beforeCnt-1,s"Why is entry not removed from queue??")
+//            Option(pv)
+
         }
       p
     }
-    e.flatMap { ee => info(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
+    e.flatMap { ee => debug(s"For tag=$tag found q entry $ee"); Some(ee) }.getOrElse("No q entry found for tag=$tag")
     e
   }
 
@@ -46,7 +60,7 @@ object QXferConServer {
   }
 
  def main(args: Array[String]): Unit = {
-    val q = new ArrayBlockingQueue[TaggedEntry](1000)
+    val q = new ArrayBlockingQueue[TaggedEntry](100)
     import org.openchai.tcp.xfer.XferConCommon._
     val cont = TestControllers
     val params = QTestParams("local", cont.conHost, cont.conPort, cont.dataHost, cont.dataPort)

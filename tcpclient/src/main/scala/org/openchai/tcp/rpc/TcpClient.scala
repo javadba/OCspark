@@ -74,7 +74,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
               Thread.sleep(50)
               innerWait += 1
               if (innerWait %20==0) {
-//                info(s"InnerWait=%d")
+//                info(s"InnerWait=$innerWait")
               }
             } while (dis.available > 0)
             var outerLoopCnt = 0

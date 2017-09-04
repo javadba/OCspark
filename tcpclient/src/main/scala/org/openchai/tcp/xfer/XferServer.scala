@@ -36,7 +36,7 @@ object XferServer {
         info("QReader thread started")
         while (true) {
           val v = q.take
-          info(s"QReader: received $v")
+          debug(s"QReader: received $v")
         }
       }
     }

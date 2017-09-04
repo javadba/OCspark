@@ -18,7 +18,7 @@ object ProcessUtils {
   def main(args: Array[String]): Unit = {
      val out = ProcessUtils.exec("ls", "ls -lrta /shared")
 //     val out = ProcessUtils.runBash("ls -lrta /shared/*.tmp")
-    info(s"$out")
+    debug(s"$out")
   }
   val Blen = 16*1024
   // ProcessUtils.runBas

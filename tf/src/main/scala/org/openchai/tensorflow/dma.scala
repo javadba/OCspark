@@ -3,6 +3,8 @@ package org.openchai.tensorflow
 import org.openchai.tcp.rpc.TcpParams
 import org.openchai.tcp.xfer._
 import org.openchai.tensorflow.api.PcieDMAClient
+import org.openchai.tensorflow.api.Logger._
+
 
 // placeholder: Burcak will inform what more needed
 case class DmaConfig(name: String)
@@ -18,8 +20,11 @@ class DmaXferConClient(val dmaConfig: DmaConfig, val tcpParams: TcpParams, val x
   override def read(params: XferReadParams): XferReadResp =
     controller.xferIf.read(params)
 
-  override def write(params: XferWriteParams): XferWriteResp =
-    controller.xferIf.write(params)
+  override def write(params: XferWriteParams): XferWriteResp = {
+//    info("DmaXferConClient says 'Boo'")
+     controller.xferIf.write(params)
+//    null
+  }
 
   override def prepareWrite(config: XferConfig): PrepResp = controller.xferConIf.prepareWrite(config)
 

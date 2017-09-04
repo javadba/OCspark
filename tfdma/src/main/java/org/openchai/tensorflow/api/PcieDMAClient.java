@@ -9,7 +9,6 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
     String parentDir = System.getenv("GITDIR") + "/tfdma";
     String ext = System.getProperty("os.name").equals("Mac OS X") ? ".dylib" : ".so";
     String libpath = String.format("%s/%s%s",parentDir,"src/main/cpp/dmaclient",ext);
-//    String libpath = "dmaserver.dylib";
     info("Loading DMA native library " + libpath + " ..");
     try {
       System.load(libpath);
@@ -17,7 +16,6 @@ public class PcieDMAClient extends DMAClientBase implements TensorFlowIf.DMAClie
       error("Unable to load native library %s: %s".format( libpath, e.getMessage()),e);
     }
 
-//    System.loadLibrary(libpath);
   }
 
   @Override

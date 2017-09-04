@@ -74,7 +74,7 @@ case class XferConClient(tcpParams: TcpParams, xferTcpParams: TcpParams,config: 
     val presult = xferConIf.prepareWrite(params)
     val result = xferIf.write(writeParams)
     val cresult = xferConIf.completeWrite(params)
-    info(s"Client: got result $result")
+//    info(s"Client: got result $result")
     cresult
   }
 

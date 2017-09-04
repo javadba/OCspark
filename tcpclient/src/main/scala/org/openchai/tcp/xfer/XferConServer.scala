@@ -92,7 +92,7 @@ class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") 
 
   def defaultConsume(config: TcpXferConfig): Any = {
     val payload = TcpCommon.unpack(config.finalPath, readFile(config.finalPath))
-    info(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
+    debug(s"DefaultConsume: received data of type ${payload.getClass.getSimpleName}")
     payload
   }
 
@@ -102,26 +102,26 @@ class XferConServerIf(tcpParams: TcpParams) extends ServerIf("XferConServerIf") 
     req match {
       case o: PrepWriteReq => {
         val config = o.value
-        info(s"Prepping the Datawrite config=$config")
+        debug(s"Prepping the Datawrite config=$config")
 //        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteWriteReq => {
         val config = o.value
-        info(s"Completed Write for ${config} the Datawrite config=$config")
+        debug(s"Completed Write for ${config} the Datawrite config=$config")
 //        val res = consume(config)
 //        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: PrepReadReq => {
         val config = o.value
-        info(s"Prepping the Datawrite config=$config")
+        debug(s"Prepping the Datawrite config=$config")
 //        claimPaths(Seq(config.tmpPath, config.finalPath), config)
         new PrepResp(PrepRespStruct(0,0,config.tmpPath))
       }
       case o: CompleteReadReq => {
         val config = o.value
-        info(s"Completed Write for ${config} the Datawrite config=$config")
+        debug(s"Completed Write for ${config} the Datawrite config=$config")
 //        releasePaths(Seq(config.tmpPath, config.finalPath), config)
         CompletedResp(PrepRespStruct(0,0,config.tmpPath))
       }

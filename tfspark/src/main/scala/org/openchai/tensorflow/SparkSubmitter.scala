@@ -3,7 +3,7 @@ package org.openchai.tensorflow
 import java.io.{File, FileReader}
 import java.nio.file.{Files, Paths}
 import java.util.Base64
-import java.util.concurrent.{Callable, ConcurrentNavigableMap, Executors}
+import java.util.concurrent._
 
 import org.apache.spark.sql.SparkSession
 import org.openchai.tcp.util.{FileUtils, ProcessUtils, TcpUtils}
@@ -11,6 +11,7 @@ import org.openchai.tensorflow.JsonUtils._
 import org.openchai.tensorflow.web.{HttpUtils, TfWebServer}
 import org.openchai.tcp.util.Logger._
 import org.openchai.util.{TfAppConfig, TfConfig, YamlStruct, YamlUtils}
+
 import collection.mutable.{ArrayBuffer => AB}
 import FileUtils._
 
@@ -21,6 +22,8 @@ object SparkSubmitter {
   import TfSubmitter._
 
   val UseWeb = false
+
+  case class ThreadResult(nImagesProcessed: Int, output: String)
 
   def process(params: Map[String, String]) = {
     val UseSpark = true // TODO: make configurable with direct
@@ -49,14 +52,22 @@ object SparkSubmitter {
   }
 
   lazy val pool = Executors.newFixedThreadPool(getTx1s.length)
+  lazy val completionSvc =  new ExecutorCompletionService[ThreadResult](pool)
   val inUse: ConcurrentNavigableMap[Int, Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int, Boolean]()
   Range(1, getTx1s.length + 1).map { ix => inUse.put(ix, false) }
 
   def runSparkJobs(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String,
     nPartitions: Int = 1, continually: Boolean = true) = {
     var warnPrinted = false
+    var nTotalThreads = 0; var nTotalImages = 0
     val res = for (iters <- Range(0, if (continually) Integer.MAX_VALUE else 1)) yield {
-      val oldWatermark = readFileOption(getWatermarkFileName(dir)).flatMap(s => Option(s.toLong)).getOrElse(0L)
+      val resetWatermark = readFileOption(getResetWatermarkFileName(dir))
+        .flatMap(s => { delete(getResetWatermarkFileName(dir)); Option(true)}).getOrElse(false)
+      val oldWatermark = if (resetWatermark) {
+        0L
+      } else {
+        readFileOption(getWatermarkFileName(dir)).flatMap(s => Option(s.toLong)).getOrElse(0L)
+      }
       try {
         val watermark = System.currentTimeMillis
         write(getWatermarkFileName(dir), watermark.toString, silent = true)
@@ -118,8 +129,12 @@ object SparkSubmitter {
             val newCap = math.ceil((otherFnames.length.toDouble - totalCap) / workersWithCapacity).toInt
             val adjCapacity = workersCapacity.map { case (g, cap) => (g, if (cap == 0) 0 else cap + newCap) }
             val finalFilesPerWorker = avgRemainingPerWorker + newCap
-            assert(adjCapacity.map(_._2).sum >= otherFnames.length, s"remainingCapacity calc error: only ${adjCapacity.map(_._2).sum} which is < ${otherFnames.length}")
-            assert(finalFilesPerWorker * workersWithCapacity >= otherFnames.length, s"finalFilesPerWorker * nWorkers calc error: only ${finalFilesPerWorker * workersWithCapacity} which is < ${otherFnames.length}")
+            if ( adjCapacity.map(_._2).sum < otherFnames.length) {
+              error(s"remainingCapacity calc error: only ${adjCapacity.map(_._2).sum} which is < ${otherFnames.length}")
+            }
+            if (finalFilesPerWorker * workersWithCapacity < otherFnames.length) {
+              error(s"finalFilesPerWorker * nWorkers calc error: only ${finalFilesPerWorker * workersWithCapacity} which is < ${otherFnames.length}")
+            }
 
             for (f <- mutable.Queue(otherFnames: _*);
                  worker <- getTx1s.indices if ({
@@ -134,7 +149,10 @@ object SparkSubmitter {
               allg(worker)._2 += f
             }
 
-            assert(allg.foldLeft(0) { case (sum, v) => sum + v._2.length } == files.length, s"We did not capture all files in the affinity groups")
+            if (allg.foldLeft(0) { case (sum, v) => sum + v._2.length } != files.length) {
+              // do not THROW because we want to continue in the presence of failed TX1's
+              error(s"We did not capture all files in the affinity groups")
+            }
             val franges = for (grp <- allg) yield {
               val ndir = s"$outDir/${grp._1}"
               debug(s"Worker dir=$ndir")
@@ -203,12 +221,14 @@ object SparkSubmitter {
             debug(s"Dividing work into: ${franges.map(fr => s"(${fr._1}:${fr._2.mkString(",")})").mkString("\n")}")
           }
 
+
           franges.zipWithIndex.foreach { case ((dir, files), ix) =>
             val tx1 = ix + 1
             info(s"TX$tx1: Submitting from dir=$dir for files=${files.mkString(",")}")
-            pool.submit(
-              new Callable[String]() {
-                override def call(): String = {
+            completionSvc.submit(
+              new Callable[ThreadResult]() {
+
+                override def call[ThreadResult](): ThreadResult = {
                   val workerNum = workers(ix).getKey
                   inUse.put(workerNum, true)
                   debug(s"TX$ix: invoking runSparkJob..")
@@ -243,19 +263,18 @@ object SparkSubmitter {
       }
     }
     res.flatten
-    res.asInstanceOf[Seq[String]].mkString("\n\n")
   }
 
   def runSparkJob(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String, tx1: Int) = {
 
-    def ix = Array(92, 91, 93, 94, 95, 96, 32, 33, 35, 36, 97, 37)
+    def bashColors = Array(92, 91, 93, 94, 95, 96, 32, 33, 35, 36, 97, 37)
 
     def txDebug(tx1: Int, msg: String) = {
-      debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1-1)}m TX$tx1 >> "))
+      debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1-1)}m TX$tx1 >> "))
     }
 
     def txInfo(tx1: Int, msg: String) = {
-      info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${ix(tx1-1)}m TX$tx1 >> "))
+      info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1-1)}m TX$tx1 >> "))
     }
 
     txDebug(tx1, s"Connecting to spark master $master ..")
@@ -267,28 +286,42 @@ object SparkSubmitter {
     txDebug(tx1, s"runsparkJob: binary files rdd on $dir ready")
     val out = irdd.mapPartitionsWithIndex { case (np, part) =>
       val (tx1Host, tx1Port) = bcTx1.value
-      val tfClient = TfClient(conf, tx1Host, tx1Port)
-      part.flatMap { case (ipath, contents) =>
-        val path = if (fileExt(ipath) == tx1.toString) ipath.substring(0, ipath.lastIndexOf(".")) else ipath
-        if (path.endsWith("result.result")) {
-          error(s"Got a double result path $path")
-        }
-        if (!ImagesMeta.allowsExt(fileExt(path))) {
-          if (fileExt(path) != "result") {
-            info(s"Skipping non image file $path")
-          }
+      val tfClientOpt = try {
+        Option(TfClient(conf, tx1Host, tx1Port))
+      } catch {
+        case e: Exception =>
+          error(s"Unable to connect to $tx1Host:$tx1Port", e)
           None
-        } else {
-          val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
-          val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
-          txDebug(tx1, s"Running labelImage for $imgLabel")
-          val res = labelImg(tfClient, imgLabel)
-          txInfo(tx1, s"LabelImage result: $res")
-          Some(res)
+      }
+
+      if (tfClientOpt.nonEmpty) {
+        val tfClient = tfClientOpt.get
+        part.map { case (ipath, contents) =>
+          val path = if (fileExt(ipath) == tx1.toString) ipath.substring(0, ipath.lastIndexOf(".")) else ipath
+          if (path.endsWith("result.result")) {
+            error(s"Got a double result path $path")
+          }
+          if (!ImagesMeta.allowsExt(fileExt(path))) {
+            if (fileExt(path) != "result") {
+              info(s"Skipping non image file $path")
+            }
+            None
+          } else {
+            val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
+            val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
+            txDebug(tx1, s"Running labelImage for $imgLabel")
+            val res = labelImg(tfClient, imgLabel)
+            txInfo(tx1, s"LabelImage result: $res")
+            Some(res)
+          }
         }
+      } else {
+        part.map { _ =>
+          None        }
       }
     }
-    val c = out.collect
+
+    val c = out.collect.flatten
     c.foreach { li =>
       val fp = if (li.value.fpath.startsWith("file:")) {
         val f = li.value.fpath.substring("file:".length)
@@ -304,12 +337,13 @@ object SparkSubmitter {
       //      debug(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
     }
     info(s"Finished runSparkJob for tx1=$tx1")
-    c.mkString("\n")
+    ThreadResult(c.map{_.value.nImagesProcessed}.sum, c.mkString("\n"))
+
   }
 
   def main(args: Array[String]): Unit = {
     if (args.length != 1) {
-      System.err.println("Usage: TfSubmitter <submitter.yml file>")
+      System.err.println("Usage: SparkSubmitter <submitter.yml file>")
       System.exit(-1)
     }
     val conf = TfConfig.getAppConfig(args(0))

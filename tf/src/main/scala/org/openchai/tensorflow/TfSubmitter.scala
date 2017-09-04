@@ -81,6 +81,7 @@ object TfSubmitter {
     }
   }
 
+  @inline def getResetWatermarkFileName(dir: String) = s"$dir/watermark.reset.txt"
   @inline def getWatermarkFileName(dir: String) = s"$dir/watermark.txt"
 
   val NumExt = "^[\\d+]$".r

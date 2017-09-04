@@ -25,7 +25,7 @@ object TcpCommon {
     if (DumpToFile) {
       val tpath = s"/tmp/${path.substring(math.max(0, path.lastIndexOf("/")))}.${new java.util.Random().nextInt(1000)}"
       FileUtils.writeBytes(tpath, out)
-      info(s"Wrote received contents (${out.length} bytes) to $tpath")
+      debug(s"Wrote received contents (${out.length} bytes) to $tpath")
     }
     out
   }

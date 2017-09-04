@@ -12,10 +12,11 @@ class XferQServerIf(outQ: BlockingQueue[TaggedEntry], tcpParams: TcpParams, qSer
   info("Created XferQServerIf")
 
   override def consume(config: TcpXferConfig) = {
-    val payload = super.defaultConsume(config).asInstanceOf[TaggedEntry]
-    info(s"Consuming message of length ${payload.toString.length}")
-    val res = outQ.offer(payload)
-    res
+//    val payload = super.defaultConsume(config).asInstanceOf[TaggedEntry]
+//    debug(s"Consuming message of length ${payload.toString.length}")
+//    val res = outQ.offer(payload)
+//    res
+    throw new UnsupportedOperationException("do not consume()")
   }
 
 }
@@ -25,7 +26,7 @@ class QXferServerIf(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) extends
 
   def writeQ(path: DataPtr, data: TaggedEntry) = {
 //    val _md5 = md5(buf.array.slice(0,buf.position))
-//    info(s"writeq: data with tag=${data.tag} len=${data.data.length}")
+    debug(s"writeq: data with tag=${data.tag} len=${data.data.length}")
     q.offer(data)
 //    info(s"After writeQ: qsize=${q.size}")
   }
@@ -35,7 +36,7 @@ class QXferServerIf(q: BlockingQueue[TaggedEntry], tcpParams: TcpParams) extends
       case o: XferWriteReq =>
         val params = o.value.asInstanceOf[XferWriteParams]
 //        FileUtils.checkMd5(params.config.finalPath, params.data, params.md5)
-        info(s"XferWriteReq! datalen=${params.data.length}")
+        debug(s"XferWriteReq! datalen=${params.data.length}")
 //        FileUtils.checkMd5(path, FileUtils.md5(data), md5In)
         val start = System.currentTimeMillis
         val len = writeQ(params.config.finalPath, TaggedEntry(params.tag, params.data))

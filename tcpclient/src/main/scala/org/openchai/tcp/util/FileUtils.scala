@@ -81,6 +81,12 @@ object FileUtils {
       .map(_.flatMap(f => rmdirs(f.getPath))).getOrElse(Array()) :+ (dir -> new File(dir).delete)
   }
 
+  def delete(path: String) = {
+    val del = new File(path).delete
+    if (!del) throw new IllegalStateException(s"Unable to delete $path")
+    del
+  }
+
   def write(path: String, data: String, silent: Boolean = false): Unit = {
     if (!silent)
       info(s"Writing to $path with datalen=${data.length}")

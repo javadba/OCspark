@@ -69,7 +69,7 @@ case class LabelImgStruct(tag: String, fpath: String, outPath: String,
 
 case class LabelImgReq(value: LabelImgStruct) extends P2pReq[LabelImgStruct]
 
-case class LabelImgRespStruct(tag: String, fpath: String, outDir: String, cmdResult: ExecResult)
+case class LabelImgRespStruct(tag: String, fpath: String, outDir: String, cmdResult: ExecResult, nImagesProcessed: Int=1)
 
 case class LabelImgResp(val value: LabelImgRespStruct) extends P2pResp[LabelImgRespStruct]
 
@@ -91,12 +91,14 @@ case class TfClientIf(tcpParams: TcpParams, config: TfSimpleConfig, tfClient: Dm
     TcpCommon.serializeObject(s.fpath, TaggedEntry("taggedPic", s.data)))
     val xferConf = TcpXferConfig(s.tag, s.fpath)
     tfClient.prepareWrite(xferConf)
-    tfClient.write(XferWriteParams(s.tag, xferConf, s.data))
-    tfClient.completeWrite(xferConf)
+//    tfClient.write(XferWriteParams(s.tag, xferConf, s.data))
 //    val wres = tfClient.write(tfClient.config, wparams)
     val wres = tfClient.write(wparams)
+    tfClient.completeWrite(xferConf)
 //    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
-    val resp = getRpc().request(LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte])))
+    val newLiReq = LabelImgReq(LabelImgStruct(s.tag, s.fpath, s.outPath))
+//    LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte]))
+    val resp = getRpc().request(newLiReq)
     info(s"LabelImg response: $resp")
     resp.asInstanceOf[LabelImgResp]
   }
