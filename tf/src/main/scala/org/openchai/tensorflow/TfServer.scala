@@ -116,7 +116,7 @@ class TfServerIf(val appConfig: AppConfig, val q: BlockingQueue[TaggedEntry], po
     req match {
       case o: LabelImgReq =>
         val struct = o.value
-        val app = struct.optApp.getOrElse(DefaultApp)
+        val app = struct.imgApp
         info(s"Service: Invoking LabelImg: struct=$struct")
 
         val estruct = LabelImgExecStruct(struct, appConfig(app, "cmdline"), app, appConfig(app, "rundir"), appConfig(app, "tmpdir"))

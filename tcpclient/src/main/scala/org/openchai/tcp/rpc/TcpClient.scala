@@ -23,7 +23,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   val MaxTcpWaitSecs = 2
 
   {
-      connect(connParams)
+    connect(connParams)
   }
 
   override def isConnected: Boolean = is != null && os != null
@@ -48,47 +48,48 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
 
   private var savedConnParam: P2pConnectionParams = _
 
-  override def request[U : TypeTag , V :  TypeTag](req: P2pReq[U]): P2pResp[V] = {
+  override def request[U: TypeTag, V: TypeTag](req: P2pReq[U]): P2pResp[V] = {
     // TODO: determine how to properly size the bos
     if (!isConnected) {
       connect(savedConnParam)
     }
-    val buf = new Array[Byte](Math.pow(2,22).toInt)
+    val buf = new Array[Byte](Math.pow(2, 22).toInt)
     val serreq = serializeStream(req.path, pack(req.path, req))
     os.write(serreq)
+    val sent = serreq.length
     os.flush
 
     val dis = new DataInputStream(is)
-      var totalRead = 0
-      do {
-        val available = dis.available
-        if (available <= 0) {
-          Thread.sleep(200)
-        } else {
+    var totalRead = 0
+    do {
+      val available = dis.available
+      if (available <= 0) {
+        Thread.sleep(200)
+      } else {
+        do {
+          var innerWait = 0
           do {
-            var innerWait = 0
-            do {
-              val nread = dis.read(buf, totalRead, buf.length - totalRead)
-              totalRead += nread
-              //                debug(s"in loop: nread=$nread totalRead=$totalRead")
-              Thread.sleep(50)
-              innerWait += 1
-              if (innerWait %20==0) {
-//                info(s"InnerWait=$innerWait")
-              }
-            } while (dis.available > 0)
-            var outerLoopCnt = 0
-            do {
-              Thread.sleep(100)
-              outerLoopCnt += 1
-//              info(s"OuterloopCnt=$outerLoopCnt")
-            } while (totalRead > 5000 && dis.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
+            val nread = dis.read(buf, totalRead, buf.length - totalRead)
+            totalRead += nread
+            //                debug(s"in loop: nread=$nread totalRead=$totalRead")
+            Thread.sleep(50)
+            innerWait += 1
+            if (innerWait % 20 == 0) {
+              //                info(s"InnerWait=$innerWait")
+            }
           } while (dis.available > 0)
-        }
-      } while (totalRead <= 0)
-      debug(s"Serve: totalRead=$totalRead")
-      val o = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
-//    val (path, o, md5) = unpack(buf.slice(0,nread))
+          var outerLoopCnt = 0
+          do {
+            Thread.sleep(100)
+            outerLoopCnt += 1
+            //              info(s"OuterloopCnt=$outerLoopCnt")
+          } while (totalRead > 5000 && dis.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
+        } while (dis.available > 0)
+      }
+    } while (totalRead <= 0)
+    debug(s"TcpClient.Request: totalSent=$sent totalRcvd=$totalRead")
+    val o = unpack("/tmp/clientReq.out", buf.slice(0, totalRead))
+    //    val (path, o, md5) = unpack(buf.slice(0,nread))
     val out = o.asInstanceOf[P2pResp[V]]
     if (reconnectEveryRequest) {
       sock.close
@@ -111,6 +112,6 @@ object TcpClient {
     val port = if (args.length >= 2) args(1) else TestPort
     val serviceIf = new SolverIf
     val client = new TcpClient(TcpParams(server, TestPort), serviceIf)
-    val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()),TestData.mdata(10,100), 3)
+    val w = serviceIf.run(ModelParams(new DefaultModel(), new DefaultHyperParams()), TestData.mdata(10, 100), 3)
   }
 }

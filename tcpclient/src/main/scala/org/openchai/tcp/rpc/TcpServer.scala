@@ -150,7 +150,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         nEmpty += 1
       }
       debug(s"outer outer: $nEmpty")
-    } while (nEmpty <= 5)
+    } while (nEmpty <= 7)
     info(s"Killing thread")
   }
 

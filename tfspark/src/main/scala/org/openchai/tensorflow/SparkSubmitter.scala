@@ -17,6 +17,7 @@ import FileUtils._
 
 import scala.collection.mutable
 
+
 object SparkSubmitter {
 
   import TfSubmitter._
@@ -56,13 +57,30 @@ object SparkSubmitter {
   val inUse: ConcurrentNavigableMap[Int, Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int, Boolean]()
   Range(1, getTx1s.length + 1).map { ix => inUse.put(ix, false) }
 
+
+  class CompletionSvcListenerThread(completionSvc: CompletionService[ThreadResult]) extends Thread {
+    override def run() = {
+      while (true) {
+        Thread.sleep(200)
+        val res = Option(completionSvc.poll)
+        res.map{ _ =>  debug(s"Received thread result ${res.get}") }
+      }
+    }
+    this.start
+  }
+
   def runSparkJobs(conf: TfAppConfig, master: String, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String,
     nPartitions: Int = 1, continually: Boolean = true) = {
     var warnPrinted = false
     var nTotalThreads = 0; var nTotalImages = 0
+    val completionSvcListenerThread = new CompletionSvcListenerThread(completionSvc)
+
     val res = for (iters <- Range(0, if (continually) Integer.MAX_VALUE else 1)) yield {
       val resetWatermark = readFileOption(getResetWatermarkFileName(dir))
-        .flatMap(s => { delete(getResetWatermarkFileName(dir)); Option(true)}).getOrElse(false)
+        .flatMap { s =>
+          delete(getResetWatermarkFileName(dir))
+          Option(true)
+        }.getOrElse(false)
       val oldWatermark = if (resetWatermark) {
         0L
       } else {
@@ -88,7 +106,7 @@ object SparkSubmitter {
         }
         if (files.isEmpty) {
           if (!warnPrinted) {
-            info(s"No files are present to process: reset/delete the watermark.txt to reprocess the existing images")
+            info(s"No files are present to process: type 'touch ${getResetWatermarkFileName(dir)}' to reprocess the existing images")
             warnPrinted = true
           }
           None
@@ -138,13 +156,13 @@ object SparkSubmitter {
 
             for (f <- mutable.Queue(otherFnames: _*);
                  worker <- getTx1s.indices if ({
-                debug(s"\nworker: $worker"); true
+                /*debug(s"\nworker: $worker"); */ true
               }) && !inUse.get(worker) && adjCapacity(worker)._2 > 0
                 && ({
-                debug(s" notInUse"); true
+                /*debug(s" notInUse"); */ true
               }) && (allg(worker)._2.length < finalFilesPerWorker)
                 && ({
-                debug(s" lessthanAvgRemaining: ${avgRemainingPerWorker - allg(worker)._2.length}"); true
+                /* debug(s" lessthanAvgRemaining: ${avgRemainingPerWorker - allg(worker)._2.length}");*/ true
               })) {
               allg(worker)._2 += f
             }
@@ -228,10 +246,10 @@ object SparkSubmitter {
             completionSvc.submit(
               new Callable[ThreadResult]() {
 
-                override def call[ThreadResult](): ThreadResult = {
+                override def call(): ThreadResult = {
                   val workerNum = workers(ix).getKey
                   inUse.put(workerNum, true)
-                  debug(s"TX$ix: invoking runSparkJob..")
+                  debug(s"TX$tx1: invoking runSparkJob..")
                   val res = runSparkJob(conf, master, tfServerHostAndPort, imgApp, dir, dir, tx1)
                   // info(s"Callable: result from worker=$workerNum = $res")
                   assert(dir.length >= 8)
@@ -240,7 +258,7 @@ object SparkSubmitter {
                     //              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
                   } catch {
                     case e: Exception =>
-                      info(s"TX$ix: Callable: ERROR: unable to delete $dir")
+                      info(s"TX$tx1: Callable: ERROR: unable to delete $dir")
                       e.printStackTrace
                   }
                   inUse.put(workerNum, false)
@@ -308,7 +326,7 @@ object SparkSubmitter {
             None
           } else {
             val outputTag = s"${TcpUtils.getLocalHostname}-Part$np-$path"
-            val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$np", imgApp, path, outDir, outputTag, contents.toArray)
+            val imgLabel = LabelImgRest(None, master, tfServerHostAndPort, s"SparkPartition-$tx1-$np", imgApp, path, outDir, outputTag, contents.toArray)
             txDebug(tx1, s"Running labelImage for $imgLabel")
             val res = labelImg(tfClient, imgLabel)
             txInfo(tx1, s"LabelImage result: $res")
@@ -340,6 +358,7 @@ object SparkSubmitter {
     ThreadResult(c.map{_.value.nImagesProcessed}.sum, c.mkString("\n"))
 
   }
+
 
   def main(args: Array[String]): Unit = {
     if (args.length != 1) {

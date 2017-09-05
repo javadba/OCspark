@@ -48,9 +48,9 @@ object TcpCommon {
     ser // (path, ser, md5)
   }
 
-  def unpack(path: String, raw: RawData): UnpackedData = {
+  def unpack(debugFilePath: String, raw: RawData): UnpackedData = {
     if (DumpToFile) {
-      val tpath = s"/tmp/${path}.${new java.util.Random().nextInt(1000)}"
+      val tpath = s"/tmp/${debugFilePath}.${new java.util.Random().nextInt(1000)}"
       FileUtils.writeBytes(tpath, raw)
       info(s"Wrote received contents (${raw.length} bytes) to $tpath")
     }

@@ -45,7 +45,7 @@ object TfClient extends Logger {
     val rbuf = buf.slice(0,n)
     val tfClient = TfClient(defaultConf())
     val md5 = FileUtils.md5(rbuf.slice(0,n))
-    val label = tfClient.labelImg(LabelImgStruct("funnyPic",s"${System.getProperty("user.dir")}/tf/src/main/resources/$testImg",
+    val label = tfClient.labelImg(LabelImgStruct("funnyPic",TensorflowApp.name, s"${System.getProperty("user.dir")}/tf/src/main/resources/$testImg",
       "/tmp", rbuf, md5))
     info(s"Received label result: $label")
   }
@@ -60,8 +60,8 @@ object TfClient extends Logger {
 
 case class TfSimpleConfig(name: String, imgDir: String, outDir: String) // placeholder
 
-case class LabelImgStruct(tag: String, fpath: String, outPath: String,
-  data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte], optApp: Option[String] = None) {
+case class LabelImgStruct(tag: String, imgApp: String, fpath: String, outPath: String,
+  data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte]) {
 
   override def toString: DataPtr = s"LabelImg: tag=$tag path=$fpath " +
     s"datalen=${if (data!=null) data.length else -1} md5len=${if (md5!=null) md5.length else -1}"
@@ -96,7 +96,7 @@ case class TfClientIf(tcpParams: TcpParams, config: TfSimpleConfig, tfClient: Dm
     val wres = tfClient.write(wparams)
     tfClient.completeWrite(xferConf)
 //    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
-    val newLiReq = LabelImgReq(LabelImgStruct(s.tag, s.fpath, s.outPath))
+    val newLiReq = LabelImgReq(LabelImgStruct(s.tag, s.imgApp, s.fpath, s.outPath))
 //    LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte]))
     val resp = getRpc().request(newLiReq)
     info(s"LabelImg response: $resp")
