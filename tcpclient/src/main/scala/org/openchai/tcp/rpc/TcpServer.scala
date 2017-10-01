@@ -94,6 +94,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     val is = new DataInputStream(socket.getInputStream)
     val os = new BufferedOutputStream(socket.getOutputStream)
     var nEmpty = 0
+    val nWaitCycles = Option(System.getProperty("tcpserver.wait.cycles")).getOrElse("12").toInt
     do {
       if (!msgPrinted) {
         debug("Listening for messages..");
@@ -150,7 +151,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         nEmpty += 1
       }
       debug(s"outer outer: $nEmpty")
-    } while (nEmpty <= 7)
+    } while (nEmpty <= nWaitCycles)
     info(s"Killing thread")
   }
 

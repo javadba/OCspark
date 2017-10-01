@@ -24,6 +24,7 @@ object Logger {
 
   def debug(msg: Any) = if (LogLevel >= 3) println(s"Debug: $msg")
   def info(msg: Any) = if (LogLevel >= 2) println(s"Info: $msg")
+  def gpuinfo(msg: Any) = if (LogLevel >= 1) println(s"GPU: $msg")
   def warn(msg: Any) = if (LogLevel >= 1) println(s"WARN: $msg")
   def error(msg: Any) = if (LogLevel >= 0) println(s"ERROR: $msg")
   def error(msg: Any, t: Throwable) = if (LogLevel >= 0) println(s"ERROR: $msg\n${toString(t)}")

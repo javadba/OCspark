@@ -4,6 +4,7 @@ import java.io.{File, FileReader}
 import java.nio.file.{Files, Paths}
 import java.util.Base64
 import java.util.concurrent._
+import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.sql.SparkSession
 import org.openchai.tcp.util.{FileUtils, ProcessUtils, TcpUtils}
@@ -54,16 +55,23 @@ object SparkSubmitter {
 
   lazy val pool = Executors.newFixedThreadPool(getTx1s.length)
   lazy val completionSvc =  new ExecutorCompletionService[ThreadResult](pool)
+  val nImagesProcessed = new AtomicInteger(0)
   val inUse: ConcurrentNavigableMap[Int, Boolean] = new java.util.concurrent.ConcurrentSkipListMap[Int, Boolean]()
   Range(1, getTx1s.length + 1).map { ix => inUse.put(ix, false) }
 
 
-  class CompletionSvcListenerThread(completionSvc: CompletionService[ThreadResult]) extends Thread {
+  class CompletionSvcListenerThread(completionSvc: CompletionService[ThreadResult], nImagesProcessed: AtomicInteger) extends Thread {
     override def run() = {
+      debug("Started CompletionSvcThread")
       while (true) {
-        Thread.sleep(200)
+        Thread.sleep(100)
         val res = Option(completionSvc.poll)
-        res.map{ _ =>  debug(s"Received thread result ${res.get}") }
+        res.map{ _ =>
+          val totalProcessed = nImagesProcessed.addAndGet(res.get.get.nImagesProcessed)
+          if (totalProcessed % 5 == 1) {
+            debug(s"CompletionSvc: Thread completed: totalProcessed=$totalProcessed result=$res")
+          }
+        }
       }
     }
     this.start
@@ -73,7 +81,7 @@ object SparkSubmitter {
     nPartitions: Int = 1, continually: Boolean = true) = {
     var warnPrinted = false
     var nTotalThreads = 0; var nTotalImages = 0
-    val completionSvcListenerThread = new CompletionSvcListenerThread(completionSvc)
+    val completionSvcListenerThread = new CompletionSvcListenerThread(completionSvc, nImagesProcessed)
 
     val res = for (iters <- Range(0, if (continually) Integer.MAX_VALUE else 1)) yield {
       val resetWatermark = readFileOption(getResetWatermarkFileName(dir))
@@ -242,23 +250,23 @@ object SparkSubmitter {
 
           franges.zipWithIndex.foreach { case ((dir, files), ix) =>
             val tx1 = ix + 1
-            info(s"TX$tx1: Submitting from dir=$dir for files=${files.mkString(",")}")
+            info(s"GPU$tx1: Submitting from dir=$dir for files=${files.mkString(",")}")
             completionSvc.submit(
               new Callable[ThreadResult]() {
 
                 override def call(): ThreadResult = {
                   val workerNum = workers(ix).getKey
                   inUse.put(workerNum, true)
-                  debug(s"TX$tx1: invoking runSparkJob..")
+                  debug(s"GPU$tx1: invoking runSparkJob..")
                   val res = runSparkJob(conf, master, tfServerHostAndPort, imgApp, dir, dir, tx1)
-                  // info(s"Callable: result from worker=$workerNum = $res")
+                  gpuinfo(s"Callable: result from worker=$workerNum = $res")
                   assert(dir.length >= 8)
                   try {
                     //              ProcessUtils.exec(s"DeleteDir-$dir", s"rm -rf $dir")
                     //              ProcessUtils.exec(s"DeleteDir-$dir", s"mv $dir/ /tmp/$ts/")
                   } catch {
                     case e: Exception =>
-                      info(s"TX$tx1: Callable: ERROR: unable to delete $dir")
+                      info(s"GPU$tx1: Callable: ERROR: unable to delete $dir")
                       e.printStackTrace
                   }
                   inUse.put(workerNum, false)
@@ -354,8 +362,9 @@ object SparkSubmitter {
       writeBytes(s"${li.value.outDir}/$fname.result", (li.value.cmdResult.stdout + li.value.cmdResult.stderr).getBytes("ISO-8859-1"))
       //      debug(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
     }
-    info(s"Finished runSparkJob for tx1=$tx1")
-    ThreadResult(c.map{_.value.nImagesProcessed}.sum, c.mkString("\n"))
+    val processed = c.map{_.value.nImagesProcessed}.sum
+    info(s"Finished runSparkJob for tx1=$tx1 processed=$processed")
+    ThreadResult(processed, c.mkString("\n"))
 
   }
 

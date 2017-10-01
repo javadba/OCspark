@@ -97,7 +97,7 @@ object TfSubmitter {
   }
 
   lazy val getTx1s = {
-    val f = "/shared/tx1-slaves.txt"
+    val f = "/shared/gpu-slaves.txt"
     val slaves = scala.io.Source.fromFile(f).getLines.map { l => l.split(":") }.map { arr => (arr(0), arr(1).toInt) }.toSeq
     info(s"Slaves from $f: ${slaves.mkString(",")}")
     slaves
