@@ -84,23 +84,12 @@ object TfSubmitter {
   @inline def getResetWatermarkFileName(dir: String) = s"$dir/watermark.reset.txt"
   @inline def getWatermarkFileName(dir: String) = s"$dir/watermark.txt"
 
-  val NumExt = "^[\\d+]$".r
-
-  @inline def isDigitsExt(fname: String) = NumExt.findAllIn(fileExt(fname)).nonEmpty
-
   def labelImg(tfClient: TfClient, lireq: LabelImgRest) = {
     val fmd5 = md5(lireq.contents)
     val res = tfClient.labelImg(LabelImgStruct(lireq.outputTag, lireq.imgApp, lireq.path, lireq.outPath,
       lireq.contents, fmd5))
     info(s"TfSubmitter.labelImg: LabelImgResp=$res")
     res
-  }
-
-  lazy val getTx1s = {
-    val f = "/shared/gpu-slaves.txt"
-    val slaves = scala.io.Source.fromFile(f).getLines.map { l => l.split(":") }.map { arr => (arr(0), arr(1).toInt) }.toSeq
-    info(s"Slaves from $f: ${slaves.mkString(",")}")
-    slaves
   }
 
   def labelImgViaRest(conf: TfAppConfig, lireq: LabelImgRest) = {

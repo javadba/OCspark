@@ -18,7 +18,7 @@ main :
  */
 case class TfAppConfig(isSpark: Boolean, isRest: Boolean, restHostAndPort: String, master: String,
   tfServerAndPort: String, imgApp: String, inDir: String, outDir: String, outTag: String, nPartitionsPerTx1: Int,
-    imageExtensions: Seq[String]) {
+    imageExtensions: Seq[String], batchSize: Int=1) {
 
 }
 

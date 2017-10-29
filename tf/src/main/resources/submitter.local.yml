@@ -18,3 +18,4 @@ map:
       - svg
       - tiff
       - mpg
+    batchSize: 4

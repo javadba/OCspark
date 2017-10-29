@@ -18,7 +18,6 @@ object TfClient extends Logger {
     client
   }
 
-  def defaultConf() = TfConfig.getAppConfig("submitter.yml")
 
   def apply(conf: TfAppConfig): TfClient = {
     apply(conf,DmaXferConClient.makeDmaXferControllers(TestControllers), AppTcpArgs)
@@ -29,6 +28,8 @@ object TfClient extends Logger {
     val controllers = DmaXferConClient.makeDmaXferControllers(remoteControllers(server, base))
     apply(conf, controllers, remoteTcpArgs(server,base+2))
   }
+
+  def defaultConf() = TfConfig.getAppConfig("submitter.yml")
 
   def testClient(): Unit = {
 //    val testImg = "/images/pilatus800.jpg"

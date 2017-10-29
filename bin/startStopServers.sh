@@ -1,11 +1,11 @@
-export slaves=$(cat /shared/tx1-slaves.txt | awk -F':' '{print $1}')
+export slaves=$(cat /shared/gpu-slaves.txt | awk -F':' '{print $1}')
 publish() {
   for s in $slaves; do echo $s; scp $GITDIR/tf/target/tf-1.0.0.jar $s:/shared ; done
   for s in $slaves; do echo $s; scp $GITDIR/bin/runtfserver.sh $s:/shared ; done
   for s in $slaves; do echo $s; ssh $s chmod +x /shared/runtfserver.sh; done
 }
 
-sshall() { slaves=$(cat /shared/tx1-slaves.txt | awk -F':' '{print $1}'); for s in $slaves; do echo $s; ssh $s "$@"; done ; }
+sshall() { slaves=$(cat /shared/gpu-slaves.txt | awk -F':' '{print $1}'); for s in $slaves; do echo $s; ssh $s "$@"; done ; }
 
 stoptf() { sshall "kill -9 \$(ps -ef | grep tf-1.0.0.jar | grep -v grep | awk '{print \$2}')" ; }
 showtf() { sshall "ps -ef | grep tf-1.0.0.jar | grep -v grep | awk '{print $2}'" ; }
