@@ -2,4 +2,3 @@
 2 txa2:61244 tensorflow-labelimage /data/input/scenery/app1   /data/output/tx2
 3 txa3:61254 tensorflow-labelimage /data/input/scenery/app2       /data/output/tx3
 txa4:61254
-

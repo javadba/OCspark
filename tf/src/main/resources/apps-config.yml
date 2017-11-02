@@ -4,27 +4,30 @@
             "tensorflow-labelimage": {
                 "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image.sh --image=${1} --tag=${2}",
                 "rundir": "${TENSORFLOW_HOME}",
-                "tmpdir": "${TENSORFLOW_HOME}/tmp"
+                "tmpdir": "/tmp/tensorflow-labelimage"
             },
             "darknet-yolo": {
                 "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
                 "rundir": "${DARKNET_HOME}",
                 "tmpdir": "${DARKNET_HOME}/tmp"
+                "tmpdir": "/tmp/darknet-yolo"
             },
             "pointrflow-a1": {
                 "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
                 "rundir": "${POINTR_HOME}",
                 "tmpdir": "${POINTR_HOME}/tmp"
+                "tmpdir": "/tmp/pointrflow"
             },
             "pointrflow-a2": {
                 "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
                 "rundir": "${POINTR_HOME}",
                 "tmpdir": "${POINTR_HOME}/tmp"
+                "tmpdir": "/tmp/pointrflow"
             },
             "pointrflow-a3": {
                 "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
                 "rundir": "${POINTR_HOME}",
-                "tmpdir": "${POINTR_HOME}/tmp"
+                "tmpdir": "/tmp/pointrflow"
             }
         }
     },

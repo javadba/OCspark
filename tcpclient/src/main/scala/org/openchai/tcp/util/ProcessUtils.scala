@@ -1,7 +1,7 @@
 package org.openchai.tcp.util
 import org.openchai.tcp.util.Logger._
 
-case class ExecResult(params: ExecParams, elapsed: Long, rc: Int, stdout: String, stderr: String)
+case class ExecResult(params: ExecParams, elapsed: Long, rc: Int, stdout: String, stderr: String, isFatalError: Boolean = false)
 
 case class ExecParams(tag: String, process: String, args: Option[Seq[String]] = None,
   env: Option[Seq[String]] = None, dir: String = ".") {

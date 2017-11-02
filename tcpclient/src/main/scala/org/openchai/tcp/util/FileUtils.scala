@@ -25,6 +25,14 @@ import scala.collection.mutable.ArrayBuffer
 import Logger._
 
 object FileUtils {
+  def mv(src: String, dest: String) = {
+    debug(s"Moving $src to $dest ..")
+    val res = new File(src).renameTo(new File(dest))
+    if (!res) {
+      throw new FileNotFoundException(s"Unable to rename $src to $dest")
+    }
+  }
+
   def removeExt(path: String) = if (path.indexOf(".") > 0) path.substring(0,path.lastIndexOf(".")) else path
 
   def fileName(fp: String) = if (fp.indexOf("/") >= 0) fp.substring(fp.lastIndexOf("/")+1) else fp

@@ -5,7 +5,7 @@
 #                "cmdline": "${GITDIR}/bin/label_image.sh --image=${1} --tag=${2}",
                 "cmdline": "${GITDIR}/bin/label_image.sh --image=${1}",
                 "rundir": "${TENSORFLOW_HOME}",
-                "tmpdir": "${TENSORFLOW_HOME}/tmp"
+                "tmpdir": "/tmp/tensorflow-labelimage"
             },
             "darknet-yolo": {
                 "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",

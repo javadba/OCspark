@@ -70,7 +70,9 @@ case class LabelImgStruct(tag: String, imgApp: String, fpath: String, outPath: S
 
 case class LabelImgReq(value: LabelImgStruct) extends P2pReq[LabelImgStruct]
 
-case class LabelImgRespStruct(tag: String, fpath: String, outDir: String, cmdResult: ExecResult, nImagesProcessed: Int=1)
+case class LabelImgRespStruct(tag: String, fpath: String, outDir: String, cmdResult: ExecResult, nImagesProcessed: Int=1) {
+  override def toString() = s"LabelImgRespStruct: tag=$tag fpath=$fpath result=$cmdResult"
+}
 
 case class LabelImgResp(val value: LabelImgRespStruct) extends P2pResp[LabelImgRespStruct]
 

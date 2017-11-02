@@ -1,23 +1,20 @@
 package org.openchai.tensorflow
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
-import java.util.{Comparator, PriorityQueue}
 
-import org.apache.spark.sql.SparkSession
-import org.openchai.tcp.util.FileUtils.{fileExt, fileName, writeBytes}
-import org.openchai.tcp.util.Logger.{debug, error, info}
-import org.openchai.tcp.util.{FileUtils, TcpUtils}
-import org.openchai.tensorflow.GpuClient.GpuClientInfo
+import org.openchai.tcp.util.FileUtils
+import org.openchai.tcp.util.Logger.{debug, error, info, warn}
+import org.openchai.tensorflow.GpuClient.{GpuClientInfo, GpuFailoverService}
 import org.openchai.tensorflow.SparkSubmitter.ThreadResult
 import org.openchai.util.TfAppConfig
 
-import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer => AB}
 
 object GpuClient {
 
+  val DirReaderSleep = 50 // 250 // 5000  // TODO: set to 100 after debugging completed
   case class ImgInfo(tag: String, path: String)
 
   case class GpuInfo(gpuNum: Int, tfServerHostAndPort: String, imgApp: String, dir: String, outDir: String)
@@ -29,19 +26,6 @@ object GpuClient {
   case class GpuStatus(gpuClientInfo: GpuClientInfo, status: String)
 
   case class ImgPartition(gpuNum: Int, imgs: AB[ImgInfo])
-
-  class QReader(q: LinkedBlockingQueue[ThreadResult]) extends Thread {
-    override def run() = {
-      while (true) {
-        val tr = q.poll
-        println(tr)
-      }
-    }
-  }
-
-  val NumExt = "^[\\d+]$".r
-
-  @inline def isDigitsExt(fname: String) = NumExt.findAllIn(fileExt(fname)).nonEmpty
 
   var gpus: GpusInfo = _
 
@@ -58,126 +42,138 @@ object GpuClient {
     val slaves = slavesIter.map { arr => GpuInfo(arr(0).toInt, arr(1), arr(2), if (arr.length >= 4) arr(3) else inDir, if (arr.length >= 5) arr(4) else outDir) }
       .toSeq
     val alternates = alternatesIter.map(s => GpuAlternate(s(0))).toSeq
-    info(s"Slaves from $slavesPath: ${slaves.mkString(",")}")
+    info(s"Slaves from $slavesPath: ${slaves.mkString(",")} alternates=${alternates.mkString(",")}")
     gpus = GpusInfo(slaves, alternates)
     gpus
   }
 
-  def gpuClientService(gpusInfo: GpusInfo, conf: TfAppConfig, master: String, batchSize: Int) = {
+  type InDirGroups = Map[String, Map[Int, GpuClient]]
 
-    type InDirGroups = Map[String, Map[Int, GpuClient]]
+  def processImages(gpus: GpusInfo, clients: Map[Int, GpuClient], outDir: String, batchSize: Int) = {
+    val inDirGroups: InDirGroups = clients.groupBy { case (g, gc) => gc.gi.gpuInfo.dir }
+
+    for (dirGroup <- inDirGroups) {
+      val partitions = ImageHandler.getImageLists(gpus.gpus.filter { g => dirGroup._2.values.map(_.gi.gpuInfo).toSeq.contains(g) }, dirGroup._1, batchSize)
+      partitions.foreach { p =>
+        /* val images = */ ImageHandler.prepImages(p, outDir)
+        p.imgs.foreach {
+          i => clients(p.gpuNum).gi.inQ.offer(i)
+        }
+      }
+    }
+  }
+
+  def gpuClientService(gpusInfo: GpusInfo, conf: TfAppConfig, master: String, batchSize: Int) = {
 
     val gpuClientInfos = gpusInfo.gpus.map { gi =>
       GpuClientInfo(gi, conf, master, batchSize, new LinkedBlockingQueue[ImgInfo](), new LinkedBlockingQueue[ThreadResult]())
     }
+    val gpuFailoverService = new GpuFailoverService(gpus)
     val clients /*: InDirGroups */ = gpuClientInfos.map {
-      gpu => (gpu.gpuInfo.gpuNum, GpuClient(gpu))
+      gpu => (gpu.gpuInfo.gpuNum, GpuClient(gpu,gpuFailoverService))
     }.toMap
 
     clients.values.foreach{ _.start }
 
-    val inDirGroups: InDirGroups = clients.groupBy { case (g, gc) => gc.gi.gpuInfo.dir }
-
-    case class ImageWriterThread(inDirGroups: InDirGroups, outDir: String) extends Thread {
+    case class ImageWriterThread(outDir: String) extends Thread {
       val nGpus = gpus.gpus.length
 
       override def run() = {
-        println(s"Starting  ImageWriterThread with ${inDirGroups.size} groups and writing to $outDir..")
+        println(s"Starting  ImageWriterThread with ${clients.size} gpu clients and writing to $outDir..")
+        var underflowReported = false
+        val reporterCounter = new AtomicInteger(0)
         while (true) {
-          for (dirGroup <- inDirGroups) {
-            val partitions = getImageLists(gpus.gpus.filter { g => dirGroup._2.values.map(_.gi.gpuInfo).toSeq.contains(g) }, dirGroup._1, batchSize)
-            partitions.foreach { p =>
-              /* val images = */ prepImages(p, outDir)
-              p.imgs.foreach {
-                i => clients(p.gpuNum).gi.inQ.offer(i)
+          try {
+            processImages(gpus, clients, conf.outDir, batchSize)
+            if (gpuFailoverService.alternatesUnderflow /* && !underflowReported */) {
+              underflowReported = true
+              if (reporterCounter.getAndIncrement % 10 == 0) {
+                throw GpuException(s"GPU Failure Alert on ${gpuFailoverService.broken.mkString(",")}: insufficient alternates available!")
               }
             }
+            Thread.sleep(DirReaderSleep)
+          } catch {
+            case e: Exception =>
+              error(s"processImages unexpected failure", e)
           }
-          Thread.sleep(100)
         }
       }
 
       this.start
     }
-    //    val inDirThreads = inDirGroups.toSeq.map { case (dir, gseq) =>
-    //      ImageWriterThread(dir, gseq)
-    //    }
-    val inDirThread = ImageWriterThread(inDirGroups, conf.outDir)
+    val inDirThread = ImageWriterThread(conf.outDir)
     inDirThread.join
   }
 
-
-  private val ilSet = mutable.Set[String]()
-
-  def getImageLists(gpus: Seq[GpuInfo], dir: String, batchSize: Int): Seq[ImgPartition] = {
-    if (!ilSet.contains(dir)) {
-      println(s"Checking images dir $dir ..")
-      ilSet += dir
-    }
-    var files = AB[File](
-      new File(dir).listFiles
-        .filter(f => f.isFile
-          && f.getName.contains(".")
-          && (ImagesMeta.allowsExt(fileExt(f.getName))
-          || isDigitsExt(f.getName))
-        ).map { f => (f, f.length) }
-        .sortBy(_._1)
-        .map(_._1)
-        .toSeq: _*)
-    getImageLists(gpus, files, batchSize)
-  }
-
-  def getImageLists(inGpus: Seq[GpuInfo], files: Seq[File], batchSize: Int): Seq[ImgPartition] = {
-    val (fnamesWithAffinity, otherFnames) = files.partition(f => isDigitsExt(f.getName))
-
-    import org.openchai.tcp.util.FileUtils._
-    val gpuNums = inGpus.map(_.gpuNum)
-
-    fnamesWithAffinity.foreach { f =>
-      assert(gpuNums.contains(fileExt(f.getName).toInt), s"Affinity extension not within range of available tx1's: ${f}")
-    }
-    val groups = fnamesWithAffinity
-      .groupBy(f => fileExt(f.getName))
-      .mapValues { files => AB(files.map(f => ImgInfo(fileName(f.getAbsolutePath), f.getAbsolutePath)): _*) }
-    val allg = for (g <- gpuNums) yield {
-      ImgPartition(g, groups.getOrElse(g.toString, AB[ImgInfo]()))
-    }
-
-    val pq = new PriorityQueue[ImgPartition](new Comparator[ImgPartition]() {
-      override def compare(o1: ImgPartition, o2: ImgPartition) = o1.imgs.length - o2.imgs.length
-    })
-
-    import collection.JavaConverters._
-    pq.addAll(allg.asJava)
-    otherFnames.foreach { fn =>
-      val lowest = pq.poll()
-      lowest.imgs += ImgInfo(fileName(fn.getAbsolutePath), fn.getAbsolutePath);
-      pq.offer(lowest)
-    }
-    pq.iterator.asScala.toList
-  }
-
-  def prepImages(imgPart: ImgPartition, outDir: String) = {
-    val ndir = s"$outDir/${imgPart.gpuNum}"
-//    debug(s"Worker dir=$ndir")
-    for (path <- imgPart.imgs.map(_.path)) yield {
-      new File(ndir).mkdirs
-      val link = s"$ndir/${new File(path).getName}"
-      val olink = if (isDigitsExt(link)) FileUtils.removeExt(link) else link
-      if (!new File(olink).exists) {
-        Files.createSymbolicLink(Paths.get(olink), Paths.get(path))
+  class GpuFailoverService(gpuInfos: GpusInfo) {
+    val broken = AB[GpuInfo]()
+    val alternates = AB[GpuAlternate](gpus.alternates:_*)
+    val newGpus = AB[GpuInfo]()
+    var alternatesUnderflow = false
+    def fail(gci: GpuClientInfo): Option[GpuClientInfo] = {
+      val gi = gci.gpuInfo
+      error(s"Got a BROKEN GPU $gi")
+      val brokenGpu = gpus.gpus.find { g => g.gpuNum == gi.gpuNum }.head
+      assert(brokenGpu!=null,s"Why did we not find the brokenGpu for ${gi.gpuNum} in ${gpus.gpus.map{_.gpuNum}.mkString(",")} ?")
+      broken += brokenGpu
+      if (alternates.nonEmpty) {
+        val alt = alternates.head
+        val newGpu = brokenGpu.copy(tfServerHostAndPort = alt.tfServerHostAndPort)
+        newGpus += newGpu
+        alternates -= alt
+        warn(s"Successfully failed over from $brokenGpu to $newGpu")
+        Some(gci.copy(gpuInfo = newGpu))
+      } else {
+        alternatesUnderflow = true
+        throw new IllegalStateException(s"No more alternates available. We're cooked.")
       }
     }
-    (ndir, new File(ndir).listFiles)
+
+  }
+
+  import reflect.runtime.universe.TypeTag
+  trait ProcessorIf {
+    def process[T: TypeTag,U: TypeTag](t: T): U
+  }
+
+  class QReader(q: LinkedBlockingQueue[ThreadResult], processor: ProcessorIf) extends Thread {
+    override def run() = {
+      while (true) {
+        val tr = q.poll
+        println(tr)
+        val result = processor.process(tr.output)
+      }
+    }
+  }
+
+  def bashColors = Array(92, 91, 93, 94, 95, 96, 32, 33, 35, 36, 97, 37)
+
+  def txDebug(tx1: Int, msg: String) = {
+    debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1 - 1)}m TX$tx1 >> "))
+  }
+
+  def txInfo(tx1: Int, msg: String) = {
+    info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1 - 1)}m TX$tx1 >> "))
+  }
+
+  def mvBatch(batch: AB[ImgInfo], toDir: String, findGrandparent: Boolean = false) = {
+    for (img <- batch) {
+      val destDir = (if (findGrandparent) {new File(img.path).getParentFile.getParent} else new File(img.path).getParent) + toDir
+      FileUtils.mkdirs(destDir)
+      FileUtils.mv(img.path, destDir + "/" + FileUtils.fileName(img.path))
+    }
+
   }
 }
 
-case class GpuClient(gi: GpuClientInfo) extends Thread {
-  val QTimeOut = 600 // 200
+case class GpuClient(inGi: GpuClientInfo, failoverService: GpuFailoverService) extends Thread {
+  val QTimeOut = 200
   import GpuClient._
-
+  var gi = inGi
+  val gpuNum = gi.gpuInfo.gpuNum
   override def run() = {
     info(s"Starting GpuClient ${gi.gpuInfo}..")
+    val empty = new java.util.concurrent.atomic.AtomicInteger
     val inQ = gi.inQ
     while (true) {
       var cntr = 0
@@ -192,106 +188,31 @@ case class GpuClient(gi: GpuClientInfo) extends Thread {
           timeout = true
         }
       }
-      val res = runSparkJob(gi, batch)
-      gi.outQ.put(res)
-    }
-  }
-
-  def bashColors = Array(92, 91, 93, 94, 95, 96, 32, 33, 35, 36, 97, 37)
-
-  def txDebug(tx1: Int, msg: String) = {
-    debug(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1 - 1)}m TX$tx1 >> "))
-  }
-
-  def txInfo(tx1: Int, msg: String) = {
-    info(("\n" + msg + "\033[0m").replace("\n", s"\n\033[${bashColors(tx1 - 1)}m TX$tx1 >> "))
-  }
-
-  def runSparkJob(gci: GpuClientInfo, batch: AB[ImgInfo]) = {
-
-    val gi = gci.gpuInfo
-    txDebug(gi.gpuNum, s"Connecting to spark master ${gci.master} ..")
-    val spark = SparkSession.builder.master(gci.master).appName("TFSubmitter").getOrCreate
-    val sc = spark.sparkContext
-    val rdds = batch.map { b =>
-      sc.binaryFiles(b.path, 1)
-    }
-    val irdd = sc.union(rdds)
-    val bdirs = batch.map(_.path).mkString(",")
-    txDebug(gi.gpuNum, s"runsparkJob: binary files rdd on $bdirs ready")
-
-    val bcGci = sc.broadcast(gci)
-    val out = irdd.mapPartitionsWithIndex {
-      case (np, part) =>
-        val gci = bcGci.value
-        val gi = gci.gpuInfo
-        val (tx1Host, tx1Port) = (gi.tfServerHostAndPort.split(":")(0), gi.tfServerHostAndPort.split(":")(1).toInt)
-        val tfClientOpt = try {
-          Option(TfClient(gci.conf, tx1Host, tx1Port))
+      if (batch.nonEmpty) {
+        txDebug(gpuNum, s"Found nonempty batch of size ${batch.length}")
+        mvBatch(batch,"/processing")
+        val inBatch = batch.map{ img => img.copy(path=new File(img.path).getParent + "/processing/" + FileUtils.fileName(img.path)) }
+        try {
+          val (res,fatalGpu) = GpuSparkJob.runSparkJob(gi, inBatch)
+          if (fatalGpu) {
+            gi = failoverService.fail(gi).getOrElse(
+              throw new IllegalStateException(s"Failover failed for batch ${inBatch.mkString(",")} on $gi. Can not proceed"))
+            mvBatch(inBatch,"",true)
+          } else {
+            gi.outQ.put(res)
+            mvBatch(inBatch, "/completed",true)
+          }
         } catch {
           case e: Exception =>
-            error(s"Unable to connect to $tx1Host:$tx1Port", e)
-            None
+            error(s"runSparkJob failed for batch=${inBatch.mkString(",")}", e)
+            mvBatch(inBatch, "",true)
         }
-
-        if (tfClientOpt.nonEmpty) {
-          val tfClient = tfClientOpt.get
-          part.map {
-            case (ipath, contents) =>
-              val path = if (fileExt(ipath) == gi.gpuNum.toString) ipath.substring(0, ipath.lastIndexOf(".")) else ipath
-              if (path.endsWith("result.result")) {
-                error(s"Got a double result path $path")
-              }
-              if (!ImagesMeta.allowsExt(fileExt(path))) {
-                if (fileExt(path) != "result") {
-                  info(s"Skipping non image file $path")
-                }
-                None
-              } else {
-                val outputTag = s"${
-                  TcpUtils.getLocalHostname
-                }-Part$np-$path"
-                val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"SparkPartition-${
-                  gi.gpuNum
-                }-$np", gi.imgApp, path, gi.outDir, outputTag, contents.toArray)
-                txDebug(gi.gpuNum, s"Running labelImage for $imgLabel")
-                val res = TfSubmitter.labelImg(tfClient, imgLabel)
-                txInfo(gi.gpuNum, s"LabelImage result: $res")
-                Some(res)
-              }
-          }
-        } else {
-          part.map {
-            _ =>
-              None
-          }
+      } else {
+        if (empty.getAndIncrement % 100 == 0) {
+          txDebug(gpuNum, s"Empty batch ${empty.get+1}")
         }
+      }
     }
-
-    val c = out.collect.flatten
-    c.foreach {
-      li =>
-        val fp = if (li.value.fpath.startsWith("file:")) {
-          val f = li.value.fpath.substring("file:".length)
-          val e = f.zipWithIndex.find {
-            _._1 != '/'
-          }.get._2
-          '/' + f.substring(e)
-        } else {
-          li.value.fpath
-        }
-        val fname = fileName(fp)
-        writeBytes(s"${
-          li.value.outDir
-        }/$fname.result", (li.value.cmdResult.stdout + li.value.cmdResult.stderr).getBytes("ISO-8859-1"))
-      //      debug(s"${li.value.fpath}.result", li.value.cmdResult.stdout.getBytes("ISO-8859-1"))
-    }
-    val processed = c.map {
-      _.value.nImagesProcessed
-    }.sum
-    info(s"Finished runSparkJob for gi.gpuNum=$gi.gpuNum processed=$processed")
-    ThreadResult(processed, c.mkString("\n"))
-
   }
 
 }
