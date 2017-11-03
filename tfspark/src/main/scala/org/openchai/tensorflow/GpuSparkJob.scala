@@ -23,6 +23,7 @@ object GpuSparkJob {
 
   def runSparkJob(gci: GpuClientInfo, batch: AB[ImgInfo], labelImgTimeoutSecs: Int = DefaultLabelImgTimeoutSecs) = {
 
+    val useExternalQueue = false
     val gi = gci.gpuInfo
     txDebug(gi.gpuNum, s"Connecting to spark master ${gci.master} ..")
     val spark = SparkSession.builder.master(gci.master).appName("TFSubmitter").getOrCreate
@@ -65,9 +66,15 @@ object GpuSparkJob {
                 val outputTag = s"${
                   TcpUtils.getLocalHostname
                 }-Part$np-$path"
+
+                val outContents = (if (useExternalQueue) {
+                  throw new UnsupportedOperationException("ExternalQueue not supported")
+                } else {
+                  contents
+                }).toArray
                 val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"SparkPartition-${
                   gi.gpuNum
-                }-$np", gi.imgApp, path, gi.outDir, outputTag, contents.toArray)
+                }-$np", gi.imgApp, path, gi.outDir, outputTag, outContents)
                 txDebug(gi.gpuNum, s"Running labelImage for $imgLabel")
 
                 val execSvc = Executors.newSingleThreadExecutor
