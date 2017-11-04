@@ -50,14 +50,19 @@ object GpuClient {
   type InDirGroups = Map[String, Map[Int, GpuClient]]
 
   def processImages(gpus: GpusInfo, clients: Map[Int, GpuClient], outDir: String, batchSize: Int) = {
-    val inDirGroups: InDirGroups = clients.groupBy { case (g, gc) => gc.gi.gpuInfo.dir }
+    val inDirGroups: InDirGroups = clients.groupBy { case (g, gc) => gc.gi.gpuInfo.dir }.filter(entry => entry._1 != null && entry._1.length > 0)
 
     for (dirGroup <- inDirGroups) {
       val partitions = ImageHandler.getImageLists(gpus.gpus.filter { g => dirGroup._2.values.map(_.gi.gpuInfo).toSeq.contains(g) }, dirGroup._1, batchSize)
       partitions.foreach { p =>
         /* val images = */ ImageHandler.prepImages(p, outDir)
         p.imgs.foreach {
-          i => clients(p.gpuNum).gi.inQ.offer(i)
+          i =>
+            txDebug(p.gpuNum,s"Enqueueing image ${i.path} ..")
+            val newName = s"${new File(i.path).getParent}/processing/${FileUtils.fileName(i.path)}"
+            FileUtils.mkdirs(new File(newName).getParent)
+            FileUtils.mv(i.path, newName)
+            clients(p.gpuNum).gi.inQ.offer(i.copy(path=newName))
         }
       }
     }
@@ -175,6 +180,14 @@ case class GpuClient(inGi: GpuClientInfo, failoverService: GpuFailoverService) e
     info(s"Starting GpuClient ${gi.gpuInfo}..")
     val empty = new java.util.concurrent.atomic.AtomicInteger
     val inQ = gi.inQ
+    val (tx1Host, tx1Port) = (gi.gpuInfo.tfServerHostAndPort.split(":")(0), gi.gpuInfo.tfServerHostAndPort.split(":")(1).toInt)
+    val tfClient = try {
+      TfClient(inGi.conf, tx1Host, tx1Port)
+    } catch {
+      case e: Exception =>
+        throw new IllegalStateException(s"Unable to connect to $tx1Host:$tx1Port", e)
+    }
+
     while (true) {
       var cntr = 0
       val batch = AB[ImgInfo]()
@@ -190,26 +203,24 @@ case class GpuClient(inGi: GpuClientInfo, failoverService: GpuFailoverService) e
       }
       if (batch.nonEmpty) {
         txDebug(gpuNum, s"Found nonempty batch of size ${batch.length}")
-        mvBatch(batch,"/processing")
-        val inBatch = batch.map{ img => img.copy(path=new File(img.path).getParent + "/processing/" + FileUtils.fileName(img.path)) }
         try {
-          val (res,fatalGpu) = GpuSparkJob.runSparkJob(gi, inBatch)
+          val (res, fatalGpu) = GpuStreaming.doBatch(tfClient, gi, batch)
           if (fatalGpu) {
             gi = failoverService.fail(gi).getOrElse(
-              throw new IllegalStateException(s"Failover failed for batch ${inBatch.mkString(",")} on $gi. Can not proceed"))
-            mvBatch(inBatch,"",true)
+              throw new IllegalStateException(s"Failover failed for batch ${batch.mkString(",")} on $gi. Can not proceed"))
+            mvBatch(batch, "", true)
           } else {
             gi.outQ.put(res)
-            mvBatch(inBatch, "/completed",true)
+            mvBatch(batch, "/completed", true)
           }
         } catch {
           case e: Exception =>
-            error(s"runSparkJob failed for batch=${inBatch.mkString(",")}", e)
-            mvBatch(inBatch, "",true)
+            error(s"runSparkJob failed for batch=${batch.mkString(",")}", e)
+            mvBatch(batch, "", true)
         }
       } else {
         if (empty.getAndIncrement % 100 == 0) {
-          txDebug(gpuNum, s"Empty batch ${empty.get+1}")
+          txDebug(gpuNum, s"Empty batch ${empty.get + 1}")
         }
       }
     }

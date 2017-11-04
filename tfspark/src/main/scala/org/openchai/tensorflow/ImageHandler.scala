@@ -1,6 +1,6 @@
 package org.openchai.tensorflow
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import java.nio.file.{Files, Paths}
 import java.util.{Comparator, PriorityQueue}
 
@@ -23,6 +23,9 @@ object ImageHandler {
     if (!ilPrinted.contains(dir)) {
       println(s"Checking images dir $dir ..")
       ilPrinted += dir
+    }
+    if (!new File(dir).exists) {
+      throw new FileNotFoundException(s"getImageLists for nonexistent directory $dir")
     }
     var files = AB[File](
       new File(dir).listFiles
