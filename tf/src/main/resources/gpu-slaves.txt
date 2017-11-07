@@ -1,4 +1,4 @@
-1 txa1:61234 tensorflow-labelimage  /data/input/scenery/app1  /data/output/tx1
-2 txa2:61244 tensorflow-labelimage /data/input/scenery/app1   /data/output/tx2
-3 txa3:61254 tensorflow-labelimage /data/input/scenery/app2       /data/output/tx3
-txa4:61254
+1 txa1:61230 tensorflow-labelimage  /data/input/scenery/app1  /data/output/tx1
+2 txa2:61240 tensorflow-labelimage /data/input/scenery/app1   /data/output/tx2
+3 txa3:61250 tensorflow-labelimage /data/input/scenery/app2       /data/output/tx3
+txa4:61260

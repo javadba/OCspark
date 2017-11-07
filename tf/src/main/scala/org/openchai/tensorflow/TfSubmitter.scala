@@ -86,6 +86,7 @@ object TfSubmitter {
 
   def labelImg(tfClient: TfClient, lireq: LabelImgRest) = {
     val fmd5 = md5(lireq.contents)
+    debug(s"invoking tfClient.labelImg on $lireq ..")
     val res = tfClient.labelImg(LabelImgStruct(lireq.outputTag, lireq.imgApp, lireq.path, lireq.outPath,
       lireq.contents, fmd5))
     info(s"TfSubmitter.labelImg: LabelImgResp=$res")

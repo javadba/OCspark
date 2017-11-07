@@ -29,6 +29,7 @@ object TcpTest {
   val TestPort = TcpServer.DefaultPort
 
   def main(args: Array[String]) {
+    System.setProperty("logger.level","3")
     val server = TcpServer(TcpUtils.getLocalHostname, TestPort, new SolverServerIf(weightsMergePolicy))
     server.start
     TcpClient.main(Array(TcpUtils.getLocalHostname,"" + TestPort))

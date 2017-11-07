@@ -107,7 +107,7 @@ object FileUtils {
     fos.write(data)
     fos.flush
     fos.close
-    debug(s"Writing ${data.length} bytes to $fpath .. done ..")
+//    debug(s"Writing ${data.length} bytes to $fpath .. done ..")
   }
 
   def readPath(path: String, recursive: Boolean = true, multiThreaded: Boolean = true): TaskResult = {

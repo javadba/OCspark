@@ -1,5 +1,6 @@
 package org.openchai.tensorflow
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{Callable, Executors, TimeUnit, TimeoutException}
 
 import org.apache.spark.sql.SparkSession
@@ -9,11 +10,13 @@ import org.openchai.tcp.util.{ExecResult, FileUtils, TcpUtils}
 import org.openchai.tensorflow.GpuClient.{GpuClientInfo, ImgInfo, txDebug, txInfo}
 import org.openchai.tensorflow.SparkSubmitter.ThreadResult
 
+import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer => AB}
 
 object GpuStreaming {
 
-  val DefaultLabelImgTimeoutSecs = 40
+  error("WARN: setting DefaultLabelImgTimeoutSecs to 20: should be changed to 90+ in production")
+  val DefaultLabelImgTimeoutSecs = 20  //TODO: change to 90+ when debugging over
 
   def GpuNumFromTag(tag: String) = {
     // TODO: implement this!
@@ -21,37 +24,27 @@ object GpuStreaming {
     3
   }
 
+  private val batchCtrMap = mutable.Map[Int,AtomicInteger]()
+
   def doBatch(tfClient: TfClient, gci: GpuClientInfo, batch: AB[ImgInfo], labelImgTimeoutSecs: Int = DefaultLabelImgTimeoutSecs) = {
 
-    val useExternalQueue = false
     val gi = gci.gpuInfo
-    txDebug(gi.gpuNum, s"Connecting to spark master ${gci.master} ..")
     val bdirs = batch.map(_.path).mkString(",")
-    txDebug(gi.gpuNum, s"runsparkJob: binary files rdd on $bdirs ready")
+    txDebug(gi.gpuNum, s"doBatch: files on $bdirs ready")
 
     val out = batch.map { b =>
       val ipath = b.path
       val contents = FileUtils.readFileBytes(ipath)
       val path = if (fileExt(ipath) == gi.gpuNum.toString) ipath.substring(0, ipath.lastIndexOf(".")) else ipath
-      if (path.endsWith("result.result")) {
-        error(s"Got a double result path $path")
-      }
       if (!ImagesMeta.allowsExt(fileExt(path))) {
         if (fileExt(path) != "result") {
           info(s"Skipping non image file $path")
         }
         None
       } else {
-        val outputTag = s"${
-          TcpUtils.getLocalHostname
-        }-$path"
+        val outputTag = s"${ TcpUtils.getLocalHostname}-$path"
 
-        val outContents = (if (useExternalQueue) {
-          throw new UnsupportedOperationException("ExternalQueue not supported")
-        } else {
-          contents
-        }).toArray
-        val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"Gpu-${gi.gpuNum}", gi.imgApp, path, gi.outDir, outputTag, outContents)
+        val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"Gpu-${gi.gpuNum}", gi.imgApp, path, gi.outDir, outputTag, contents)
         txDebug(gi.gpuNum, s"Running labelImage for $imgLabel")
 
         val execSvc = Executors.newSingleThreadExecutor
@@ -77,7 +70,6 @@ object GpuStreaming {
         res
       }
     }
-
     var fatalGpu = false
     val c = out.flatten
     c.foreach {
@@ -97,13 +89,12 @@ object GpuStreaming {
             fatalGpu = true
             "FATAL ERROR"
           } else {
-            (li.value.cmdResult.stdout + li.value.cmdResult.stderr)
-          }).getBytes("ISO-8859-1"))
+            (li.value.cmdResult.stdout + li.value.cmdResult.stderr)}).getBytes("ISO-8859-1"))
     }
     val processed = c.map {
       _.value.nImagesProcessed
     }.sum
-    info(s"Finished streamingJob for gi.gpuNum=${gi.gpuNum} processed=$processed")
+    txInfo(gi.gpuNum, s"Batch ${batchCtrMap.getOrElseUpdate(gi.gpuNum, new AtomicInteger).incrementAndGet} completed: processed=$processed")
     (ThreadResult(processed, out.mkString("\n")), fatalGpu)
 
   }

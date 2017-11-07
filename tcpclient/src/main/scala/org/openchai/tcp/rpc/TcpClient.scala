@@ -17,8 +17,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
   import reflect.runtime.universe._
 
   private var sock: Socket = _
-  private var os: OutputStream = _
-  private var is: InputStream = _
+  private var os: DataOutputStream = _
+  private var is: DataInputStream = _
 
   val MaxTcpWaitSecs = 2
 
@@ -26,7 +26,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     connect(connParams)
   }
 
-  override def isConnected: Boolean = is != null && os != null
+  override def isConnected: Boolean = sock.isConnected && is != null && os != null
 
   override def connect(connParam: P2pConnectionParams): Boolean = {
     try {
@@ -34,8 +34,8 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
       val tconn = connParams.asInstanceOf[TcpParams]
       info(s"TcpClient: Connecting ${serviceIf.name} to ${tconn.server}:${tconn.port} ..")
       sock = new Socket(tconn.server, tconn.port)
-      os = sock.getOutputStream
-      is = sock.getInputStream
+      os = new DataOutputStream(sock.getOutputStream)
+      is = new DataInputStream(sock.getInputStream)
       bind(this, serviceIf)
       info(s"TcpClient: Bound ${serviceIf.name} to ${tconn.server}:${tconn.port}")
       is != null && os != null
@@ -55,38 +55,26 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     }
     val buf = new Array[Byte](Math.pow(2, 22).toInt)
     val serreq = serializeStream(req.path, pack(req.path, req))
+    os.writeInt(serreq.length)
     os.write(serreq)
     val sent = serreq.length
     os.flush
+    debug(s"Wrote $sent bytes to output")
 
-    val dis = new DataInputStream(is)
     var totalRead = 0
+    //      val available = dis.available
+    //      if (available <= 0) {
+    //        Thread.sleep(200)
+    //      } else {
+    val bytesToRead = is.readInt
+    debug(s"Client BytesToRead = $bytesToRead")
     do {
-      val available = dis.available
-      if (available <= 0) {
-        Thread.sleep(200)
-      } else {
-        do {
-          var innerWait = 0
-          do {
-            val nread = dis.read(buf, totalRead, buf.length - totalRead)
-            totalRead += nread
-            //                debug(s"in loop: nread=$nread totalRead=$totalRead")
-            Thread.sleep(50)
-            innerWait += 1
-            if (innerWait % 20 == 0) {
-              //                info(s"InnerWait=$innerWait")
-            }
-          } while (dis.available > 0)
-          var outerLoopCnt = 0
-          do {
-            Thread.sleep(100)
-            outerLoopCnt += 1
-            //              info(s"OuterloopCnt=$outerLoopCnt")
-          } while (totalRead > 5000 && dis.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
-        } while (dis.available > 0)
-      }
-    } while (totalRead <= 0)
+      val nread = is.read(buf, totalRead, buf.length - totalRead)
+      totalRead += nread
+      debug(s"in loop: nread=$nread totalRead=$totalRead")
+      Thread.sleep(20)
+    } while (totalRead < bytesToRead)
+    //      }
     debug(s"TcpClient.Request: totalSent=$sent totalRcvd=$totalRead")
     val o = unpack("/tmp/clientReq.out", buf.slice(0, totalRead))
     //    val (path, o, md5) = unpack(buf.slice(0,nread))

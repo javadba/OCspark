@@ -1,7 +1,7 @@
 package org.openchai.tensorflow
 
 import java.io.{File, FileNotFoundException}
-import java.nio.file.{Files, Paths}
+import java.nio.file.{FileAlreadyExistsException, Files, Paths}
 import java.util.{Comparator, PriorityQueue}
 
 import org.openchai.tcp.util.FileUtils
@@ -10,6 +10,7 @@ import org.openchai.tensorflow.GpuClient.{GpuInfo, ImgInfo, ImgPartition}
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer => AB}
+import org.openchai.tcp.util.Logger._
 
 object ImageHandler {
 
@@ -21,7 +22,7 @@ object ImageHandler {
 
   def getImageLists(gpus: Seq[GpuInfo], dir: String, batchSize: Int): Seq[ImgPartition] = {
     if (!ilPrinted.contains(dir)) {
-      println(s"Checking images dir $dir ..")
+      info(s"Checking images dir $dir ..")
       ilPrinted += dir
     }
     if (!new File(dir).exists) {
@@ -47,7 +48,11 @@ object ImageHandler {
     val gpuNums = inGpus.map(_.gpuNum)
 
     fnamesWithAffinity.foreach { f =>
-      assert(gpuNums.contains(fileExt(f.getName).toInt), s"Affinity extension not within range of available tx1's: ${f}")
+      if (!gpuNums.contains(fileExt(f.getName).toInt)) {
+        error("Affinity extension not within range of available tx1's: ${f}")
+      }
+      assert(gpuNums.contains(fileExt(f.getName).toInt),
+        s"Affinity extension not within range of available tx1's: ${f}")
     }
     val groups = fnamesWithAffinity
       .groupBy(f => fileExt(f.getName))
@@ -71,15 +76,22 @@ object ImageHandler {
     paths
   }
 
+  import FileUtils._
   def prepImages(imgPart: ImgPartition, outDir: String) = {
     val ndir = s"$outDir/${imgPart.gpuNum}"
     //    debug(s"Worker dir=$ndir")
-    for (path <- imgPart.imgs.map(_.path)) yield {
+    for (path <- imgPart.imgs.map(p => filePath(p.path) + "/completed/" + fileName(p.path))) yield {
       new File(ndir).mkdirs
       val link = s"$ndir/${new File(path).getName}"
       val olink = if (isDigitsExt(link)) FileUtils.removeExt(link) else link
-      if (!new File(olink).exists) {
-        Files.createSymbolicLink(Paths.get(olink), Paths.get(path))
+      if (!Paths.get(olink).toFile.exists) {
+        try {
+          Files.createSymbolicLink(Paths.get(olink), Paths.get(path))
+        } catch {
+          case fae: FileAlreadyExistsException =>
+//            GpuClient.txDebug(imgPart.gpuNum, s"Got spurious FileAlreadyExistsException on $olink")
+          case e: Exception => throw e
+        }
       }
     }
     (ndir, new File(ndir).listFiles)

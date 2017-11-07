@@ -16,7 +16,7 @@
  */
 package org.openchai.tcp.rpc
 
-import java.io.{BufferedOutputStream, DataInputStream}
+import java.io.{BufferedOutputStream, DataInputStream, DataOutputStream}
 import java.net._
 import java.util
 import java.util.concurrent.Executors
@@ -91,50 +91,31 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     var msgPrinted = false
     var msgCounter = 0
 
-    val is = new DataInputStream(socket.getInputStream)
-    val os = new BufferedOutputStream(socket.getOutputStream)
+    val dis = new DataInputStream(socket.getInputStream)
+    val os = new DataOutputStream(socket.getOutputStream)
     var nEmpty = 0
-    val nWaitCycles = Option(System.getProperty("tcpserver.wait.cycles")).getOrElse("12").toInt
+    val nWaitCycles = Option(System.getProperty("tcpserver.wait.cycles")).getOrElse("500").toInt
     do {
       if (!msgPrinted) {
         debug("Listening for messages..");
         msgPrinted = true
       }
-      var totalRead = 0
       var nNone = 0
+      var totalRead = 0
+      //      val available = dis.available
+      //      if (available <= 0) {
+      //        Thread.sleep(200)
+      //      } else {
+      val bytesToRead = dis.readInt
+      debug(s"Server BytesToRead = $bytesToRead")
       do {
-        val available = is.available
-        if (available <= 0) {
-          Thread.sleep(50)
-          if (nNone % 20 == 0) {
-            debug(s"None available: $nNone")
-          }
-          nNone += 1
-        } else {
-          nNone = 0
-          do {
-            var innerWait = 0
-            do {
-              val nread = is.read(buf, totalRead, buf.length - totalRead)
-              totalRead += nread
-              debug(s"in loop: nread=$nread totalRead=$totalRead is.available=${is.available}")
-              Thread.sleep(50)
-              innerWait += 1
-              if (innerWait % 20 == 0) {
-                debug(s"InnerWait=$innerWait")
-              }
-            } while (is.available > 0)
-            var outerLoopCnt = 0
-            do {
-              Thread.sleep(100)
-              outerLoopCnt += 1
-              if (outerLoopCnt % 10 ==0) {
-                debug(s"OuterloopCnt=$outerLoopCnt")
-              }
-            } while (totalRead > 5000 && is.available <= 0 && outerLoopCnt <= MaxTcpWaitSecs * 10)
-          } while (is.available > 0)
-        }
-      } while (totalRead <= 0 && nNone <= 50)
+        val nread = dis.read(buf, totalRead, buf.length - totalRead)
+        totalRead += nread
+        debug(s"in loop: nread=$nread totalRead=$totalRead")
+        nEmpty = 0
+        Thread.sleep(20)
+      } while (totalRead < bytesToRead)
+      //      }
       if (totalRead > 0) {
         debug(s"Serve: totalRead=$totalRead")
         val unpacked = unpack("/tmp/serverReq.out", buf.slice(0, totalRead))
@@ -144,6 +125,8 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         val resp = serverIf.service(req)
         //          debug(s"Sending response:  ${resp.toString}")
         val ser = serializeStream("/tmp/serverResp.out", pack("/tmp/serverResp.pack.out", resp))
+        debug(s"serialized stream length is ${ser.length}")
+        os.writeInt(ser.length)
         os.write(ser)
         os.flush
         Thread.sleep(200)

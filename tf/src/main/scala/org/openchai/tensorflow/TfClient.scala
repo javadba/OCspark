@@ -1,5 +1,7 @@
 package org.openchai.tensorflow
 
+import java.net.SocketException
+
 import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpCommon}
@@ -64,7 +66,7 @@ case class TfSimpleConfig(name: String, imgDir: String, outDir: String) // place
 case class LabelImgStruct(tag: String, imgApp: String, fpath: String, outPath: String,
   data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte]) {
 
-  override def toString: DataPtr = s"LabelImg: tag=$tag path=$fpath " +
+  override def toString: DataPtr = s"LabelImgStruct: tag=$tag path=$fpath " +
     s"datalen=${if (data!=null) data.length else -1} md5len=${if (md5!=null) md5.length else -1}"
 }
 
@@ -85,25 +87,42 @@ class TfClient(val tcpParams: TcpParams, val config: TfSimpleConfig, val xferCli
 case class TfClientIf(tcpParams: TcpParams, config: TfSimpleConfig, tfClient: DmaXferConClient) extends ServiceIf("TfClient") {
 
 //  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)
-  def labelImg(s: LabelImgStruct): LabelImgResp = {
+  def labelImg(s: LabelImgStruct, retries: Int = 0): LabelImgResp = {
     FileUtils.mkdirs(s.outPath)
-    info(s"LabelImg: $s")
+    info(s"TfClientIf.LabelImg: $s")
+    try {
 
-//    val fdata = FileUtils.readFileBytes(s.fpath)
-    val wparams = XferWriteParams(s.tag, tfClient.config,
-    TcpCommon.serializeObject(s.fpath, TaggedEntry("taggedPic", s.data)))
-    val xferConf = TcpXferConfig(s.tag, s.fpath)
-    tfClient.prepareWrite(xferConf)
-//    tfClient.write(XferWriteParams(s.tag, xferConf, s.data))
-//    val wres = tfClient.write(tfClient.config, wparams)
-    val wres = tfClient.write(wparams)
-    tfClient.completeWrite(xferConf)
-//    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
-    val newLiReq = LabelImgReq(LabelImgStruct(s.tag, s.imgApp, s.fpath, s.outPath))
-//    LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte]))
-    val resp = getRpc().request(newLiReq)
-    info(s"LabelImg response: $resp")
-    resp.asInstanceOf[LabelImgResp]
+      //    val fdata = FileUtils.readFileBytes(s.fpath)
+      val wparams = XferWriteParams(s.tag, tfClient.config,
+        TcpCommon.serializeObject(s.fpath, TaggedEntry("taggedPic", s.data)))
+      val xferConf = TcpXferConfig(s.tag, s.fpath)
+      debug(s"TfClientIf.prepareWrite on ${wparams.tag} ..")
+      tfClient.prepareWrite(xferConf)
+      //    tfClient.write(XferWriteParams(s.tag, xferConf, s.data))
+      //    val wres = tfClient.write(tfClient.config, wparams)
+      debug(s"TfClientIf.write on ${wparams.tag} ..")
+      val wres = tfClient.write(wparams)
+      debug(s"TfClientIf.completeWrite on ${wparams.tag} ..")
+      tfClient.completeWrite(xferConf)
+      //    val resp = getRpc().request(LabelImgReq(s.copy(data = s.data)))
+      val newLiReq = LabelImgReq(LabelImgStruct(s.tag, s.imgApp, s.fpath, s.outPath))
+      //    LabelImgReq(s.copy(data = Array.empty[Byte], md5 = Array.empty[Byte]))
+      debug(s"TfClientIf.request on ${wparams.tag} ..")
+      val resp = getRpc().request(newLiReq)
+      info(s"LabelImg response: $resp")
+      resp.asInstanceOf[LabelImgResp]
+    } catch {
+      case se: SocketException =>
+        if (retries == 0) {
+          error(s"SocketException on labelImg", se)
+
+          labelImg(s, 1)
+        } else {
+          throw se
+        }
+      case e: Exception => throw e
+    }
+
   }
 
 }

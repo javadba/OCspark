@@ -7,7 +7,7 @@ map:
     tfServerAndPort: 192.168.0.2
     imgApp: tensorflow-labelimage
     inDir: /data/scenery
-    outDir: /data/out/scenery
+    outDir: /data/output/scenery
     outTag: scenery
     nPartitionsPerTx1: 2
     imageExtensions:
@@ -18,3 +18,4 @@ map:
       - svg
       - tiff
       - mpg
+    batchSize: 4
