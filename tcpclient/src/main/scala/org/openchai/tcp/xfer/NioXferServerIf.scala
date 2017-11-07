@@ -13,7 +13,7 @@ class NioXferServerIf(tcpParams: TcpParams) extends XferServerIf {
 
   private val nReqs = new AtomicInteger(0)
 
-  val AllocSize = math.pow(2,22).toInt // 64MB
+  val AllocSize = math.pow(2,21).toInt // 64MB
   var buf = java.nio.ByteBuffer.allocate(AllocSize)
 
   def writeNio(path: DataPtr, data: RawData, md5In: RawData) = {

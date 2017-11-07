@@ -28,7 +28,7 @@ import scala.collection.mutable
 
 object TcpServer {
   val DefaultPort = 8989
-  val BufSize = (Math.pow(2, 24) - 1).toInt
+  val BufSize = (Math.pow(2, 21) - 1).toInt
 }
 
 case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
@@ -129,7 +129,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
         os.writeInt(ser.length)
         os.write(ser)
         os.flush
-        Thread.sleep(200)
+        Thread.sleep(20)
       } else {
         nEmpty += 1
       }

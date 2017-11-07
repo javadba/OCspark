@@ -53,7 +53,6 @@ object GpuClient {
   private val processCtrMap = mutable.Map[Int, AtomicInteger]()
   def processImages(gpus: GpusInfo, clients: Map[Int, GpuClient], outDir: String, batchSize: Int) = {
     val inDirGroups: InDirGroups = clients.groupBy { case (g, gc) => gc.gi.gpuInfo.dir }.filter(entry => entry._1 != null && entry._1.length > 0)
-
     for (dirGroup <- inDirGroups) {
       val partitions = ImageHandler.getImageLists(gpus.gpus.filter { g => dirGroup._2.values.map(_.gi.gpuInfo).toSeq.contains(g) }, dirGroup._1, batchSize)
       partitions.foreach { p =>

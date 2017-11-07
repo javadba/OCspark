@@ -53,7 +53,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     if (!isConnected) {
       connect(savedConnParam)
     }
-    val buf = new Array[Byte](Math.pow(2, 22).toInt)
+    val buf = new Array[Byte](Math.pow(2, 21).toInt)
     val serreq = serializeStream(req.path, pack(req.path, req))
     os.writeInt(serreq.length)
     os.write(serreq)

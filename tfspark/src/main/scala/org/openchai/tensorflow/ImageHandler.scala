@@ -49,10 +49,10 @@ object ImageHandler {
 
     fnamesWithAffinity.foreach { f =>
       if (!gpuNums.contains(fileExt(f.getName).toInt)) {
-        error("Affinity extension not within range of available tx1's: ${f}")
+        error(s"Affinity extension not within range of available tx1's: ${f} . GpuNums are ${gpuNums.mkString(",")}")
       }
       assert(gpuNums.contains(fileExt(f.getName).toInt),
-        s"Affinity extension not within range of available tx1's: ${f}")
+        s"Affinity extension not within range of available tx1's: ${f} . GpuNums are ${gpuNums.mkString(",")}")
     }
     val groups = fnamesWithAffinity
       .groupBy(f => fileExt(f.getName))
