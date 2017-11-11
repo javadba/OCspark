@@ -16,7 +16,7 @@ object TfClient extends Logger {
 
   def apply(conf: TfAppConfig, controllers: DmaXferControllers, tcpParams: TcpParams) = {
 
-    val client = new TfClient(tcpParams, TfSimpleConfig(conf.outTag, conf.inDir, conf.outDir), controllers.client)
+    val client = new TfClient(tcpParams, TfSimpleConfig("ImagesApp" /*, conf.inDir, conf.outDir*/), controllers.client)
     client
   }
 
@@ -61,7 +61,14 @@ object TfClient extends Logger {
 
 }
 
-case class TfSimpleConfig(name: String, imgDir: String, outDir: String) // placeholder
+class TfClient(val tcpParams: TcpParams, val config: TfSimpleConfig, val xferClient: DmaXferConClient)
+  extends TcpClient(tcpParams, TfClientIf(tcpParams, config, xferClient)) {
+  val tfIf = serviceIf.asInstanceOf[TfClientIf]
+
+  def labelImg(struct: LabelImgStruct) = tfIf.labelImg(struct)
+}
+
+case class TfSimpleConfig(name: String/*, imgDir: String, outDir: String*/) // placeholder
 
 case class LabelImgStruct(tag: String, imgApp: String, fpath: String, outPath: String,
   data: Array[Byte] = Array.empty[Byte], md5: Array[Byte] = Array.empty[Byte]) {
@@ -78,12 +85,6 @@ case class LabelImgRespStruct(tag: String, fpath: String, outDir: String, cmdRes
 
 case class LabelImgResp(val value: LabelImgRespStruct) extends P2pResp[LabelImgRespStruct]
 
-class TfClient(val tcpParams: TcpParams, val config: TfSimpleConfig, val xferClient: DmaXferConClient)
-  extends TcpClient(tcpParams, TfClientIf(tcpParams, config, xferClient)) {
-  val tfIf = serviceIf.asInstanceOf[TfClientIf]
-
-  def labelImg(struct: LabelImgStruct) = tfIf.labelImg(struct)
-}
 case class TfClientIf(tcpParams: TcpParams, config: TfSimpleConfig, tfClient: DmaXferConClient) extends ServiceIf("TfClient") {
 
 //  val controllers = XferConClient.makeXferControllers(XferConCommon.TestControllers)

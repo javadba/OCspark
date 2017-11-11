@@ -38,7 +38,7 @@ object Logger {
     val sw = new StringWriter()
     val pw = new PrintWriter(sw)
     t.printStackTrace(pw)
-    String.format("%s - %s", t.getMessage, sw.toString)
+    s"$t ${t.getMessage} - ${sw.toString}"
   }
 
 }

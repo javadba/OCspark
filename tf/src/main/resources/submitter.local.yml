@@ -1,15 +1,6 @@
 map:
   main :
-    isSpark: true
-    isRest: true
-    restHostAndPort: localhost:8190
-    master: local[*]
-    tfServerAndPort: 192.168.0.2
-    imgApp: tensorflow-labelimage
-    inDir: /data/input
-    outDir: /data/output/scenery
-    outTag: scenery
-    nPartitionsPerTx1: 2
+    appType: direct
     imageExtensions:
       - jpg
       - jpeg
@@ -18,4 +9,6 @@ map:
       - svg
       - tiff
       - mpg
-    batchSize: 4
+    batchSize: 2
+    gpuRegistryHost:  localhost
+    gpuRegistryPort:  60001

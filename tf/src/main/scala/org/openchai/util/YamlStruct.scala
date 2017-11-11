@@ -15,9 +15,12 @@ class AppConfig(yamlPath: String, os: String) {
     (k, vnew)
   }
 
-  def apply(app: String, key: String) = emap(app)(key)
+  def apply(dottedKey: String) = {
+    val keys = dottedKey.split("\\.")
+    yamlConf.getMap(keys(0)).asInstanceOf[StringMap].get(keys(1)).get
+  }
 
-  def apply(app: String, key: String, default: String) = emap(app).getOrElse(key, default)
+  def apply(app: String, key: String, default: String = "") = emap(app).getOrElse(key, default)
 
   def getMap(app: String, key: String) = emap(app)(key).asInstanceOf[Map[String, String]]
 }

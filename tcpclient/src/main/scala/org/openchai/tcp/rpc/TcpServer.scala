@@ -87,7 +87,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
   def serve(socket: Socket): Unit = {
     val buf = new Array[Byte](BufSize)
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
-    info(s"Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
+    info(s"$port: Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
     var msgPrinted = false
     var msgCounter = 0
 
@@ -97,7 +97,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
     val nWaitCycles = Option(System.getProperty("tcpserver.wait.cycles")).getOrElse("500").toInt
     do {
       if (!msgPrinted) {
-        debug("Listening for messages..");
+        debug("Listening for messages..")
         msgPrinted = true
       }
       var nNone = 0

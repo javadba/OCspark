@@ -2,6 +2,7 @@ package org.openchai.tensorflow
 
 import java.io.{File, FileNotFoundException}
 import java.nio.file.{FileAlreadyExistsException, Files, Paths}
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Comparator, PriorityQueue}
 
 import org.openchai.tcp.util.FileUtils
@@ -11,6 +12,8 @@ import org.openchai.tensorflow.GpuClient.{GpuInfo, ImgInfo, ImgPartition}
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer => AB}
 import org.openchai.tcp.util.Logger._
+
+import scala.collection.generic.AtomicIndexFlag
 
 object ImageHandler {
 
@@ -41,6 +44,7 @@ object ImageHandler {
     getImageLists(gpus, files, batchSize)
   }
 
+  val msgCtr = new AtomicInteger(0)
   def getImageLists(inGpus: Seq[GpuInfo], files: Seq[File], batchSize: Int): Seq[ImgPartition] = {
     val (fnamesWithAffinity, otherFnames) = files.partition(f => isDigitsExt(f.getName))
 
@@ -48,11 +52,9 @@ object ImageHandler {
     val gpuNums = inGpus.map(_.gpuNum)
 
     fnamesWithAffinity.foreach { f =>
-      if (!gpuNums.contains(fileExt(f.getName).toInt)) {
+      if (!gpuNums.contains(fileExt(f.getName).toInt) && msgCtr.incrementAndGet % 100 == 1) {
         error(s"Affinity extension not within range of available tx1's: ${f} . GpuNums are ${gpuNums.mkString(",")}")
       }
-      assert(gpuNums.contains(fileExt(f.getName).toInt),
-        s"Affinity extension not within range of available tx1's: ${f} . GpuNums are ${gpuNums.mkString(",")}")
     }
     val groups = fnamesWithAffinity
       .groupBy(f => fileExt(f.getName))

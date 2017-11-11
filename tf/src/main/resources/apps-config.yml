@@ -1,4 +1,9 @@
 {
+  "connections": {
+    "gpuRegistry.host": "localhost",
+    "gpuRegistry.port": "60001"
+  }
+
     "defaults": {
         "apps": {
             "tensorflow-labelimage": {

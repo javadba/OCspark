@@ -1,17 +1,19 @@
 package org.openchai.tensorflow
 
+import java.io.EOFException
+import java.net.SocketException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{Callable, Executors, TimeUnit, TimeoutException}
 
-import org.apache.spark.sql.SparkSession
 import org.openchai.tcp.util.FileUtils.{fileExt, fileName, writeBytes}
 import org.openchai.tcp.util.Logger.{error, info}
 import org.openchai.tcp.util.{ExecResult, FileUtils, TcpUtils}
-import org.openchai.tensorflow.GpuClient.{GpuClientInfo, ImgInfo, txDebug, txInfo}
-import org.openchai.tensorflow.SparkSubmitter.ThreadResult
+import org.openchai.tensorflow.GpuClient._
+import org.openchai.tensorflow.DirectSubmitter.ThreadResult
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer => AB}
+import GpuLogger._
 
 object GpuStreaming {
 
@@ -44,24 +46,34 @@ object GpuStreaming {
       } else {
         val outputTag = s"${ TcpUtils.getLocalHostname}-$path"
 
-        val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"Gpu-${gi.gpuNum}", gi.imgApp, path, gi.outDir, outputTag, contents)
+        val imgLabel = LabelImgRest(None, gi.tfServerHostAndPort, s"Gpu-${gi.gpuNum}", gi.imgApp, path, gi.outDir, outputTag, contents)
         txDebug(gi.gpuNum, s"Running labelImage for $imgLabel")
 
         val execSvc = Executors.newSingleThreadExecutor
-        val future = execSvc.submit(new Callable[LabelImgResp]() {
-          override def call() = {
-            TfSubmitter.labelImg(tfClient, imgLabel)
-          }
-        })
         val res = try {
+          val future = execSvc.submit(new Callable[LabelImgResp]() {
+            override def call() = {
+              TfSubmitter.labelImg(tfClient, imgLabel)
+            }
+          })
           val res = future.get(labelImgTimeoutSecs,TimeUnit.SECONDS)
           if (res.value.cmdResult.isFatalError) {
             error(s"Got a FATAL error from gpu ${gi}: res=$res")
           }
           Some(res)
         } catch {
-          case t: TimeoutException =>
-            Some(LabelImgResp(LabelImgRespStruct("TIMEOUT",path, gi.outDir,ExecResult(null,99999,999,"","",true))))
+          case e: Exception =>
+            txError(gi.gpuNum, s"Error on $imgLabel",e)
+            e match {
+              case t: TimeoutException =>
+                Some(LabelImgResp(LabelImgRespStruct("TIMEOUT", path, gi.outDir, ExecResult(null, 99999, 999, "", "", true))))
+              case s: SocketException =>
+                Some(LabelImgResp(LabelImgRespStruct("SOCKETERROR", path, gi.outDir, ExecResult(null, 99999, 999, "", "", true))))
+              case o: EOFException =>
+                Some(LabelImgResp(LabelImgRespStruct("EOFException", path, gi.outDir, ExecResult(null, 99999, 999, "", "", true))))
+              case e: Exception =>
+                Some(LabelImgResp(LabelImgRespStruct(e.getClass.getSimpleName, path, gi.outDir, ExecResult(null, 99999, 999, "", "", true))))
+            }
         } finally {
           execSvc.shutdownNow
         }

@@ -7,7 +7,7 @@ import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util._
 import org.openchai.tcp.xfer._
-import org.openchai.util.{AppConfig, YamlConf, YamlStruct}
+import org.openchai.util.AppConfig
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val appConfig: AppConfig, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
@@ -21,6 +21,7 @@ class TfServer(val appConfig: AppConfig, val outQ: BlockingQueue[TaggedEntry], v
   def start() = {
     xferServer.start
     tfServer.start
+    GpuRegistry.registerGpuAlternate(appConfig("connections.gpuRegistryHost"),appConfig("connections.gpuRegistryPort").toInt, tcpParams.server, tcpParams.port)
     Thread.sleep(100)
   }
 

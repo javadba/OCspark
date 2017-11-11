@@ -5,10 +5,10 @@ import java.util.concurrent.{Callable, Executors, TimeUnit, TimeoutException}
 import org.apache.spark.sql.SparkSession
 import org.openchai.tcp.util.FileUtils.{fileExt, fileName, writeBytes}
 import org.openchai.tcp.util.Logger.{error, info}
-import org.openchai.tcp.util.{ExecParams, ExecResult, TcpUtils}
+import org.openchai.tcp.util.{ExecResult, TcpUtils}
 import org.openchai.tensorflow.GpuClient.{GpuClientInfo, ImgInfo}
-import org.openchai.tensorflow.SparkSubmitter.ThreadResult
-import GpuClient.{mvBatch, txDebug, txInfo}
+import org.openchai.tensorflow.GpuLogger.{txDebug, txInfo}
+import org.openchai.tensorflow.DirectSubmitter.ThreadResult
 
 import scala.collection.mutable.{ArrayBuffer => AB}
 
@@ -23,10 +23,11 @@ object GpuSparkJob {
 
   def runSparkJob(gci: GpuClientInfo, batch: AB[ImgInfo], labelImgTimeoutSecs: Int = DefaultLabelImgTimeoutSecs) = {
 
+    val master = "local"
     val useExternalQueue = false
     val gi = gci.gpuInfo
-    txDebug(gi.gpuNum, s"Connecting to spark master ${gci.master} ..")
-    val spark = SparkSession.builder.master(gci.master).appName("TFSubmitter").getOrCreate
+    txDebug(gi.gpuNum, s"Connecting to spark master ${master} ..")
+    val spark = SparkSession.builder.master(master).appName("TFSubmitter").getOrCreate
     val sc = spark.sparkContext
     val rdds = batch.map { b =>
       sc.binaryFiles(b.path, 1)
@@ -72,7 +73,7 @@ object GpuSparkJob {
                 } else {
                   contents
                 }).toArray
-                val imgLabel = LabelImgRest(None, gci.master, gi.tfServerHostAndPort, s"SparkPartition-${
+                val imgLabel = LabelImgRest(None, /*gci.master, */gi.tfServerHostAndPort, s"SparkPartition-${
                   gi.gpuNum
                 }-$np", gi.imgApp, path, gi.outDir, outputTag, outContents)
                 txDebug(gi.gpuNum, s"Running labelImage for $imgLabel")

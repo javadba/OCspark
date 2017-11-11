@@ -3,28 +3,12 @@ package org.openchai.util
 import org.openchai.tcp.util.FileUtils
 
 import scala.collection.immutable.HashMap
-//import net.jcazevedo.moultingyaml._
-/*
-main :
-  isSpark: true
-  isRest: true
-  restHostAndPort: localhost:8190
-  master: local[*]
-  tfServer: 192.168.0.2
-  imgApp: tensorflow-labelimage
-  inDir: /data/scenery
-  outDir: /data/out/scenery
-  outTag: scenery
- */
-case class TfAppConfig(isSpark: Boolean, isRest: Boolean, restHostAndPort: String, master: String,
-  tfServerAndPort: String, imgApp: String, inDir: String, outDir: String, outTag: String, nPartitionsPerTx1: Int,
-    imageExtensions: Seq[String], batchSize: Int=1) {
 
+case class TfAppConfig(appType: String, imageExtensions: Seq[String], batchSize: Int=1, gpuRegistryHost: String, gpuRegistryPort: Int) {
+  def isSpark = appType == "spark"
+  def isRest = appType == "rest"
+  def isDirect = appType == "direct"
 }
-
-//object TfAppConfigYamlProtocol extends DefaultYamlProtocol {
-//  implicit val appConfigFormat = yamlFormat10(TfAppConfig)
-//}
 
 case class TfAppConfigs(var map:  Map[String,TfAppConfig] = new HashMap[String,TfAppConfig]())
 
@@ -33,10 +17,7 @@ object TfAppConfigs {
 }
 
 object TfConfig {
-//  import TfAppConfigYamlProtocol._
   def getAppConfig(fpath: String): TfAppConfig = {
-//    val yml = FileUtils.readFileAsString(fpath).parseYaml
-//    yml.convertTo[TfAppConfig]
     val yml = FileUtils.readFileAsString(fpath)
     YamlUtils.toScala[TfAppConfigs](yml).map("main")
   }

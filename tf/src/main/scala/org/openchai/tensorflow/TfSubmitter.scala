@@ -1,21 +1,16 @@
 package org.openchai.tensorflow
 
-import java.io.{File, FileReader}
-import java.nio.file.{Files, Paths}
 import java.util.Base64
-import java.util.concurrent.{Callable, ConcurrentNavigableMap, Executors}
 
-import org.openchai.tcp.util.{FileUtils, ProcessUtils, TcpUtils}
+import org.openchai.tcp.util.FileUtils._
+import org.openchai.tcp.util.Logger._
 import org.openchai.tensorflow.JsonUtils._
 import org.openchai.tensorflow.web.{HttpUtils, TfWebServer}
-import org.openchai.tcp.util.Logger._
-import org.openchai.util.{TfAppConfig, TfConfig, YamlStruct, YamlUtils}
-import collection.mutable.{ArrayBuffer => AB}
-import FileUtils._
+import org.openchai.util.{TfAppConfig, TfConfig}
 
-import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer => AB}
 
-case class LabelImgRest(restHostAndPort: Option[String], master: String, tfServerHostAndPort: String, workerName: String,
+case class LabelImgRest(restHostAndPort: Option[String], tfServerHostAndPort: String, workerName: String,
   imgApp: String, path: String, outPath: String, outputTag: String, contents: Array[Byte]) {
 }
 
@@ -27,18 +22,18 @@ object LabelImgRest {
       } else {
         Base64.getDecoder.decode(liwreq.contentsBase64)
       }
-      new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.master, liwreq.tfServerHostAndPort, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outDir, liwreq.outputTag, bytes)
+      new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.tfServerHostAndPort, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outDir, liwreq.outputTag, bytes)
     } else {
-      new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.master, liwreq.tfServerHostAndPort, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outDir, liwreq.outputTag, null)
+      new LabelImgRest(Option(liwreq.restHostAndPort), liwreq.tfServerHostAndPort, liwreq.workerName, liwreq.imgApp, liwreq.path, liwreq.outDir, liwreq.outputTag, null)
     }
   }
 }
 
-case class LabelImgWebRest(restHostAndPort: String, master: String, tfServerHostAndPort: String, workerName: String, imgApp: String, path: String, outDir: String, outputTag: String, contentsBase64: String)
+case class LabelImgWebRest(restHostAndPort: String, tfServerHostAndPort: String, workerName: String, imgApp: String, path: String, outDir: String, outputTag: String, contentsBase64: String)
 
 object LabelImgWebRest {
   def apply(lireq: LabelImgRest) =
-    new LabelImgWebRest(lireq.restHostAndPort.get, lireq.master, lireq.tfServerHostAndPort, lireq.workerName, lireq.imgApp, lireq.path, lireq.outPath, lireq.outputTag,
+    new LabelImgWebRest(lireq.restHostAndPort.get, lireq.tfServerHostAndPort, lireq.workerName, lireq.imgApp, lireq.path, lireq.outPath, lireq.outputTag,
       if (lireq.contents != null) {
         Base64.getEncoder.encodeToString(lireq.contents)
       } else "")
@@ -68,7 +63,7 @@ object TfSubmitter {
       val json = params("json")
       val labelImgWebReq = parseJsonToCaseClass[LabelImgWebRest](json)
       val resp = if (UseSpark) {
-        val msg = s"TfWebServer: TfSubmitter can not run Spark jobs: invoke SparkSubmitter instead.."
+        val msg = s"TfWebServer: TfSubmitter can not run Spark jobs: invoke DirectSubmitter instead.."
         error(msg)
         msg
       } else {
@@ -110,17 +105,17 @@ object TfSubmitter {
       System.exit(-1)
     }
     val conf = TfConfig.getAppConfig(args(0))
-    if (conf.isSpark) {
-      val msg = s"TfWebServer: TfSubmitter can not run Spark jobs: invoke SparkSubmitter instead.."
+    if (conf.isDirect) {
+      val msg = s"TfWebServer: TfSubmitter can not run Spark jobs: invoke DirectSubmitter instead.."
       throw new IllegalArgumentException(msg)
     } else {
-      val res = if (conf.isRest) {
-        labelImgViaRest(conf, LabelImgRest(Option(conf.restHostAndPort), conf.tfServerAndPort, conf.master, "TFViaRest", conf.imgApp,
-          conf.inDir, conf.outDir, conf.outTag, null))
-      } else {
-        labelImg(TfClient(conf), LabelImgRest(None, conf.master, conf.tfServerAndPort, "TFCommandLine", conf.imgApp, conf.inDir, conf.outDir, conf.outTag, readFileBytes(conf.inDir)))
-      }
-      info(res.toString)
+//      val res = if (conf.isRest) {
+//        labelImgViaRest(conf, LabelImgRest(Option(conf.restHostAndPort), conf.tfServerAndPort, conf.master, "TFViaRest", conf.imgApp,
+//          conf.inDir, conf.outDir, conf.outTag, null))
+//      } else {
+//        labelImg(TfClient(conf), LabelImgRest(None, conf.master, conf.tfServerAndPort, "TFCommandLine", conf.imgApp, conf.inDir, conf.outDir, conf.outTag, readFileBytes(conf.inDir)))
+//      }
+//      info(res.toString)
     }
   }
 }

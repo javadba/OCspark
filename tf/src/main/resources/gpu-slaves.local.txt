@@ -1,5 +1,6 @@
-1 eldamar:61234 tensorflow-labelimage  /data/input/app1  /data/output/tx1
+1 eldamar:61264 tensorflow-labelimage  /data/input/app1  /data/output/tx1
 2 eldamar:61244 tensorflow-labelimage /data/input/app1   /data/output/tx2
 3 eldamar:61254 tensorflow-labelimage /data/input/app2       /data/output/tx3
-eldamar:61264
+eldamar:61234
+
 
