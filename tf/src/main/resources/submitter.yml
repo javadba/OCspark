@@ -1,7 +1,6 @@
 map:
   main :
     appType: direct
-    master: local[*]
     imageExtensions:
       - jpg
       - jpeg
@@ -11,3 +10,5 @@ map:
       - tiff
       - mpg
     batchSize: 2
+    gpuRegistryHost:  localhost
+    gpuRegistryPort:  60001

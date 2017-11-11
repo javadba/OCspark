@@ -17,6 +17,8 @@ object TfAppConfigs {
 }
 
 object TfConfig {
+  def getHostName = FileUtils.readFileAsString("/shared/conf/hostname").trim
+
   def getAppConfig(fpath: String): TfAppConfig = {
     val yml = FileUtils.readFileAsString(fpath)
     YamlUtils.toScala[TfAppConfigs](yml).map("main")

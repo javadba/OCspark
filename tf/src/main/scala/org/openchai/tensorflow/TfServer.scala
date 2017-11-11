@@ -1,5 +1,6 @@
 package org.openchai.tensorflow
 
+import java.net.ConnectException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue}
 
@@ -7,11 +8,13 @@ import org.openchai.tcp.rpc._
 import org.openchai.tcp.util.Logger._
 import org.openchai.tcp.util._
 import org.openchai.tcp.xfer._
-import org.openchai.util.AppConfig
+import org.openchai.util.{AppConfig, TfConfig}
 
 // The main thing we need to override here is using XferQConServerIf inside the server object
 class TfServer(val appConfig: AppConfig, val outQ: BlockingQueue[TaggedEntry], val tfTcpParams: TcpParams,
   val tcpParams: TcpParams, val xtcpParams: TcpParams) {
+
+  val ConnectWait = 3
 
   val xferServer = new QXferConServer(outQ/*.asInstanceOf[BlockingQueue[TaggedEntry]]*/,
     tcpParams, xtcpParams)
@@ -19,9 +22,20 @@ class TfServer(val appConfig: AppConfig, val outQ: BlockingQueue[TaggedEntry], v
   val tfServer = new TcpServer(tfTcpParams.server, tfTcpParams.port, new TfServerIf(appConfig, outQ, tfTcpParams.port))
 
   def start() = {
+    var connected = false
     xferServer.start
     tfServer.start
-    GpuRegistry.registerGpuAlternate(appConfig("connections.gpuRegistryHost"),appConfig("connections.gpuRegistryPort").toInt, tcpParams.server, tcpParams.port)
+    while (!connected) {
+      try {
+        GpuRegistry.registerGpuAlternate(appConfig("connections.gpuRegistryHost"), appConfig("connections.gpuRegistryPort").toInt, TfConfig.getHostName, tcpParams.port)
+        connected = true
+        error(s"Connected to Gpu Registry")
+      } catch {
+        case ce: ConnectException =>
+          error(s"Unable to connect to GpuRegistry - will try again in $ConnectWait seconds ..")
+          Thread.sleep(1000 * ConnectWait)
+      }
+    }
     Thread.sleep(100)
   }
 

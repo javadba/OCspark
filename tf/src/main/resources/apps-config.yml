@@ -1,58 +1,55 @@
 {
   "connections": {
-    "gpuRegistry.host": "localhost",
-    "gpuRegistry.port": "60001"
-  }
+    "gpuRegistryHost": "localhost",
+    "gpuRegistryPort": "60001"
+  },
 
-    "defaults": {
-        "apps": {
-            "tensorflow-labelimage": {
-                "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image.sh --image=${1} --tag=${2}",
-                "rundir": "${TENSORFLOW_HOME}",
-                "tmpdir": "/tmp/tensorflow-labelimage"
-            },
-            "darknet-yolo": {
-                "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
-                "rundir": "${DARKNET_HOME}",
-                "tmpdir": "${DARKNET_HOME}/tmp"
-                "tmpdir": "/tmp/darknet-yolo"
-            },
-            "pointrflow-a1": {
-                "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
-                "rundir": "${POINTR_HOME}",
-                "tmpdir": "${POINTR_HOME}/tmp"
-                "tmpdir": "/tmp/pointrflow"
-            },
-            "pointrflow-a2": {
-                "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
-                "rundir": "${POINTR_HOME}",
-                "tmpdir": "${POINTR_HOME}/tmp"
-                "tmpdir": "/tmp/pointrflow"
-            },
-            "pointrflow-a3": {
-                "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
-                "rundir": "${POINTR_HOME}",
-                "tmpdir": "/tmp/pointrflow"
-            }
-        }
-    },
-    "environments": {
-        "linux": {
-            "env" : {
-                "POINTR_HOME": "/shared/pointr",
-                "TENSORFLOW_HOME": "/home/ubuntu/tensorflow",
-                "DARKNET_HOME": "/git/darknet",
-                "TF_CPP_MIN_LOG_LEVEL": "2"
-            }
-        },
-        "osx": {
-            "env" : {
-                "POINTR_HOME": "/shared/pointr",
-                "TENSORFLOW_HOME": "/shared/tensorflow",
-                "DARKNET_HOME": "/git/darknet",
-                "TF_CPP_MIN_LOG_LEVEL": "2"
-            }
-        }
-    }
+  "defaults": {
+      "apps": {
+          "tensorflow-labelimage": {
+              "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image.sh --image=${1} --tag=${2}",
+              "rundir": "${TENSORFLOW_HOME}",
+              "tmpdir": "/tmp/tensorflow-labelimage"
+          },
+          "darknet-yolo": {
+              "cmdline": "${DARKNET_HOME}/darknet detect ${DARKNET_HOME}/cfg/yolo.cfg ${DARKNET_HOME}/data/yolo.weights ${1}",
+              "rundir": "${DARKNET_HOME}",
+              "tmpdir": "/tmp/darknet-yolo"
+          },
+          "pointrflow-a1": {
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "rundir": "${POINTR_HOME}",
+              "tmpdir": "/tmp/pointrflow"
+          },
+          "pointrflow-a2": {
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "rundir": "${POINTR_HOME}",
+              "tmpdir": "/tmp/pointrflow"
+          },
+          "pointrflow-a3": {
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "rundir": "${POINTR_HOME}",
+              "tmpdir": "/tmp/pointrflow"
+          }
+      }
+  },
+  "environments": {
+      "linux": {
+          "env" : {
+              "POINTR_HOME": "/shared/pointr",
+              "TENSORFLOW_HOME": "/home/ubuntu/tensorflow",
+              "DARKNET_HOME": "/git/darknet",
+              "TF_CPP_MIN_LOG_LEVEL": "2"
+          }
+      },
+      "osx": {
+          "env" : {
+              "POINTR_HOME": "/shared/pointr",
+              "TENSORFLOW_HOME": "/shared/tensorflow",
+              "DARKNET_HOME": "/git/darknet",
+              "TF_CPP_MIN_LOG_LEVEL": "2"
+          }
+      }
+  }
 }
 
