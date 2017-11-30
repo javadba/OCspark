@@ -28,7 +28,7 @@ import scala.collection.mutable
 
 object TcpServer {
   val DefaultPort = 8989
-  val BufSize = (Math.pow(2, 21) - 1).toInt
+  val BufSize = (Math.pow(2, 24) - 1).toInt
 }
 
 case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
@@ -84,8 +84,8 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
 
   val MaxTcpWaitSecs = 1
 
+  val buf = new Array[Byte](BufSize)
   def serve(socket: Socket): Unit = {
-    val buf = new Array[Byte](BufSize)
     val sockaddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
     info(s"$port: Received connection request from ${sockaddr.getHostName}@${sockaddr.getAddress.getHostAddress} on socket ${socket.getPort}")
     var msgPrinted = false
@@ -111,7 +111,7 @@ case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pSer
       do {
         val nread = dis.read(buf, totalRead, buf.length - totalRead)
         totalRead += nread
-        debug(s"in loop: nread=$nread totalRead=$totalRead")
+        debug(s"in loop: nread=$nread totalRead=$totalRead bytesToRead=$bytesToRead")
         nEmpty = 0
         Thread.sleep(20)
       } while (totalRead < bytesToRead)

@@ -1,13 +1,13 @@
 {
   "connections": {
-    "gpuRegistryHost": "localhost",
+    "gpuRegistryHost": "192.168.1.132",
     "gpuRegistryPort": "60001"
   },
 
   "defaults": {
       "apps": {
           "tensorflow-labelimage": {
-              "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image.sh --image=${1} --tag=${2}",
+              "cmdline": "${TENSORFLOW_HOME}/bazel-bin/tensorflow/examples/label_image/label_image --image=${1}",
               "rundir": "${TENSORFLOW_HOME}",
               "tmpdir": "/tmp/tensorflow-labelimage"
           },
@@ -17,17 +17,17 @@
               "tmpdir": "/tmp/darknet-yolo"
           },
           "pointrflow-a1": {
-              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1} ",
               "rundir": "${POINTR_HOME}",
               "tmpdir": "/tmp/pointrflow"
           },
           "pointrflow-a2": {
-              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1} ",
               "rundir": "${POINTR_HOME}",
               "tmpdir": "/tmp/pointrflow"
           },
           "pointrflow-a3": {
-              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1}  --tag=${2}",
+              "cmdline": "${POINTR_HOME}/pointr.sh --conf ${POINTR_HOME}/pointr.json --weights ${POINTR_HOME}/data/yolo.weights --image ${1} ",
               "rundir": "${POINTR_HOME}",
               "tmpdir": "/tmp/pointrflow"
           }

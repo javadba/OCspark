@@ -48,12 +48,12 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
 
   private var savedConnParam: P2pConnectionParams = _
 
+  val buf = new Array[Byte](Math.pow(2, 24).toInt)
   override def request[U: TypeTag, V: TypeTag](req: P2pReq[U]): P2pResp[V] = {
     // TODO: determine how to properly size the bos
     if (!isConnected) {
       connect(savedConnParam)
     }
-    val buf = new Array[Byte](Math.pow(2, 21).toInt)
     val serreq = serializeStream(req.path, pack(req.path, req))
     os.writeInt(serreq.length)
     os.write(serreq)
@@ -71,7 +71,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
     do {
       val nread = is.read(buf, totalRead, buf.length - totalRead)
       totalRead += nread
-      debug(s"in loop: nread=$nread totalRead=$totalRead")
+      debug(s"in loop: nread=$nread totalRead=$totalRead bytesToRead=$bytesToRead")
       Thread.sleep(20)
     } while (totalRead < bytesToRead)
     //      }
