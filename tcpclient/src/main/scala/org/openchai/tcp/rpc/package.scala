@@ -23,6 +23,7 @@ package object rpc {
 
   trait P2pConnectionParams
 
+  val BufSize = (64 * Math.pow(2, 20)-1).toInt   // 64MB
   abstract class ServiceIf(val name: String) {
 
     import reflect.runtime.universe.TypeTag

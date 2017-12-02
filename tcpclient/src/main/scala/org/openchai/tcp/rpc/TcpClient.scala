@@ -48,7 +48,7 @@ class TcpClient(val connParams: TcpParams, val serviceIf: ServiceIf)
 
   private var savedConnParam: P2pConnectionParams = _
 
-  val buf = new Array[Byte](Math.pow(2, 24).toInt)
+  val buf = new Array[Byte](BufSize)
   override def request[U: TypeTag, V: TypeTag](req: P2pReq[U]): P2pResp[V] = {
     // TODO: determine how to properly size the bos
     if (!isConnected) {

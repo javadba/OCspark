@@ -45,37 +45,45 @@ object ImageHandler {
   }
 
   val msgCtr = new AtomicInteger(0)
+  val msgCtr1 = new AtomicInteger(0)
   def getImageLists(inGpus: Seq[GpuInfo], files: Seq[File], batchSize: Int): Seq[ImgPartition] = {
     val (fnamesWithAffinity, otherFnames) = files.partition(f => isDigitsExt(f.getName))
 
     import org.openchai.tcp.util.FileUtils._
     val gpuNums = inGpus.map(_.gpuNum)
-
-    fnamesWithAffinity.foreach { f =>
-      if (!gpuNums.contains(fileExt(f.getName).toInt) && msgCtr.incrementAndGet % 100 == 1) {
-        error(s"Affinity extension not within range of available tx1's: ${f} . GpuNums are ${gpuNums.mkString(",")}")
+    if (gpuNums.isEmpty) {
+      if (msgCtr.incrementAndGet % 20 == 1) {
+        error("getImageLists: we do not have any gpus")
       }
-    }
-    val groups = fnamesWithAffinity
-      .groupBy(f => fileExt(f.getName))
-      .mapValues { files => AB(files.map(f => ImgInfo(fileName(f.getAbsolutePath), f.getAbsolutePath)): _*) }
-    val allg = for (g <- gpuNums) yield {
-      ImgPartition(g, groups.getOrElse(g.toString, AB[ImgInfo]()))
-    }
+      Seq.empty[ImgPartition]
+    } else {
 
-    val pq = new PriorityQueue[ImgPartition](new Comparator[ImgPartition]() {
-      override def compare(o1: ImgPartition, o2: ImgPartition) = o1.imgs.length - o2.imgs.length
-    })
+      fnamesWithAffinity.foreach { f =>
+        if (!gpuNums.contains(fileExt(f.getName).toInt) && msgCtr1.incrementAndGet % 20 == 1) {
+          error(s"Affinity extension not within range of available tx1's: $f . GpuNums are ${gpuNums.mkString(",")}")
+        }
+      }
+      val groups = fnamesWithAffinity
+        .groupBy(f => fileExt(f.getName))
+        .mapValues { files => AB(files.map(f => ImgInfo(fileName(f.getAbsolutePath), f.getAbsolutePath)): _*) }
+      val allg = for (g <- gpuNums) yield {
+        ImgPartition(g, groups.getOrElse(g.toString, AB[ImgInfo]()))
+      }
 
-    import collection.JavaConverters._
-    pq.addAll(allg.asJava)
-    otherFnames.foreach { fn =>
-      val lowest = pq.poll()
-      lowest.imgs += ImgInfo(fileName(fn.getAbsolutePath), fn.getAbsolutePath);
-      pq.offer(lowest)
+      val pq = new PriorityQueue[ImgPartition](new Comparator[ImgPartition]() {
+        override def compare(o1: ImgPartition, o2: ImgPartition) = o1.imgs.length - o2.imgs.length
+      })
+
+      import collection.JavaConverters._
+      pq.addAll(allg.asJava)
+      otherFnames.foreach { fn =>
+        val lowest = pq.poll()
+        lowest.imgs += ImgInfo(fileName(fn.getAbsolutePath), fn.getAbsolutePath);
+        pq.offer(lowest)
+      }
+      val paths = pq.iterator.asScala.toList
+      paths
     }
-    val paths = pq.iterator.asScala.toList
-    paths
   }
 
   import FileUtils._

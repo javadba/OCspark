@@ -189,13 +189,18 @@ object GpuClient {
     }
   }
 
-  def mvBatch(batch: AB[ImgInfo], toDir: String, findGrandparent: Boolean = false) = {
+  def mvBatch(gpuNum: Int, batch: AB[ImgInfo], toDir: String, findGrandparent: Boolean = false) = {
     for (img <- batch) {
-      val destDir = (if (findGrandparent) {
-        new File(img.path).getParentFile.getParent
-      } else new File(img.path).getParent) + toDir
-      FileUtils.mkdirs(destDir)
-      FileUtils.mv(img.path, destDir + "/" + FileUtils.fileName(img.path))
+      try {
+        val destDir = (if (findGrandparent) {
+          new File(img.path).getParentFile.getParent
+        } else new File(img.path).getParent) + toDir
+        FileUtils.mkdirs(destDir)
+        FileUtils.mv(img.path, destDir + "/" + FileUtils.fileName(img.path))
+      } catch {
+        case e: Exception =>
+          txError(gpuNum, s"Unable to move image $img in batch=${batch.mkString(",")}", e)
+      }
     }
 
   }
@@ -270,16 +275,16 @@ case class GpuClient(inGci: GpuClientInfo, failoverService: GpuFailoverService) 
             } else {
               throw new IllegalStateException(s"Failover failed for batch ${batch.mkString(",")} on $gci. Can not proceed")
             }
-            mvBatch(batch, "", true)
+            mvBatch(gpuNum, batch, "", true)
           } else {
             gci.outQ.put(res)
-            mvBatch(batch, "/completed", true)
+            mvBatch(gpuNum, batch, "/completed", true)
             ImageHandler.prepImages(ImgPartition(gpuNum, batch), gci.gpuInfo.outDir)
           }
         } catch {
           case e: Exception =>
             txError(gpuNum, s"GpuClient.run failed for batch=${batch.mkString(",")}", e)
-            mvBatch(batch, "", true)
+            mvBatch(gpuNum, batch, "", true)
         }
       } else {
         if (empty.getAndIncrement % 100 == 0) {

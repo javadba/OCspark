@@ -28,7 +28,6 @@ import scala.collection.mutable
 
 object TcpServer {
   val DefaultPort = 8989
-  val BufSize = (Math.pow(2, 24) - 1).toInt
 }
 
 case class TcpServer(host: String, port: Int, serverIf: ServerIf) extends P2pServer with P2pBinding {
